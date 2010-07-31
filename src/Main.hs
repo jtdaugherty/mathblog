@@ -50,6 +50,7 @@ import System.Process
     )
 import Data.List
     ( sortBy
+    , isSuffixOf
     )
 import Data.Maybe
     ( fromJust
@@ -162,7 +163,9 @@ allPosts :: Config -> IO [Post]
 allPosts config = do
   -- Read all files from the post source directory (except .. and .)
   allFiles <- getDirectoryContents $ postSourceDir config
-  let postFiles = [ f | f <- allFiles, not $ f `elem` ["..", "."] ]
+  let postFiles = [ f | f <- allFiles
+                  , ".txt" `isSuffixOf` f
+                  ]
 
   -- For each file, construct a Post from it.
   posts <- forM postFiles $
