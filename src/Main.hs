@@ -125,12 +125,15 @@ postPostamble c = templateDir c </> "postPostamble.html"
 stylesheet :: Config -> FilePath
 stylesheet c = stylesheetDir c </> "stylesheet.css"
 
-safeMakeDir :: FilePath -> IO ()
+safeMakeDir :: FilePath -> IO Bool
 safeMakeDir dir = do
   exists <- doesDirectoryExist dir
-  when (not exists) $ do
-                    putStrLn $ "Creating directory: " ++ (show dir)
-                    createDirectory dir
+  case exists of
+    True -> return False
+    False -> do
+      putStrLn $ "Creating directory: " ++ (show dir)
+      createDirectory dir
+      return True
 
 safeCreateFile :: FilePath -> String -> IO ()
 safeCreateFile path contents = do
@@ -333,8 +336,7 @@ postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 setup :: Config -> IO ()
 setup config = do
   -- If the base directory doesn't already exist, create it.
-  let creationOrder = [ baseDir
-                      , postSourceDir
+  let creationOrder = [ postSourceDir
                       , htmlDir
                       , stylesheetDir
                       , postHtmlDir
@@ -344,16 +346,21 @@ setup config = do
                       , htmlTempDir
                       ]
 
+  isNew <- safeMakeDir $ baseDir config
+
   mapM_ safeMakeDir $ creationOrder <*> pure config
 
   -- Install default files.
-  let files = [ (firstPost, Defaults.firstPost)
-              , (pagePreamble, Defaults.pagePreamble)
+  let files = [ (pagePreamble, Defaults.pagePreamble)
               , (pagePostamble, Defaults.pagePostamble)
               , (postPreamble, Defaults.postPreamble)
               , (postPostamble, Defaults.postPostamble)
               , (stylesheet, Defaults.stylesheet)
               ]
+
+  -- Only create the default blog post if we are initializing a new
+  -- blog.
+  when isNew $ safeCreateFile (firstPost config) Defaults.firstPost
 
   forM_ files $ \(path, content) -> do
                  safeCreateFile (path config) content
