@@ -10,17 +10,23 @@
   - scan text files and see which ones do not have corresponding
     generated content, or which ones need to be re-generated
 
+    done
+
   - uses the pandoc library directly (not external invocation) to
     generate HTML / gladtex files from markdown source
+
+    done
 
   - generate index.html or something (should be safe to regenerate
     this. probably we want a preamble and postamble)
 
-  - generated index.html includes latest N posts only, configurable
+  - generated index.html includes latest N posts only, configurable?
 
   - also generates a master post listing, linked from the index.html
 
-  - need the ability to "preview" posts
+    done
+
+  - need the ability to "preview" posts (possibly for local editing?)
 
 - Configuration interface:
 
@@ -39,3 +45,18 @@
   base/templates/preamble.html
   base/templates/postamble.html
   base/posts/*.txt
+
+- Format modification times, update listing
+
+- Sort posts by modification time descending before building listing
+  and before generating index.html with latest post
+
+- Record somewhere what I have done to pandoc and gladtex to make all
+  of this work nicely
+
+  - fix environment threading in gladtex script
+
+  - add dpi EQ attribute support in gladtex script
+
+  - differentiate between inline and display math in pandoc HTML
+    writer
