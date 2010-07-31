@@ -6,6 +6,7 @@ import Control.Applicative
     )
 import Control.Monad
     ( when
+    , forM
     , forM_
     )
 import System.IO
@@ -24,10 +25,21 @@ import System.Directory
     ( doesDirectoryExist
     , doesFileExist
     , createDirectory
+    , getDirectoryContents
     )
 import System.FilePath
     ( (</>)
     )
+import System.Posix.Types
+    ( EpochTime
+    )
+import System.Posix.Files
+    ( getFileStatus
+    , modificationTime
+    )
+
+import qualified Text.Pandoc as Pandoc
+import qualified Text.Pandoc.Definition as Pandoc
 
 import qualified MB.Defaults as Defaults
 
@@ -39,6 +51,13 @@ data Config = Config { baseDir :: FilePath
                      , imageDir :: FilePath
                      , templateDir :: FilePath
                      }
+
+data Post = Post { postTitle :: String
+                 , postFilename :: String -- relative to the postSourceDir
+                 , postModificationTime :: EpochTime
+                 , postAst :: Pandoc.Pandoc
+                 }
+            deriving (Show)
 
 baseDirName :: String
 baseDirName = "MB_BASE_DIR"
@@ -77,14 +96,47 @@ safeCreateFile path contents = do
     hPutStr h contents
     hClose h
 
-generatePosts :: Config -> IO ()
-generatePosts _ = return ()
+--- xxx need to extract the document title, possibly making some
+--- assumptions about valid titles
+title :: Pandoc.Pandoc -> String
+title (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
+    where
+      getStr (Pandoc.Str s) = s
+      getStr Pandoc.Space = " "
+      getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
-generateIndex :: Config -> IO ()
-generateIndex _ = return ()
+allPosts :: Config -> IO [Post]
+allPosts config = do
+  -- Read all files from the post source directory (except .. and .)
+  allFiles <- getDirectoryContents $ postSourceDir config
+  let postFiles = [ f | f <- allFiles, not $ f `elem` ["..", "."] ]
 
-generateList :: Config -> IO ()
-generateList _ = return ()
+  -- For each file, construct a Post from it.
+  forM postFiles $
+           \f -> do
+             let fullPath = postSourceDir config </> f
+             info <- getFileStatus fullPath
+             fileContent <- readFile fullPath
+             let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
+
+             return $ Post { postTitle = title doc
+                           , postFilename = f
+                           , postModificationTime = modificationTime info
+                           , postAst = doc
+                           }
+
+generatePost :: Config -> Post -> IO ()
+generatePost _ _ = return ()
+
+generatePosts :: Config -> [Post] -> IO ()
+generatePosts config posts =
+    forM_ posts $ \p -> generatePost config p
+
+generateIndex :: Config -> Post -> IO ()
+generateIndex _ _ = return ()
+
+generateList :: Config -> [Post] -> IO ()
+generateList _ _ = return ()
 
 setup :: Config -> IO ()
 setup config = do
@@ -143,6 +195,10 @@ main = do
          putStrLn $ "mb: using base directory " ++ (show d)
          let config = mkConfig d
          setup config
-         generatePosts config
-         generateIndex config
-         generateList config
+
+         posts <- allPosts config
+         print posts
+
+         generatePosts config posts
+         generateIndex config $ head posts
+         generateList config posts

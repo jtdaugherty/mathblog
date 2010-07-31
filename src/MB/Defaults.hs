@@ -29,8 +29,7 @@ stylesheet = "body {\n\
              \}"
 
 firstPost :: String
-firstPost = "A First Post\n\
-            \============\n\
+firstPost = "%A first post\n\
             \\n\
             \This is an initial post which you should delete.  This is just\n\
             \here to show how the system works.  Here is some example math:\n\
