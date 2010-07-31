@@ -11,9 +11,11 @@ import Control.Monad
     )
 import System.IO
     ( IOMode(WriteMode)
+    , Handle
     , openFile
     , hPutStr
     , hClose
+    , readFile
     )
 import System.Exit
     ( ExitCode(ExitSuccess)
@@ -79,11 +81,17 @@ listHtml c = htmlDir c </> "list.html"
 firstPost :: Config -> FilePath
 firstPost c = postSourceDir c </> "first-post.txt"
 
-preamble :: Config -> FilePath
-preamble c = templateDir c </> "preamble.html"
+pagePreamble :: Config -> FilePath
+pagePreamble c = templateDir c </> "pagePreamble.html"
 
-postamble :: Config -> FilePath
-postamble c = templateDir c </> "postamble.html"
+pagePostamble :: Config -> FilePath
+pagePostamble c = templateDir c </> "pagePostamble.html"
+
+postPreamble :: Config -> FilePath
+postPreamble c = templateDir c </> "postPreamble.html"
+
+postPostamble :: Config -> FilePath
+postPostamble c = templateDir c </> "postPostamble.html"
 
 stylesheet :: Config -> FilePath
 stylesheet c = stylesheetDir c </> "stylesheet.css"
@@ -110,6 +118,7 @@ title :: Pandoc.Pandoc -> String
 title (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
     where
       getStr (Pandoc.Str s) = s
+      getStr (Pandoc.Math _ s) = "<EQ DPI=\"175\">" ++ s ++ "</EQ>"
       getStr Pandoc.Space = " "
       getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
@@ -166,6 +175,15 @@ gladTex config p = do
     putStrLn err
     exitFailure
 
+writePost :: Handle -> Config -> Post -> IO ()
+writePost h config post = do
+  hPutStr h =<< (readFile $ pagePreamble config)
+  hPutStr h =<< (readFile $ postPreamble config)
+  hPutStr h $ "<h1>" ++ postTitle post ++ "</h1>"
+  hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
+  hPutStr h =<< (readFile $ postPostamble config)
+  hPutStr h =<< (readFile $ pagePostamble config)
+
 generatePost :: Config -> Post -> IO ()
 generatePost config post = do
   let tempHtml = htmlTempDir config </> postBaseName post ++ ".html"
@@ -182,7 +200,7 @@ generatePost config post = do
     putStrLn $ "Processing: " ++ postBaseName post
 
     h <- openFile (postHtex config post) WriteMode
-    hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
+    writePost h config post
     hClose h
 
     -- Run gladtex on the temp file to generate the final file.
@@ -223,8 +241,10 @@ setup config = do
 
   -- Install default files.
   let files = [ (firstPost, Defaults.firstPost)
-              , (preamble, Defaults.preamble)
-              , (postamble, Defaults.postamble)
+              , (pagePreamble, Defaults.pagePreamble)
+              , (pagePostamble, Defaults.pagePostamble)
+              , (postPreamble, Defaults.postPreamble)
+              , (postPostamble, Defaults.postPostamble)
               , (stylesheet, Defaults.stylesheet)
               ]
 
