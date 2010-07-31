@@ -18,7 +18,7 @@ pagePreamble = "<html>\n\
                \    <div id=\"page\">\n\
                \      <div id=\"header\">\n\
                \        <a href=\"/\">A Blog</a>\n\
-               \        <a id=\"listing\" href=\"/list.html\">previous posts</a>\n\
+               \        <a id=\"listing\" href=\"/list.html\">all posts</a>\n\
                \      </div>\n"
 
 pagePostamble :: String
@@ -62,6 +62,11 @@ stylesheet = "html {\n\
              \#header a {\n\
              \  color: #00f;\n\
              \  text-decoration: none;\n\
+             \}\n\
+             \a#listing {\n\
+             \  float: right;\n\
+             \  font-size: 14px;\n\
+             \  margin-top: 1em;\n\
              \}"
 
 firstPost :: String
