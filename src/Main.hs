@@ -150,6 +150,12 @@ gladTex config p = do
              , imageDir config
              , "-u"
              , "/images/"
+             , "-r"
+             , "120"
+             , "-s"
+             , "15"
+             , "-b"
+             , "FFFFFF"
              , postHtex config p
              ]
 
