@@ -43,9 +43,13 @@ import System.Posix.Types
 import System.Posix.Files
     ( getFileStatus
     , modificationTime
+    , createSymbolicLink
     )
 import System.Process
     ( readProcessWithExitCode
+    )
+import Data.List
+    ( sortBy
     )
 import Data.Maybe
     ( fromJust
@@ -75,6 +79,7 @@ data Config = Config { baseDir :: FilePath
                      , htmlDir :: FilePath
                      , stylesheetDir :: FilePath
                      , postHtmlDir :: FilePath
+                     , postIntermediateDir :: FilePath
                      , imageDir :: FilePath
                      , templateDir :: FilePath
                      , htmlTempDir :: FilePath
@@ -160,7 +165,7 @@ allPosts config = do
   let postFiles = [ f | f <- allFiles, not $ f `elem` ["..", "."] ]
 
   -- For each file, construct a Post from it.
-  forM postFiles $
+  posts <- forM postFiles $
            \f -> do
              let fullPath = postSourceDir config </> f
              info <- getFileStatus fullPath
@@ -173,6 +178,9 @@ allPosts config = do
                            , postModificationTime = t
                            , postAst = doc
                            }
+
+  -- Return posts sorted by modification time, descending
+  return $ sortBy (\a b -> postModificationTime a `compare` postModificationTime b) posts
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =
@@ -209,19 +217,29 @@ gladTex config htexPath color = do
     putStrLn err
     exitFailure
 
-writePost :: Handle -> Config -> Post -> IO ()
-writePost h config post = do
-  hPutStr h =<< (readFile $ pagePreamble config)
-  hPutStr h =<< (readFile $ postPreamble config)
+writePost :: Handle -> Post -> IO ()
+writePost h post = do
   hPutStr h $ "<h1>" ++ postTitle post 175 ++ "</h1>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
+
+postIntermediateHtml :: Config -> Post -> FilePath
+postIntermediateHtml config post = postIntermediateDir config </> postBaseName post ++ ".html"
+
+postFinalHtml :: Config -> Post -> FilePath
+postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
+
+buildPost :: Handle -> Config -> Post -> IO ()
+buildPost h config post = do
+  hPutStr h =<< (readFile $ pagePreamble config)
+  hPutStr h =<< (readFile $ postPreamble config)
+  hPutStr h =<< (readFile $ postIntermediateHtml config post)
   hPutStr h =<< (readFile $ postPostamble config)
   hPutStr h =<< (readFile $ pagePostamble config)
 
 generatePost :: Config -> Post -> IO ()
 generatePost config post = do
   let tempHtml = htmlTempDir config </> postBaseName post ++ ".html"
-      finalHtml = postHtmlDir config </> postBaseName post ++ ".html"
+      finalHtml = postIntermediateHtml config post
 
   htmlExists <- doesFileExist finalHtml
   skip <- case htmlExists of
@@ -234,7 +252,7 @@ generatePost config post = do
     putStrLn $ "Processing: " ++ postBaseName post
 
     h <- openFile (postHtex config post) WriteMode
-    writePost h config post
+    writePost h post
     hClose h
 
     -- Run gladtex on the temp file to generate the final file.
@@ -250,10 +268,22 @@ generatePost config post = do
 
 generatePosts :: Config -> [Post] -> IO ()
 generatePosts config posts =
-    forM_ posts $ \p -> generatePost config p
+    forM_ posts $ \p -> do
+      generatePost config p
+
+      h <- openFile (postFinalHtml config p) WriteMode
+      buildPost h config p
+      hClose h
 
 generateIndex :: Config -> Post -> IO ()
-generateIndex _ _ = return ()
+generateIndex config post = do
+  let dest = postFinalHtml config post
+      index = indexHtml config
+
+  exists <- doesFileExist index
+  when exists $ removeFile index
+
+  createSymbolicLink dest index
 
 generateList :: Config -> [Post] -> IO ()
 generateList config posts = do
@@ -305,6 +335,7 @@ setup config = do
                       , htmlDir
                       , stylesheetDir
                       , postHtmlDir
+                      , postIntermediateDir
                       , imageDir
                       , templateDir
                       , htmlTempDir
@@ -335,6 +366,7 @@ mkConfig base = Config { baseDir = base
                        , htmlDir = base </> "html"
                        , stylesheetDir = base </> "html" </> "stylesheets"
                        , postHtmlDir = base </> "html" </> "posts"
+                       , postIntermediateDir = base </> "generated"
                        , imageDir = base </> "html" </> "images"
                        , templateDir = base </> "templates"
                        , htmlTempDir = base </> "temp"

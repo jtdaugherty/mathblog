@@ -52,9 +52,6 @@
   base/templates/postamble.html
   base/posts/*.txt
 
-- Sort posts by modification time descending before building listing
-  and before generating index.html with latest post
-
 - Record somewhere what I have done to pandoc and gladtex to make all
   of this work nicely
 
