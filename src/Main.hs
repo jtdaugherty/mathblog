@@ -76,6 +76,15 @@ safeCreateFile path contents = do
     hPutStr h contents
     hClose h
 
+generatePosts :: Config -> IO ()
+generatePosts _ = return ()
+
+generateIndex :: Config -> IO ()
+generateIndex _ = return ()
+
+generateList :: Config -> IO ()
+generateList _ = return ()
+
 setup :: Config -> IO ()
 setup config = do
   -- If the base directory doesn't already exist, create it.
@@ -133,5 +142,10 @@ main = do
     Nothing -> usage >> exitFailure
     Just d -> do
          putStrLn $ "mb: using base directory " ++ (show d)
+         let config = mkConfig d
+         setup config
+         generatePosts config
+         generateIndex config
+         generateList config
 
   return ()
