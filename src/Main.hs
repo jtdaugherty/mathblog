@@ -265,7 +265,7 @@ main = do
     Nothing -> usage >> exitFailure
     Just d -> do
          when (head d /= '/') $ do
-                putStrLn $ baseDirEnvName ++ " must contain an abosolute path"
+                putStrLn $ baseDirEnvName ++ " must contain an absolute path"
                 exitFailure
 
          putStrLn $ "mb: using base directory " ++ (show d)
