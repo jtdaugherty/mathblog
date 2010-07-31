@@ -16,7 +16,8 @@ import System.IO
     , hClose
     )
 import System.Exit
-    ( exitFailure
+    ( ExitCode(ExitSuccess)
+    , exitFailure
     )
 import System.Environment
     ( getEnvironment
@@ -26,10 +27,13 @@ import System.Directory
     , doesFileExist
     , createDirectory
     , getDirectoryContents
+    , removeFile
+    , copyFile
     )
 import System.FilePath
     ( (</>)
     , takeBaseName
+    , takeFileName
     )
 import System.Posix.Types
     ( EpochTime
@@ -38,7 +42,9 @@ import System.Posix.Files
     ( getFileStatus
     , modificationTime
     )
-
+import System.Process
+    ( readProcessWithExitCode
+    )
 import qualified Text.Pandoc as Pandoc
 import qualified Text.Pandoc.Definition as Pandoc
 
@@ -132,21 +138,56 @@ pandocWriterOptions =
     Pandoc.defaultWriterOptions { Pandoc.writerHTMLMathMethod = Pandoc.GladTeX
                                 }
 
+postBaseName :: Post -> String
+postBaseName = takeBaseName . takeFileName . postFilename
+
+postHtex :: Config -> Post -> String
+postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
+
+gladTex :: Config -> Post -> IO ()
+gladTex config p = do
+  let args = [ "-d"
+             , imageDir config
+             , "-u"
+             , "/images/"
+             , postHtex config p
+             ]
+
+  (ecode, _, err) <- readProcessWithExitCode "gladtex" args ""
+
+  when (ecode /= ExitSuccess) $ do
+    putStrLn $ "Error processing " ++ (show $ postHtex config p) ++ " with gladtex:"
+    putStrLn err
+    exitFailure
+
 generatePost :: Config -> Post -> IO ()
 generatePost config post = do
-  let tempFilename = htmlTempDir config </> (takeBaseName $ postFilename post) ++ ".html"
-      finalFilename = htmlDir config </> (takeBaseName $ postFilename post) ++ ".html"
+  let tempHtml = htmlTempDir config </> postBaseName post ++ ".html"
+      finalHtml = postHtmlDir config </> postBaseName post ++ ".html"
       sourceFilename = postSourceDir config </> postFilename post
 
   -- XXX only generate post if mtime of post source is newer than
   -- mtime of generated post HTML
 
-  putStrLn $ "Rendering: " ++ sourceFilename ++ " to " ++ finalFilename
-  h <- openFile tempFilename WriteMode
+  putStrLn $ "Rendering: " ++ sourceFilename ++ " to " ++ finalHtml
+
+  putStrLn "  Parsing"
+  h <- openFile (postHtex config post) WriteMode
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
   hClose h
 
+  putStrLn "  Running gladTeX"
   -- Run gladtex on the temp file to generate the final file.
+  gladTex config post
+
+  putStrLn "  Installing"
+  -- Gladtex generates the HTML in the same directory as the source
+  -- file, so we need to copy that to the final location.
+  copyFile tempHtml finalHtml
+
+  -- Remove the temporary file.
+  removeFile $ postHtex config post
+  removeFile tempHtml
 
 generatePosts :: Config -> [Post] -> IO ()
 generatePosts config posts =
@@ -211,9 +252,15 @@ main :: IO ()
 main = do
   env <- getEnvironment
 
+  -- XXX look for gladtex in path, put this in the configuration
+
   case lookup baseDirEnvName env of
     Nothing -> usage >> exitFailure
     Just d -> do
+         when (head d /= '/') $ do
+                putStrLn $ baseDirEnvName ++ " must contain an abosolute path"
+                exitFailure
+
          putStrLn $ "mb: using base directory " ++ (show d)
          let config = mkConfig d
          setup config

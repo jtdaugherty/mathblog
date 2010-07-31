@@ -13,7 +13,8 @@ Executable mb
     directory >= 1.0 && < 1.1,
     filepath >= 1.1 && < 1.2,
     pandoc >= 1.6 && < 1.7,
-    unix >= 2.3 && < 2.4
+    unix >= 2.3 && < 2.4,
+    process >= 1.0 && < 1.1
 
   GHC-Options: -Wall -Werror
 
