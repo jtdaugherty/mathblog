@@ -127,9 +127,7 @@ mkConfig base = Config { baseDir = base
 
 usage :: IO ()
 usage = do
-  putStrLn "Usage: mb"
-  putStrLn ""
-
+  putStrLn "Usage: mb\n"
   putStrLn "mb is a tool for creating and managing a mathematically-inclined"
   putStrLn "weblog.  To use mb, you must set an environment variable to the"
   putStrLn $ "path where blog files will be stored.  Please set " ++ baseDirName
@@ -148,5 +146,3 @@ main = do
          generatePosts config
          generateIndex config
          generateList config
-
-  return ()
