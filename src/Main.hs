@@ -29,6 +29,7 @@ import System.Directory
     )
 import System.FilePath
     ( (</>)
+    , takeBaseName
     )
 import System.Posix.Types
     ( EpochTime
@@ -50,6 +51,7 @@ data Config = Config { baseDir :: FilePath
                      , postHtmlDir :: FilePath
                      , imageDir :: FilePath
                      , templateDir :: FilePath
+                     , htmlTempDir :: FilePath
                      }
 
 data Post = Post { postTitle :: String
@@ -125,8 +127,26 @@ allPosts config = do
                            , postAst = doc
                            }
 
+pandocWriterOptions :: Pandoc.WriterOptions
+pandocWriterOptions =
+    Pandoc.defaultWriterOptions { Pandoc.writerHTMLMathMethod = Pandoc.GladTeX
+                                }
+
 generatePost :: Config -> Post -> IO ()
-generatePost _ _ = return ()
+generatePost config post = do
+  let tempFilename = htmlTempDir config </> (takeBaseName $ postFilename post) ++ ".html"
+      finalFilename = htmlDir config </> (takeBaseName $ postFilename post) ++ ".html"
+      sourceFilename = postSourceDir config </> postFilename post
+
+  -- XXX only generate post if mtime of post source is newer than
+  -- mtime of generated post HTML
+
+  putStrLn $ "Rendering: " ++ sourceFilename ++ " to " ++ finalFilename
+  h <- openFile tempFilename WriteMode
+  hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
+  hClose h
+
+  -- Run gladtex on the temp file to generate the final file.
 
 generatePosts :: Config -> [Post] -> IO ()
 generatePosts config posts =
@@ -148,6 +168,7 @@ setup config = do
                       , postHtmlDir
                       , imageDir
                       , templateDir
+                      , htmlTempDir
                       ]
 
   mapM_ safeMakeDir $ creationOrder <*> pure config
@@ -175,6 +196,7 @@ mkConfig base = Config { baseDir = base
                        , postHtmlDir = base </> "html" </> "posts"
                        , imageDir = base </> "html" </> "images"
                        , templateDir = base </> "templates"
+                       , htmlTempDir = base </> "temp"
                        }
 
 usage :: IO ()
