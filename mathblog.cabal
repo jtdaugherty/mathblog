@@ -1,0 +1,17 @@
+Name:                mathblog
+Version:             0.1
+Synopsis:            A program for generating static
+                     mathematically-inclined content
+Author:              Jonathan Daugherty <drcygnus@gmail.com>
+Maintainer:          Jonathan Daugherty <drcygnus@gmail.com>
+Build-Type:          Simple
+Cabal-version:       >= 1.2
+
+Executable mb
+  Build-depends:
+    base >= 3 && < 5
+
+  GHC-Options: -Wall -Werror
+
+  Hs-Source-Dirs:  src
+  Main-is:         Main.hs

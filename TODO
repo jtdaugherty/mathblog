@@ -1,0 +1,41 @@
+
+- Directory of markdown text files
+
+- Directory of generated blog content, with an index.html root
+
+- No comment support for now
+
+- Command-line program to:
+
+  - scan text files and see which ones do not have corresponding
+    generated content, or which ones need to be re-generated
+
+  - uses the pandoc library directly (not external invocation) to
+    generate HTML / gladtex files from markdown source
+
+  - generate index.html or something (should be safe to regenerate
+    this. probably we want a preamble and postamble)
+
+  - generated index.html includes latest N posts only, configurable
+
+  - also generates a master post listing, linked from the index.html
+
+  - need the ability to "preview" posts
+
+- Configuration interface:
+
+  - need to know location of "base directory"
+
+  - use environment variable so command line is simple
+
+- Directory structure:
+
+  base/
+  base/web/index.html
+  base/web/list.html
+  base/web/stylesheets/*.css
+  base/web/posts/*.html
+  base/web/images/*.png
+  base/html/preamble.html
+  base/html/postamble.html
+  base/posts/*.txt
