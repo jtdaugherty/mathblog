@@ -153,7 +153,7 @@ gladTex config p = do
              , "-r"
              , "120"
              , "-s"
-             , "15"
+             , "10"
              , "-b"
              , "FFFFFF"
              , postHtex config p
