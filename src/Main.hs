@@ -62,12 +62,11 @@ data Config = Config { baseDir :: FilePath
                      , htmlTempDir :: FilePath
                      }
 
-data Post = Post { postTitle :: String
+data Post = Post { postTitle :: Int -> String
                  , postFilename :: String -- relative to the postSourceDir
                  , postModificationTime :: EpochTime
                  , postAst :: Pandoc.Pandoc
                  }
-            deriving (Show)
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
@@ -77,6 +76,12 @@ indexHtml c = htmlDir c </> "index.html"
 
 listHtml :: Config -> FilePath
 listHtml c = htmlDir c </> "list.html"
+
+listHtex :: Config -> FilePath
+listHtex c = htmlTempDir c </> "list.htex"
+
+listTmpHtml :: Config -> FilePath
+listTmpHtml c = htmlTempDir c </> "list.html"
 
 firstPost :: Config -> FilePath
 firstPost c = postSourceDir c </> "first-post.txt"
@@ -114,11 +119,11 @@ safeCreateFile path contents = do
 
 --- xxx need to extract the document title, possibly making some
 --- assumptions about valid titles
-title :: Pandoc.Pandoc -> String
-title (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
+title :: Pandoc.Pandoc -> Int -> String
+title (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
     where
       getStr (Pandoc.Str s) = s
-      getStr (Pandoc.Math _ s) = "<EQ DPI=\"175\">" ++ s ++ "</EQ>"
+      getStr (Pandoc.Math _ s) = "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
       getStr Pandoc.Space = " "
       getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
@@ -153,8 +158,8 @@ postBaseName = takeBaseName . takeFileName . postFilename
 postHtex :: Config -> Post -> String
 postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
 
-gladTex :: Config -> Post -> IO ()
-gladTex config p = do
+gladTex :: Config -> FilePath -> String -> IO ()
+gladTex config htexPath color = do
   let args = [ "-d"
              , imageDir config
              , "-u"
@@ -165,13 +170,15 @@ gladTex config p = do
              , "10"
              , "-b"
              , "FFFFFF"
-             , postHtex config p
+             , "-c"
+             , color
+             , htexPath
              ]
 
   (ecode, _, err) <- readProcessWithExitCode "gladtex" args ""
 
   when (ecode /= ExitSuccess) $ do
-    putStrLn $ "Error processing " ++ (show $ postHtex config p) ++ " with gladtex:"
+    putStrLn $ "Error processing " ++ (show htexPath) ++ " with gladtex:"
     putStrLn err
     exitFailure
 
@@ -179,7 +186,7 @@ writePost :: Handle -> Config -> Post -> IO ()
 writePost h config post = do
   hPutStr h =<< (readFile $ pagePreamble config)
   hPutStr h =<< (readFile $ postPreamble config)
-  hPutStr h $ "<h1>" ++ postTitle post ++ "</h1>"
+  hPutStr h $ "<h1>" ++ postTitle post 175 ++ "</h1>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
   hPutStr h =<< (readFile $ postPostamble config)
   hPutStr h =<< (readFile $ pagePostamble config)
@@ -204,7 +211,7 @@ generatePost config post = do
     hClose h
 
     -- Run gladtex on the temp file to generate the final file.
-    gladTex config post
+    gladTex config (postHtex config post) "000000"
 
     -- Gladtex generates the HTML in the same directory as the source
     -- file, so we need to copy that to the final location.
@@ -222,7 +229,42 @@ generateIndex :: Config -> Post -> IO ()
 generateIndex _ _ = return ()
 
 generateList :: Config -> [Post] -> IO ()
-generateList _ _ = return ()
+generateList config posts = do
+  putStrLn "Generating all-posts list."
+
+  h <- openFile (listHtex config) WriteMode
+
+  hPutStr h =<< (readFile $ pagePreamble config)
+  hPutStr h "<div id=\"all-posts\">"
+
+  -- For each post in the order they were given, extract the
+  -- unrendered title and construct an htex document.  Then render it
+  -- to the listing location.
+  forM_ posts $ \p -> do
+    hPutStr h $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
+                       , "<a href=\"" ++ postUrl p ++ "\">"
+                       , postTitle p 110
+                       , "</a></span><span class=\"post-created\">Posted "
+                       , show $ postModificationTime p -- XXX
+                       , "</span></div>\n"
+                       ]
+
+  hPutStr h "</div>"
+  hPutStr h =<< (readFile $ pagePostamble config)
+  hClose h
+
+  gladTex config (listHtex config) "0000FF"
+
+  -- Gladtex generates the HTML in the same directory as the source
+  -- file, so we need to copy that to the final location.
+  copyFile (listTmpHtml config) (listHtml config)
+
+  -- Remove the temporary file.
+  removeFile $ listHtex config
+  removeFile $ listTmpHtml config
+
+postUrl :: Post -> String
+postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 
 setup :: Config -> IO ()
 setup config = do

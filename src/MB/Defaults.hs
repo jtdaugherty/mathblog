@@ -59,6 +59,9 @@ stylesheet = "html {\n\
              \  font-size: 32px;\n\
              \  font-weight: normal;\n\
              \}\n\
+             \h3 {\n\
+             \  font-weight: normal;\n\
+             \}\n\
              \#header a {\n\
              \  color: #00f;\n\
              \  text-decoration: none;\n\
@@ -67,7 +70,30 @@ stylesheet = "html {\n\
              \  float: right;\n\
              \  font-size: 14px;\n\
              \  margin-top: 1em;\n\
-             \}"
+             \}\n\
+             \div#all-posts {\n\
+             \  margin-top: 1.5em;\n\
+             \}\n\
+             \div.listing-entry {\n\
+             \  border-bottom: 1px solid #aaa;\n\
+             \  margin-top: 0.5em;\n\
+             \  padding-bottom: 0.5em;\n\
+             \}\n\
+             \span.post-title {\n\
+             \  font-size: 20px;\n\
+             \  display: block;\n\
+             \}\n\
+             \span.post-title a {\n\
+             \  text-decoration: none;\n\
+             \  color: blue;\n\
+             \}\n\
+             \span.post-created {\n\
+             \  font-size: 15px;\n\
+             \  display: block;\n\
+             \  margin-left: 1em;\n\
+             \  color: #555;\n\
+             \}\n\
+             \"
 
 firstPost :: String
 firstPost = "%A first post on the nature of $R$\n\
@@ -78,8 +104,12 @@ firstPost = "%A first post on the nature of $R$\n\
             \\n\
             \$\\int^n_0{x^2 dx} = \\sum^n_{i=1}{i^n}$\n\
             \\n\
+            \$$\\int^n_0{x^2 dx} = \\sum^n_{i=1}{i^n}$$\n\
+            \\n\
             \Summary\n\
             \-------\n\
+            \\n\
+            \$$\\int^n_0{i^2}$$\n\
             \\n\
             \Posts are written in extended Markdown as described in the <a href=\"http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown-vs.standard-markdown\">\
             \Pandoc User Guide</a>.  Embedded math is rendered with <a href=\"http://ans.hsh.no/home/mgg/gladtex/\">gladTeX</a>.\n\
