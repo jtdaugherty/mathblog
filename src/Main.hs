@@ -61,8 +61,8 @@ data Post = Post { postTitle :: String
                  }
             deriving (Show)
 
-baseDirName :: String
-baseDirName = "MB_BASE_DIR"
+baseDirEnvName :: String
+baseDirEnvName = "MB_BASE_DIR"
 
 indexHtml :: Config -> FilePath
 indexHtml c = htmlDir c </> "index.html"
@@ -204,7 +204,7 @@ usage = do
   putStrLn "Usage: mb\n"
   putStrLn "mb is a tool for creating and managing a mathematically-inclined"
   putStrLn "weblog.  To use mb, you must set an environment variable to the"
-  putStrLn $ "path where blog files will be stored.  Please set " ++ baseDirName
+  putStrLn $ "path where blog files will be stored.  Please set " ++ baseDirEnvName
   putStrLn "and try again."
 
 main :: IO ()
