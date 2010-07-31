@@ -31,11 +31,11 @@
 - Directory structure:
 
   base/
-  base/web/index.html
-  base/web/list.html
-  base/web/stylesheets/*.css
-  base/web/posts/*.html
-  base/web/images/*.png
-  base/html/preamble.html
-  base/html/postamble.html
+  base/html/index.html
+  base/html/list.html
+  base/html/stylesheets/*.css
+  base/html/posts/*.html
+  base/html/images/*.png
+  base/templates/preamble.html
+  base/templates/postamble.html
   base/posts/*.txt
