@@ -128,7 +128,7 @@ allPosts config = do
              let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
 
              return $ Post { postTitle = title doc
-                           , postFilename = f
+                           , postFilename = fullPath
                            , postModificationTime = modificationTime info
                            , postAst = doc
                            }
@@ -164,30 +164,31 @@ generatePost :: Config -> Post -> IO ()
 generatePost config post = do
   let tempHtml = htmlTempDir config </> postBaseName post ++ ".html"
       finalHtml = postHtmlDir config </> postBaseName post ++ ".html"
-      sourceFilename = postSourceDir config </> postFilename post
 
-  -- XXX only generate post if mtime of post source is newer than
-  -- mtime of generated post HTML
+  htmlExists <- doesFileExist finalHtml
+  skip <- case htmlExists of
+            False -> return False
+            True -> do
+              info <- getFileStatus finalHtml
+              return $ modificationTime info > postModificationTime post
 
-  putStrLn $ "Rendering: " ++ sourceFilename ++ " to " ++ finalHtml
+  when (not skip) $ do
+    putStrLn $ "Processing: " ++ postBaseName post
 
-  putStrLn "  Parsing"
-  h <- openFile (postHtex config post) WriteMode
-  hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
-  hClose h
+    h <- openFile (postHtex config post) WriteMode
+    hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
+    hClose h
 
-  putStrLn "  Running gladTeX"
-  -- Run gladtex on the temp file to generate the final file.
-  gladTex config post
+    -- Run gladtex on the temp file to generate the final file.
+    gladTex config post
 
-  putStrLn "  Installing"
-  -- Gladtex generates the HTML in the same directory as the source
-  -- file, so we need to copy that to the final location.
-  copyFile tempHtml finalHtml
+    -- Gladtex generates the HTML in the same directory as the source
+    -- file, so we need to copy that to the final location.
+    copyFile tempHtml finalHtml
 
-  -- Remove the temporary file.
-  removeFile $ postHtex config post
-  removeFile tempHtml
+    -- Remove the temporary file.
+    removeFile $ postHtex config post
+    removeFile tempHtml
 
 generatePosts :: Config -> [Post] -> IO ()
 generatePosts config posts =
@@ -270,3 +271,5 @@ main = do
          generatePosts config posts
          generateIndex config $ head posts
          generateList config posts
+
+         putStrLn "Done."
