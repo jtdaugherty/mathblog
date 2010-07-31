@@ -64,14 +64,15 @@ stylesheet c = stylesheetDir c </> "stylesheet.css"
 safeMakeDir :: FilePath -> IO ()
 safeMakeDir dir = do
   exists <- doesDirectoryExist dir
-  if not exists then
-      createDirectory dir else
-      return ()
+  when (not exists) $ do
+                    putStrLn $ "Creating directory: " ++ (show dir)
+                    createDirectory dir
 
 safeCreateFile :: FilePath -> String -> IO ()
 safeCreateFile path contents = do
   exists <- doesFileExist path
   when (not exists) $ do
+    putStrLn $ "Creating default file: " ++ (show path)
     h <- openFile path WriteMode
     hPutStr h contents
     hClose h
