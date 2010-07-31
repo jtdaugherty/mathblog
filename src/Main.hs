@@ -219,7 +219,6 @@ main = do
          setup config
 
          posts <- allPosts config
-         print posts
 
          generatePosts config posts
          generateIndex config $ head posts
