@@ -211,7 +211,7 @@ main :: IO ()
 main = do
   env <- getEnvironment
 
-  case lookup baseDirName env of
+  case lookup baseDirEnvName env of
     Nothing -> usage >> exitFailure
     Just d -> do
          putStrLn $ "mb: using base directory " ++ (show d)
