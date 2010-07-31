@@ -47,6 +47,24 @@ import System.Posix.Files
 import System.Process
     ( readProcessWithExitCode
     )
+import Data.Maybe
+    ( fromJust
+    )
+import Data.Time.Clock
+    ( UTCTime
+    )
+import Data.Time.Format
+    ( parseTime
+    )
+import Data.Time.LocalTime
+    ( LocalTime
+    , TimeZone(timeZoneName)
+    , getCurrentTimeZone
+    , utcToLocalTime
+    )
+import System.Locale
+    ( defaultTimeLocale
+    )
 import qualified Text.Pandoc as Pandoc
 import qualified Text.Pandoc.Definition as Pandoc
 
@@ -64,7 +82,7 @@ data Config = Config { baseDir :: FilePath
 
 data Post = Post { postTitle :: Int -> String
                  , postFilename :: String -- relative to the postSourceDir
-                 , postModificationTime :: EpochTime
+                 , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
 
@@ -127,6 +145,14 @@ title (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
       getStr Pandoc.Space = " "
       getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
+toUtcTime :: EpochTime -> UTCTime
+toUtcTime t = fromJust $ parseTime defaultTimeLocale "%s" $ show t
+
+toLocalTime :: UTCTime -> IO LocalTime
+toLocalTime u = do
+  tz <- getCurrentTimeZone
+  return $ utcToLocalTime tz u
+
 allPosts :: Config -> IO [Post]
 allPosts config = do
   -- Read all files from the post source directory (except .. and .)
@@ -140,10 +166,11 @@ allPosts config = do
              info <- getFileStatus fullPath
              fileContent <- readFile fullPath
              let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
+                 t = toUtcTime $ modificationTime info
 
              return $ Post { postTitle = title doc
                            , postFilename = fullPath
-                           , postModificationTime = modificationTime info
+                           , postModificationTime = t
                            , postAst = doc
                            }
 
@@ -201,7 +228,7 @@ generatePost config post = do
             False -> return False
             True -> do
               info <- getFileStatus finalHtml
-              return $ modificationTime info > postModificationTime post
+              return $ (toUtcTime $ modificationTime info) > postModificationTime post
 
   when (not skip) $ do
     putStrLn $ "Processing: " ++ postBaseName post
@@ -232,6 +259,7 @@ generateList :: Config -> [Post] -> IO ()
 generateList config posts = do
   putStrLn "Generating all-posts list."
 
+  tz <- getCurrentTimeZone
   h <- openFile (listHtex config) WriteMode
 
   hPutStr h =<< (readFile $ pagePreamble config)
@@ -241,11 +269,14 @@ generateList config posts = do
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
   forM_ posts $ \p -> do
+    localTime <- toLocalTime $ postModificationTime p
     hPutStr h $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
                        , "<a href=\"" ++ postUrl p ++ "\">"
                        , postTitle p 110
                        , "</a></span><span class=\"post-created\">Posted "
-                       , show $ postModificationTime p -- XXX
+                       , show localTime
+                       , " "
+                       , timeZoneName tz
                        , "</span></div>\n"
                        ]
 

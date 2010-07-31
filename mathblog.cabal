@@ -14,7 +14,9 @@ Executable mb
     filepath >= 1.1 && < 1.2,
     pandoc >= 1.6 && < 1.7,
     unix >= 2.3 && < 2.4,
-    process >= 1.0 && < 1.1
+    process >= 1.0 && < 1.1,
+    time >= 1.1 && < 1.2,
+    old-locale >= 1.0 && < 1.1
 
   GHC-Options: -Wall -Werror
 

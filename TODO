@@ -52,8 +52,6 @@
   base/templates/postamble.html
   base/posts/*.txt
 
-- Format modification times, update listing
-
 - Sort posts by modification time descending before building listing
   and before generating index.html with latest post
 
