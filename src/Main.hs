@@ -183,7 +183,7 @@ allPosts config = do
                            }
 
   -- Return posts sorted by modification time, descending
-  return $ sortBy (\a b -> postModificationTime a `compare` postModificationTime b) posts
+  return $ sortBy (\a b -> postModificationTime b `compare` postModificationTime a) posts
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =
