@@ -26,6 +26,7 @@ stylesheet = "body {\n\
              \  margin-left: auto;\n\
              \  margin-right: auto;\n\
              \  width: 60em;\n\
+             \  font-size: 14px;\n\
              \}"
 
 firstPost :: String
@@ -33,4 +34,4 @@ firstPost = "%A first post\n\
             \\n\
             \This is an initial post which you should delete.  This is just\n\
             \here to show how the system works.  Here is some example math:\n\
-            \$Y \\cup Y$."
+            \$Y \\cup Y$ and $u = r^2 - t^2$"
