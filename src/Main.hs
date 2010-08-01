@@ -54,6 +54,7 @@ import Data.List
     )
 import Data.Maybe
     ( fromJust
+    , isNothing
     )
 import Data.Time.Clock
     ( UTCTime
@@ -424,21 +425,23 @@ main = do
 
   checkForGladtex
 
-  case lookup baseDirEnvName env of
-    Nothing -> usage >> exitFailure
-    Just d -> do
-         when (head d /= '/') $ do
-                putStrLn $ baseDirEnvName ++ " must contain an absolute path"
-                exitFailure
+  let mBase = lookup baseDirEnvName env
 
-         putStrLn $ "mb: using base directory " ++ (show d)
-         let config = mkConfig d
-         setup config
+  when (isNothing mBase) $ usage >> exitFailure
 
-         posts <- allPosts config
+  let Just dir = mBase
+  when (head dir /= '/') $ do
+         putStrLn $ baseDirEnvName ++ " must contain an absolute path"
+         exitFailure
 
-         generatePosts config posts
-         generateIndex config $ head posts
-         generateList config posts
+  putStrLn $ "mb: using base directory " ++ (show dir)
+  let config = mkConfig dir
+  setup config
 
-         putStrLn "Done."
+  posts <- allPosts config
+
+  generatePosts config posts
+  generateIndex config $ head posts
+  generateList config posts
+
+  putStrLn "Done."
