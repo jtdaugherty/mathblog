@@ -1,30 +1,7 @@
 
-- Directory of markdown text files
-
-- Directory of generated blog content, with an index.html root
-
-- No comment support for now
-
 - Command-line program to:
 
-  - scan text files and see which ones do not have corresponding
-    generated content, or which ones need to be re-generated
-
-    done
-
-  - uses the pandoc library directly (not external invocation) to
-    generate HTML / gladtex files from markdown source
-
-    done
-
-  - generate index.html or something (should be safe to regenerate
-    this. probably we want a preamble and postamble)
-
   - generated index.html includes latest N posts only, configurable?
-
-  - also generates a master post listing, linked from the index.html
-
-    done
 
   - need the ability to "preview" posts (possibly for local editing?).
     One idea is to put mb in "listening" mode in which it periodically
@@ -34,30 +11,12 @@
     post before pushing it up to your server.  If you develop the post
     on the same machine as the server, this doesn't work as well.
 
-- Configuration interface:
-
-  - need to know location of "base directory"
-
-  - use environment variable so command line is simple
-
-- Directory structure:
-
-  base/
-  base/html/index.html
-  base/html/list.html
-  base/html/stylesheets/*.css
-  base/html/posts/*.html
-  base/html/images/*.png
-  base/templates/preamble.html
-  base/templates/postamble.html
-  base/posts/*.txt
-
 - Record somewhere what I have done to pandoc and gladtex to make all
   of this work nicely
 
-  - fix environment threading in gladtex script
+  - fix environment threading in gladtex script (fixed in release 1.2)
 
   - add dpi EQ attribute support in gladtex script
 
   - differentiate between inline and display math in pandoc HTML
-    writer
+    writer (added to git HEAD)
