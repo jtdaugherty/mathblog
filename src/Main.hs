@@ -18,7 +18,7 @@ import System.IO
     , readFile
     )
 import System.Exit
-    ( ExitCode(ExitSuccess)
+    ( ExitCode(..)
     , exitFailure
     )
 import System.Environment
@@ -91,6 +91,9 @@ data Post = Post { postTitle :: Int -> String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
+
+gladtexProgName :: String
+gladtexProgName = "gladtex"
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
@@ -216,10 +219,10 @@ gladTex config htexPath color = do
              , htexPath
              ]
 
-  (ecode, _, err) <- readProcessWithExitCode "gladtex" args ""
+  (ecode, _, err) <- readProcessWithExitCode gladtexProgName args ""
 
   when (ecode /= ExitSuccess) $ do
-    putStrLn $ "Error processing " ++ (show htexPath) ++ " with gladtex:"
+    putStrLn $ "Error processing " ++ (show htexPath) ++ " with " ++ gladtexProgName ++ ":"
     putStrLn err
     exitFailure
 
@@ -403,11 +406,23 @@ usage = do
   putStrLn $ "path where blog files will be stored.  Please set " ++ baseDirEnvName
   putStrLn "and try again."
 
+checkForGladtex :: IO ()
+checkForGladtex = do
+  (code, _, _) <- readProcessWithExitCode gladtexProgName [] ""
+  case code of
+    (ExitFailure c) ->
+        do
+          putStrLn $ "This program requires '" ++ gladtexProgName ++
+                       "'; I attempted to run it but " ++
+                       "got exit status " ++ (show c)
+          exitFailure
+    _ -> return ()
+
 main :: IO ()
 main = do
   env <- getEnvironment
 
-  -- XXX look for gladtex in path, put this in the configuration
+  checkForGladtex
 
   case lookup baseDirEnvName env of
     Nothing -> usage >> exitFailure
