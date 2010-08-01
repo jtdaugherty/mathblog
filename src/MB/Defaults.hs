@@ -30,7 +30,10 @@ postPreamble :: String
 postPreamble = "<div class=\"post\">"
 
 postPostamble :: String
-postPostamble = "</div>"
+postPostamble = "</div>\n\
+                \<div id=\"footer\">\n\
+                \  Copyright &copy; 2010 Your Name Here\n\
+                \</div>"
 
 stylesheet :: String
 stylesheet = "html {\n\
@@ -107,6 +110,13 @@ stylesheet = "html {\n\
              \.prev-link {\n\
              \  color: blue;\n\
              \  text-decoration: none;\n\
+             \}\n\
+             \#footer {\n\
+             \  border-top: 1px solid #ddd;\n\
+             \  padding-top: 0.5em;\n\
+             \  color: #777;\n\
+             \  font-size: smaller;\n\
+             \  text-align: right;\n\
              \}\n\
              \"
 
