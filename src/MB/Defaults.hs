@@ -93,6 +93,21 @@ stylesheet = "html {\n\
              \  margin-left: 1em;\n\
              \  color: #555;\n\
              \}\n\
+             \div#prev-next-links {\n\
+             \  margin-top: 1em;\n\
+             \}\n\
+             \span.subdued {\n\
+             \  color: #aaa;\n\
+             \}\n\
+             \.next-link {\n\
+             \  float: right;\n\
+             \  color: blue;\n\
+             \  text-decoration: none;\n\
+             \}\n\
+             \.prev-link {\n\
+             \  color: blue;\n\
+             \  text-decoration: none;\n\
+             \}\n\
              \"
 
 firstPost :: String

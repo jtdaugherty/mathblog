@@ -234,9 +234,23 @@ postIntermediateHtml config post = postIntermediateDir config </> postBaseName p
 postFinalHtml :: Config -> Post -> FilePath
 postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
 
-buildPost :: Handle -> Config -> Post -> IO ()
-buildPost h config post = do
+buildLinks :: Maybe Post -> Maybe Post -> String
+buildLinks prev next =
+    "<div id=\"prev-next-links\">"
+      ++ link "prev-link" "&laquo; newer" prev
+      ++ link "next-link" "older &raquo;" next
+      ++ "</div>"
+        where
+          link cls name Nothing =
+              "<span class=\"subdued " ++ cls ++ "\">" ++ name ++ "</span>"
+          link cls name (Just p) =
+              "<a class=\"" ++ cls ++ "\" href=\"" ++ postUrl p ++
+                                "\">" ++ name ++ "</a>"
+
+buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
+buildPost h config post prevNext = do
   hPutStr h =<< (readFile $ pagePreamble config)
+  hPutStr h $ uncurry buildLinks prevNext
   hPutStr h =<< (readFile $ postPreamble config)
   hPutStr h =<< (readFile $ postIntermediateHtml config post)
   hPutStr h =<< (readFile $ postPostamble config)
@@ -273,13 +287,17 @@ generatePost config post = do
     removeFile tempHtml
 
 generatePosts :: Config -> [Post] -> IO ()
-generatePosts config posts =
-    forM_ posts $ \p -> do
-      generatePost config p
+generatePosts config posts = do
+  let n = length posts
+  forM_ (zip posts [0..]) $ \(p, i) ->
+      do
+        let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
+            nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
 
-      h <- openFile (postFinalHtml config p) WriteMode
-      buildPost h config p
-      hClose h
+        generatePost config p
+        h <- openFile (postFinalHtml config p) WriteMode
+        buildPost h config p (prevPost, nextPost)
+        hClose h
 
 generateIndex :: Config -> Post -> IO ()
 generateIndex config post = do
@@ -364,11 +382,6 @@ setup config = do
 
   forM_ files $ \(path, content) -> do
                  safeCreateFile (path config) content
-
-  -- Generated files, such as the index and post list, will be
-  -- generated as usual.
-
-  return ()
 
 mkConfig :: FilePath -> Config
 mkConfig base = Config { baseDir = base
