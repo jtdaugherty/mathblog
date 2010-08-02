@@ -97,6 +97,21 @@ postPreamble c = templateDir c </> "postPreamble.html"
 postPostamble :: Config -> FilePath
 postPostamble c = templateDir c </> "postPostamble.html"
 
+postUrl :: Post -> String
+postUrl p = "/posts/" ++ postBaseName p ++ ".html"
+
+postBaseName :: Post -> String
+postBaseName = takeBaseName . takeFileName . postFilename
+
+postHtex :: Config -> Post -> String
+postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
+
+postIntermediateHtml :: Config -> Post -> FilePath
+postIntermediateHtml config post = postIntermediateDir config </> postBaseName post ++ ".html"
+
+postFinalHtml :: Config -> Post -> FilePath
+postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
+
 stylesheet :: Config -> FilePath
 stylesheet c = stylesheetDir c </> "stylesheet.css"
 
@@ -131,22 +146,10 @@ pandocWriterOptions =
     Pandoc.defaultWriterOptions { Pandoc.writerHTMLMathMethod = Pandoc.GladTeX
                                 }
 
-postBaseName :: Post -> String
-postBaseName = takeBaseName . takeFileName . postFilename
-
-postHtex :: Config -> Post -> String
-postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
-
 writePost :: Handle -> Post -> IO ()
 writePost h post = do
   hPutStr h $ "<h1>" ++ postTitle post 175 ++ "</h1>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
-
-postIntermediateHtml :: Config -> Post -> FilePath
-postIntermediateHtml config post = postIntermediateDir config </> postBaseName post ++ ".html"
-
-postFinalHtml :: Config -> Post -> FilePath
-postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
 
 buildLinks :: Maybe Post -> Maybe Post -> String
 buildLinks prev next =
@@ -261,9 +264,6 @@ generateList config posts = do
   -- Remove the temporary file.
   removeFile $ listHtex config
   removeFile $ listTmpHtml config
-
-postUrl :: Post -> String
-postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 
 setup :: Config -> IO ()
 setup config = do
