@@ -279,11 +279,9 @@ setup :: Config -> IO ()
 setup config = do
   exists <- doesDirectoryExist $ baseDir config
 
-  case exists of
-    True -> return ()
-    False -> do
-      putStrLn $ "Setting up data directory using skeleton: " ++ skelDir
-      copyTree skelDir $ baseDir config
+  when (not exists) $ do
+          putStrLn $ "Setting up data directory using skeleton: " ++ skelDir
+          copyTree skelDir $ baseDir config
 
   validate config
 
