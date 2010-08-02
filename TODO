@@ -1,8 +1,6 @@
 
 - Command-line program to:
 
-  - generated index.html includes latest N posts only, configurable?
-
   - need the ability to "preview" posts (possibly for local editing?).
     One idea is to put mb in "listening" mode in which it periodically
     (every second or so) looks to see if any blog posts have been
