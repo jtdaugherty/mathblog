@@ -148,7 +148,9 @@ pandocWriterOptions =
 
 writePost :: Handle -> Post -> IO ()
 writePost h post = do
+  created <- postModificationString post
   hPutStr h $ "<h1>" ++ postTitle post 175 ++ "</h1>"
+  hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
 
 buildLinks :: Maybe Post -> Maybe Post -> String
@@ -226,11 +228,16 @@ generateIndex config post = do
 
   createSymbolicLink dest index
 
+postModificationString :: Post -> IO String
+postModificationString p = do
+  tz <- getCurrentTimeZone
+  localTime <- toLocalTime $ postModificationTime p
+  return $ show localTime ++ "  " ++ timeZoneName tz
+
 generateList :: Config -> [Post] -> IO ()
 generateList config posts = do
   putStrLn "Generating all-posts list."
 
-  tz <- getCurrentTimeZone
   h <- openFile (listHtex config) WriteMode
 
   hPutStr h =<< (readFile $ pagePreamble config)
@@ -240,14 +247,12 @@ generateList config posts = do
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
   forM_ posts $ \p -> do
-    localTime <- toLocalTime $ postModificationTime p
+    created <- postModificationString p
     hPutStr h $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
                        , "<a href=\"" ++ postUrl p ++ "\">"
                        , postTitle p 110
                        , "</a></span><span class=\"post-created\">Posted "
-                       , show localTime
-                       , " "
-                       , timeZoneName tz
+                       , created
                        , "</span></div>\n"
                        ]
 

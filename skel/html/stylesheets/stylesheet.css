@@ -102,3 +102,9 @@ div#prev-next-links {
   padding-top: 0.5em;
   font-size: smaller;
 }
+#post h1 {
+  margin-bottom: 0px;
+}
+#post span.post-created {
+  color: #999;
+}
