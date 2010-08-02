@@ -20,3 +20,6 @@
 
   - differentiate between inline and display math in pandoc HTML
     writer (added to git HEAD)
+
+- Instead of hardcoding the skel directory in the source, do something
+  more intelligent like using TH to get it at compile time

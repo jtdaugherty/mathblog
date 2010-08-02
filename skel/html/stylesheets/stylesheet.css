@@ -1,0 +1,75 @@
+html {
+  background: #aaa;
+}
+body {
+  font-size: 16px;
+  margin-left: 3em;
+  margin-right: 3em;
+  background: #fff;
+  margin-top: 0px;
+  min-height: 900px;
+}
+#page {
+  padding-top: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 700px;
+}
+#header {
+  font-size: 26px;
+}
+h1 {
+  font-size: 32px;
+  font-weight: normal;
+}
+h3 {
+  font-weight: normal;
+}
+#header a {
+  color: #00f;
+  text-decoration: none;
+}
+a#listing {
+  float: right;
+  font-size: 14px;
+  margin-top: 1em;
+}
+div#all-posts {
+  margin-top: 1.5em;
+}
+div.listing-entry {
+  border-bottom: 1px solid #aaa;
+  margin-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+span.post-title {
+  font-size: 20px;
+  display: block;
+}
+span.post-title a {
+  text-decoration: none;
+  color: blue;
+}
+span.post-created {
+  font-size: 15px;
+  display: block;
+  margin-left: 1em;
+  color: #555;
+}
+div#prev-next-links {
+  margin-top: 1em;
+}
+span.subdued {
+  color: #aaa;
+}
+.next-link {
+  float: right;
+  color: blue;
+  text-decoration: none;
+}
+.prev-link {
+  color: blue;
+  text-decoration: none;
+}

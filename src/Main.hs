@@ -1,13 +1,15 @@
 module Main where
 
 import Control.Applicative
-    ( (<*>)
+    ( (<$>)
+    , (<*>)
     , pure
     )
 import Control.Monad
     ( when
     , forM
     , forM_
+    , filterM
     )
 import System.IO
     ( IOMode(WriteMode)
@@ -74,8 +76,6 @@ import System.Locale
 import qualified Text.Pandoc as Pandoc
 import qualified Text.Pandoc.Definition as Pandoc
 
-import qualified MB.Defaults as Defaults
-
 data Config = Config { baseDir :: FilePath
                      , postSourceDir :: FilePath
                      , htmlDir :: FilePath
@@ -92,6 +92,9 @@ data Post = Post { postTitle :: Int -> String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
+
+skelDir :: FilePath
+skelDir = "/home/cygnus/src/mathblog/skel"
 
 gladtexProgName :: String
 gladtexProgName = "gladtex"
@@ -128,25 +131,6 @@ postPostamble c = templateDir c </> "postPostamble.html"
 
 stylesheet :: Config -> FilePath
 stylesheet c = stylesheetDir c </> "stylesheet.css"
-
-safeMakeDir :: FilePath -> IO Bool
-safeMakeDir dir = do
-  exists <- doesDirectoryExist dir
-  case exists of
-    True -> return False
-    False -> do
-      putStrLn $ "Creating directory: " ++ (show dir)
-      createDirectory dir
-      return True
-
-safeCreateFile :: FilePath -> String -> IO ()
-safeCreateFile path contents = do
-  exists <- doesFileExist path
-  when (not exists) $ do
-    putStrLn $ "Creating default file: " ++ (show path)
-    h <- openFile path WriteMode
-    hPutStr h contents
-    hClose h
 
 --- xxx need to extract the document title, possibly making some
 --- assumptions about valid titles
@@ -355,37 +339,70 @@ generateList config posts = do
 postUrl :: Post -> String
 postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 
+copyTree :: FilePath -> FilePath -> IO ()
+copyTree srcPath dstPath = do
+  dstFExists <- doesFileExist dstPath
+  dstDExists <- doesDirectoryExist dstPath
+
+  when (dstFExists || dstDExists) $ do
+    putStrLn $ "Cannot copy " ++ (show srcPath) ++ " to existing destination path " ++
+                 (show dstPath) ++ "; remove to continue."
+    exitFailure
+
+  createDirectory dstPath
+  copyTree' srcPath dstPath
+
+  where
+    copyTree' src dst = do
+      -- For each file in src, copy it to dest.
+      entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents src
+
+      dirs <- filterM doesDirectoryExist $ map (src </>) entries
+      files <- filterM doesFileExist $ map (src </>) entries
+
+      -- For each directory in src, create it in dest, then descend
+      -- into that directory in both src and dest.
+      forM_ files $ \f -> copyFile f $ dst </> takeFileName f
+      forM_ dirs $ \dir ->
+          do
+            let dstDir = dst </> dirName
+                dirName = takeFileName dir
+
+            createDirectory dstDir
+            copyTree' (src </> dirName) dstDir
+
 setup :: Config -> IO ()
 setup config = do
-  -- If the base directory doesn't already exist, create it.
-  let creationOrder = [ postSourceDir
-                      , htmlDir
-                      , stylesheetDir
-                      , postHtmlDir
-                      , postIntermediateDir
-                      , imageDir
-                      , templateDir
-                      , htmlTempDir
-                      ]
+  exists <- doesDirectoryExist $ baseDir config
 
-  isNew <- safeMakeDir $ baseDir config
+  case exists of
+    True -> return ()
+    False -> do
+      putStrLn $ "Setting up data directory using skeleton: " ++ skelDir
+      copyTree skelDir $ baseDir config
 
-  mapM_ safeMakeDir $ creationOrder <*> pure config
+  validate config
 
-  -- Install default files.
-  let files = [ (pagePreamble, Defaults.pagePreamble)
-              , (pagePostamble, Defaults.pagePostamble)
-              , (postPreamble, Defaults.postPreamble)
-              , (postPostamble, Defaults.postPostamble)
-              , (stylesheet, Defaults.stylesheet)
-              ]
+validate :: Config -> IO ()
+validate config = do
+  let dirs = [ baseDir
+             , postSourceDir
+             , htmlDir
+             , stylesheetDir
+             , postHtmlDir
+             , postIntermediateDir
+             , imageDir
+             , templateDir
+             , htmlTempDir
+             ]
 
-  -- Only create the default blog post if we are initializing a new
-  -- blog.
-  when isNew $ safeCreateFile (firstPost config) Defaults.firstPost
-
-  forM_ files $ \(path, content) -> do
-                 safeCreateFile (path config) content
+  forM_ (dirs <*> pure config) $ \d ->
+      do
+        exists <- doesDirectoryExist d
+        when (not exists) $
+             do
+               putStrLn $ "Required directory missing: " ++ (show d)
+               exitFailure
 
 mkConfig :: FilePath -> Config
 mkConfig base = Config { baseDir = base
@@ -396,7 +413,7 @@ mkConfig base = Config { baseDir = base
                        , postIntermediateDir = base </> "generated"
                        , imageDir = base </> "html" </> "generated-images"
                        , templateDir = base </> "templates"
-                       , htmlTempDir = base </> "temp"
+                       , htmlTempDir = base </> "tmp"
                        }
 
 usage :: IO ()

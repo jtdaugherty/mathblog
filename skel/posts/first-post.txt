@@ -1,0 +1,16 @@
+%A first post on the nature of $R$
+
+This is an initial post which you should delete.  This is just
+here to show how the system works.  Inline math looks like $x \in Y$
+and:
+
+$\int^n_0{x^2 dx} = \sum^n_{i=1}{i^n}$
+
+$$\int^n_0{x^2 dx} = \sum^n_{i=1}{i^n}$$
+
+Summary
+-------
+
+$$\int^n_0{i^2}$$
+
+Posts are written in extended Markdown as described in the <a href="http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown-vs.standard-markdown">Pandoc User Guide</a>.  Embedded math is rendered with <a href="http://ans.hsh.no/home/mgg/gladtex/">gladTeX</a>.
