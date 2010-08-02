@@ -71,16 +71,13 @@ div#prev-next-links {
   background-repeat: no-repeat;
   background-position: 0px 5px;
   padding-left: 30px;
-  /* WIDTH=23 HEIGHT=9 STYLE="vertical-align: -1px; margin: 0;" */
 }
-.prev-link.subdued {
+.prev-link-subdued {
   color: #aaa;
-  text-decoration: none;
   background-image: url('/images/newer-subdued.png');
   background-repeat: no-repeat;
   background-position: 0px 5px;
   padding-left: 30px;
-  /* WIDTH=23 HEIGHT=9 STYLE="vertical-align: -1px; margin: 0;" */
 }
 .next-link {
   float: right;
@@ -91,9 +88,13 @@ div#prev-next-links {
   background-position: right 5px;
   padding-right: 25px;
 }
-.next-link.subdued {
+.next-link-subdued {
   color: #aaa;
+  float: right;
   background-image: url('/images/older-subdued.png');
+  background-repeat: no-repeat;
+  background-position: right 5px;
+  padding-right: 25px;
 }
 #footer {
   border-top: 1px solid #ddd;

@@ -159,7 +159,7 @@ buildLinks prev next =
       ++ "</div>"
         where
           link cls name Nothing =
-              "<span class=\"subdued " ++ cls ++ "\">" ++ name ++ "</span>"
+              "<span class=\"" ++ cls ++ "-subdued\">" ++ name ++ "</span>"
           link cls name (Just p) =
               "<a class=\"" ++ cls ++ "\" href=\"" ++ postUrl p ++
                                 "\">" ++ name ++ "</a>"
