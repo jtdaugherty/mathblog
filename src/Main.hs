@@ -74,7 +74,7 @@ indexHtml :: Config -> FilePath
 indexHtml c = htmlDir c </> "index.html"
 
 listHtml :: Config -> FilePath
-listHtml c = htmlDir c </> "list.html"
+listHtml c = postHtmlDir c </> "index.html"
 
 listHtex :: Config -> FilePath
 listHtex c = htmlTempDir c </> "list.htex"
