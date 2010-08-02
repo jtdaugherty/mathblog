@@ -1,16 +1,44 @@
-%A first post on the nature of $R$
+%A first post $p = 0$
 
-This is an initial post which you should delete.  This is just
-here to show how the system works.  Inline math looks like $x \in Y$
-and:
+You've successfully set up your shiny new math blog!
 
-$\int^n_0{x^2 dx} = \sum^n_{i=1}{i^n}$
+This initial post is here to show how the software works.  Posts are
+written in the Markdown format using <a
+href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.  They employ an
+extended Markdown syntax as described in the <a
+href="http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown-vs.standard-markdown">Pandoc
+User Guide</a>.  You can embed LaTeX math in your posts; it will be
+processed with <a
+href="http://ans.hsh.no/home/mgg/gladtex/">gladTeX</a>.
 
-$$\int^n_0{x^2 dx} = \sum^n_{i=1}{i^n}$$
+Inline math is introduced with `$...$` and looks like $x \in Y$.  Math
+can be embedded in post titles, as well!  To insert a block-level
+equation, use `$$...$$` as a block-level Markdown element.  This
+causes the math to be typeset in the `displaymath` environment.  The
+results look like this:
 
-Summary
--------
+$$\int^n_0{\ldots} = \sum^n_{i=1}{b_0 G(u^s)}
+\Longrightarrow \frac{\tan x}{\lim_{h \to \infty}{\Phi}}$$
 
-$$\int^n_0{i^2}$$
+as opposed to this:
 
-Posts are written in extended Markdown as described in the <a href="http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown-vs.standard-markdown">Pandoc User Guide</a>.  Embedded math is rendered with <a href="http://ans.hsh.no/home/mgg/gladtex/">gladTeX</a>.
+$\int^n_0{\ldots} = \sum^n_{i=1}{b_0 G(u^s)}
+\Longrightarrow \frac{\tan x}{\lim_{h \to \infty}{\Phi}}$
+
+The content of this post can be found in the `posts` subdirectory of
+your blog data directory; the rest of the content of this page can be
+found in "preamble" and "postamble" files in the `templates`
+subdirectory.  You can modify those files and re-run `mb` to
+regenerate all of your blog content.  Note that some defaults, such as
+the blog title and footer text, are probably bogus and need to be
+changed.
+
+Note that `mb` will not bother to regenerate the actual content of
+your blog posts unless the corresponding source file in `posts` has
+changed.
+
+Once you have the hang of creating posts, you'll probably want to
+delete this one; just delete it from the `posts` subdirectory and run
+`mb`.
+
+Enjoy!
