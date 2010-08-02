@@ -32,8 +32,6 @@ import System.Directory
     )
 import System.FilePath
     ( (</>)
-    , takeBaseName
-    , takeFileName
     )
 import System.Posix.Files
     ( getFileStatus
@@ -63,57 +61,13 @@ import MB.Gladtex
     , checkForGladtex
     )
 import MB.Types
+import qualified MB.Files as Files
 
 skelDir :: FilePath
 skelDir = "/home/cygnus/src/mathblog/skel"
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
-
-indexHtml :: Config -> FilePath
-indexHtml c = htmlDir c </> "index.html"
-
-listHtml :: Config -> FilePath
-listHtml c = postHtmlDir c </> "index.html"
-
-listHtex :: Config -> FilePath
-listHtex c = htmlTempDir c </> "list.htex"
-
-listTmpHtml :: Config -> FilePath
-listTmpHtml c = htmlTempDir c </> "list.html"
-
-firstPost :: Config -> FilePath
-firstPost c = postSourceDir c </> "first-post.txt"
-
-pagePreamble :: Config -> FilePath
-pagePreamble c = templateDir c </> "pagePreamble.html"
-
-pagePostamble :: Config -> FilePath
-pagePostamble c = templateDir c </> "pagePostamble.html"
-
-postPreamble :: Config -> FilePath
-postPreamble c = templateDir c </> "postPreamble.html"
-
-postPostamble :: Config -> FilePath
-postPostamble c = templateDir c </> "postPostamble.html"
-
-postUrl :: Post -> String
-postUrl p = "/posts/" ++ postBaseName p ++ ".html"
-
-postBaseName :: Post -> String
-postBaseName = takeBaseName . takeFileName . postFilename
-
-postHtex :: Config -> Post -> String
-postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
-
-postIntermediateHtml :: Config -> Post -> FilePath
-postIntermediateHtml config post = postIntermediateDir config </> postBaseName post ++ ".html"
-
-postFinalHtml :: Config -> Post -> FilePath
-postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
-
-stylesheet :: Config -> FilePath
-stylesheet c = stylesheetDir c </> "stylesheet.css"
 
 allPosts :: Config -> IO [Post]
 allPosts config = do
@@ -163,22 +117,22 @@ buildLinks prev next =
           link cls name Nothing =
               "<span class=\"" ++ cls ++ "-subdued\">" ++ name ++ "</span>"
           link cls name (Just p) =
-              "<a class=\"" ++ cls ++ "\" href=\"" ++ postUrl p ++
+              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl p ++
                                 "\">" ++ name ++ "</a>"
 
 buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h config post prevNext = do
-  hPutStr h =<< (readFile $ pagePreamble config)
+  hPutStr h =<< (readFile $ Files.pagePreamble config)
   hPutStr h $ uncurry buildLinks prevNext
-  hPutStr h =<< (readFile $ postPreamble config)
-  hPutStr h =<< (readFile $ postIntermediateHtml config post)
-  hPutStr h =<< (readFile $ postPostamble config)
-  hPutStr h =<< (readFile $ pagePostamble config)
+  hPutStr h =<< (readFile $ Files.postPreamble config)
+  hPutStr h =<< (readFile $ Files.postIntermediateHtml config post)
+  hPutStr h =<< (readFile $ Files.postPostamble config)
+  hPutStr h =<< (readFile $ Files.pagePostamble config)
 
 generatePost :: Config -> Post -> IO ()
 generatePost config post = do
-  let tempHtml = htmlTempDir config </> postBaseName post ++ ".html"
-      finalHtml = postIntermediateHtml config post
+  let tempHtml = htmlTempDir config </> Files.postBaseName post ++ ".html"
+      finalHtml = Files.postIntermediateHtml config post
 
   htmlExists <- doesFileExist finalHtml
   skip <- case htmlExists of
@@ -188,21 +142,21 @@ generatePost config post = do
               return $ (toUtcTime $ modificationTime info) > postModificationTime post
 
   when (not skip) $ do
-    putStrLn $ "Processing: " ++ postBaseName post
+    putStrLn $ "Processing: " ++ Files.postBaseName post
 
-    h <- openFile (postHtex config post) WriteMode
+    h <- openFile (Files.postHtex config post) WriteMode
     writePost h post
     hClose h
 
     -- Run gladtex on the temp file to generate the final file.
-    gladTex config (postHtex config post) "000000"
+    gladTex config (Files.postHtex config post) "000000"
 
     -- Gladtex generates the HTML in the same directory as the source
     -- file, so we need to copy that to the final location.
     copyFile tempHtml finalHtml
 
     -- Remove the temporary file.
-    removeFile $ postHtex config post
+    removeFile $ Files.postHtex config post
     removeFile tempHtml
 
 generatePosts :: Config -> [Post] -> IO ()
@@ -214,14 +168,14 @@ generatePosts config posts = do
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
 
         generatePost config p
-        h <- openFile (postFinalHtml config p) WriteMode
+        h <- openFile (Files.postFinalHtml config p) WriteMode
         buildPost h config p (prevPost, nextPost)
         hClose h
 
 generateIndex :: Config -> Post -> IO ()
 generateIndex config post = do
-  let dest = postFinalHtml config post
-      index = indexHtml config
+  let dest = Files.postFinalHtml config post
+      index = Files.indexHtml config
 
   exists <- doesFileExist index
   when exists $ removeFile index
@@ -238,9 +192,9 @@ generateList :: Config -> [Post] -> IO ()
 generateList config posts = do
   putStrLn "Generating all-posts list."
 
-  h <- openFile (listHtex config) WriteMode
+  h <- openFile (Files.listHtex config) WriteMode
 
-  hPutStr h =<< (readFile $ pagePreamble config)
+  hPutStr h =<< (readFile $ Files.pagePreamble config)
   hPutStr h "<div id=\"all-posts\">"
 
   -- For each post in the order they were given, extract the
@@ -249,7 +203,7 @@ generateList config posts = do
   forM_ posts $ \p -> do
     created <- postModificationString p
     hPutStr h $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
-                       , "<a href=\"" ++ postUrl p ++ "\">"
+                       , "<a href=\"" ++ Files.postUrl p ++ "\">"
                        , postTitle p 110
                        , "</a></span><span class=\"post-created\">Posted "
                        , created
@@ -257,18 +211,18 @@ generateList config posts = do
                        ]
 
   hPutStr h "</div>"
-  hPutStr h =<< (readFile $ pagePostamble config)
+  hPutStr h =<< (readFile $ Files.pagePostamble config)
   hClose h
 
-  gladTex config (listHtex config) "0000FF"
+  gladTex config (Files.listHtex config) "0000FF"
 
   -- Gladtex generates the HTML in the same directory as the source
   -- file, so we need to copy that to the final location.
-  copyFile (listTmpHtml config) (listHtml config)
+  copyFile (Files.listTmpHtml config) (Files.listHtml config)
 
   -- Remove the temporary file.
-  removeFile $ listHtex config
-  removeFile $ listTmpHtml config
+  removeFile $ Files.listHtex config
+  removeFile $ Files.listTmpHtml config
 
 setup :: Config -> IO ()
 setup config = do
