@@ -2,6 +2,7 @@ module MB.Util
     ( copyTree
     , toUtcTime
     , toLocalTime
+    , pandocTitle
     )
 where
 import Control.Applicative
@@ -46,6 +47,7 @@ import System.Locale
 import Data.Maybe
     ( fromJust
     )
+import qualified Text.Pandoc.Definition as Pandoc
 
 copyTree :: FilePath -> FilePath -> IO ()
 copyTree srcPath dstPath = do
@@ -86,3 +88,11 @@ toLocalTime :: UTCTime -> IO LocalTime
 toLocalTime u = do
   tz <- getCurrentTimeZone
   return $ utcToLocalTime tz u
+
+pandocTitle :: Pandoc.Pandoc -> Int -> String
+pandocTitle (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
+    where
+      getStr (Pandoc.Str s) = s
+      getStr (Pandoc.Math _ s) = "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
+      getStr Pandoc.Space = " "
+      getStr i = error $ "Unexpected inline in document title, got " ++ (show i)

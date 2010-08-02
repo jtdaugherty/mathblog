@@ -52,11 +52,11 @@ import Data.Time.LocalTime
     , getCurrentTimeZone
     )
 import qualified Text.Pandoc as Pandoc
-import qualified Text.Pandoc.Definition as Pandoc
 import MB.Util
     ( copyTree
     , toUtcTime
     , toLocalTime
+    , pandocTitle
     )
 import MB.Gladtex
     ( gladTex
@@ -100,16 +100,6 @@ postPostamble c = templateDir c </> "postPostamble.html"
 stylesheet :: Config -> FilePath
 stylesheet c = stylesheetDir c </> "stylesheet.css"
 
---- xxx need to extract the document title, possibly making some
---- assumptions about valid titles
-title :: Pandoc.Pandoc -> Int -> String
-title (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
-    where
-      getStr (Pandoc.Str s) = s
-      getStr (Pandoc.Math _ s) = "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
-      getStr Pandoc.Space = " "
-      getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
-
 allPosts :: Config -> IO [Post]
 allPosts config = do
   -- Read all files from the post source directory (except .. and .)
@@ -127,7 +117,7 @@ allPosts config = do
              let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
                  t = toUtcTime $ modificationTime info
 
-             return $ Post { postTitle = title doc
+             return $ Post { postTitle = pandocTitle doc
                            , postFilename = fullPath
                            , postModificationTime = t
                            , postAst = doc
