@@ -37,7 +37,7 @@ h3 {
 a#listing {
   float: right;
   font-size: 14px;
-  margin-top: 1em;
+  margin-top: 0.25em;
 }
 div#all-posts {
   margin-top: 1.5em;
