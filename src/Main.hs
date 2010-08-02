@@ -18,8 +18,7 @@ import System.IO
     , readFile
     )
 import System.Exit
-    ( ExitCode(..)
-    , exitFailure
+    ( exitFailure
     )
 import System.Environment
     ( getEnvironment
@@ -41,18 +40,12 @@ import System.Posix.Files
     , modificationTime
     , createSymbolicLink
     )
-import System.Process
-    ( readProcessWithExitCode
-    )
 import Data.List
     ( sortBy
     , isSuffixOf
     )
 import Data.Maybe
     ( isNothing
-    )
-import Data.Time.Clock
-    ( UTCTime
     )
 import Data.Time.LocalTime
     ( TimeZone(timeZoneName)
@@ -65,29 +58,14 @@ import MB.Util
     , toUtcTime
     , toLocalTime
     )
-
-data Config = Config { baseDir :: FilePath
-                     , postSourceDir :: FilePath
-                     , htmlDir :: FilePath
-                     , stylesheetDir :: FilePath
-                     , postHtmlDir :: FilePath
-                     , postIntermediateDir :: FilePath
-                     , imageDir :: FilePath
-                     , templateDir :: FilePath
-                     , htmlTempDir :: FilePath
-                     }
-
-data Post = Post { postTitle :: Int -> String
-                 , postFilename :: String -- relative to the postSourceDir
-                 , postModificationTime :: UTCTime
-                 , postAst :: Pandoc.Pandoc
-                 }
+import MB.Gladtex
+    ( gladTex
+    , checkForGladtex
+    )
+import MB.Types
 
 skelDir :: FilePath
 skelDir = "/home/cygnus/src/mathblog/skel"
-
-gladtexProgName :: String
-gladtexProgName = "gladtex"
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
@@ -168,30 +146,6 @@ postBaseName = takeBaseName . takeFileName . postFilename
 
 postHtex :: Config -> Post -> String
 postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
-
-gladTex :: Config -> FilePath -> String -> IO ()
-gladTex config htexPath color = do
-  let args = [ "-d"
-             , imageDir config
-             , "-u"
-             , "/generated-images/"
-             , "-r"
-             , "120"
-             , "-s"
-             , "10"
-             , "-b"
-             , "FFFFFF"
-             , "-c"
-             , color
-             , htexPath
-             ]
-
-  (ecode, _, err) <- readProcessWithExitCode gladtexProgName args ""
-
-  when (ecode /= ExitSuccess) $ do
-    putStrLn $ "Error processing " ++ (show htexPath) ++ " with " ++ gladtexProgName ++ ":"
-    putStrLn err
-    exitFailure
 
 writePost :: Handle -> Post -> IO ()
 writePost h post = do
@@ -373,18 +327,6 @@ usage = do
   putStrLn "weblog.  To use mb, you must set an environment variable to the"
   putStrLn $ "path where blog files will be stored.  Please set " ++ baseDirEnvName
   putStrLn "and try again."
-
-checkForGladtex :: IO ()
-checkForGladtex = do
-  (code, _, _) <- readProcessWithExitCode gladtexProgName [] ""
-  case code of
-    (ExitFailure c) ->
-        do
-          putStrLn $ "This program requires '" ++ gladtexProgName ++
-                       "'; I attempted to run it but " ++
-                       "got exit status " ++ (show c)
-          exitFailure
-    _ -> return ()
 
 main :: IO ()
 main = do
