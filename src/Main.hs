@@ -1,15 +1,13 @@
 module Main where
 
 import Control.Applicative
-    ( (<$>)
-    , (<*>)
+    ( (<*>)
     , pure
     )
 import Control.Monad
     ( when
     , forM
     , forM_
-    , filterM
     )
 import System.IO
     ( IOMode(WriteMode)
@@ -29,7 +27,6 @@ import System.Environment
 import System.Directory
     ( doesDirectoryExist
     , doesFileExist
-    , createDirectory
     , getDirectoryContents
     , removeFile
     , copyFile
@@ -38,9 +35,6 @@ import System.FilePath
     ( (</>)
     , takeBaseName
     , takeFileName
-    )
-import System.Posix.Types
-    ( EpochTime
     )
 import System.Posix.Files
     ( getFileStatus
@@ -55,26 +49,22 @@ import Data.List
     , isSuffixOf
     )
 import Data.Maybe
-    ( fromJust
-    , isNothing
+    ( isNothing
     )
 import Data.Time.Clock
     ( UTCTime
     )
-import Data.Time.Format
-    ( parseTime
-    )
 import Data.Time.LocalTime
-    ( LocalTime
-    , TimeZone(timeZoneName)
+    ( TimeZone(timeZoneName)
     , getCurrentTimeZone
-    , utcToLocalTime
-    )
-import System.Locale
-    ( defaultTimeLocale
     )
 import qualified Text.Pandoc as Pandoc
 import qualified Text.Pandoc.Definition as Pandoc
+import MB.Util
+    ( copyTree
+    , toUtcTime
+    , toLocalTime
+    )
 
 data Config = Config { baseDir :: FilePath
                      , postSourceDir :: FilePath
@@ -141,14 +131,6 @@ title (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
       getStr (Pandoc.Math _ s) = "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
       getStr Pandoc.Space = " "
       getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
-
-toUtcTime :: EpochTime -> UTCTime
-toUtcTime t = fromJust $ parseTime defaultTimeLocale "%s" $ show t
-
-toLocalTime :: UTCTime -> IO LocalTime
-toLocalTime u = do
-  tz <- getCurrentTimeZone
-  return $ utcToLocalTime tz u
 
 allPosts :: Config -> IO [Post]
 allPosts config = do
@@ -338,38 +320,6 @@ generateList config posts = do
 
 postUrl :: Post -> String
 postUrl p = "/posts/" ++ postBaseName p ++ ".html"
-
-copyTree :: FilePath -> FilePath -> IO ()
-copyTree srcPath dstPath = do
-  dstFExists <- doesFileExist dstPath
-  dstDExists <- doesDirectoryExist dstPath
-
-  when (dstFExists || dstDExists) $ do
-    putStrLn $ "Cannot copy " ++ (show srcPath) ++ " to existing destination path " ++
-                 (show dstPath) ++ "; remove to continue."
-    exitFailure
-
-  createDirectory dstPath
-  copyTree' srcPath dstPath
-
-  where
-    copyTree' src dst = do
-      -- For each file in src, copy it to dest.
-      entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents src
-
-      dirs <- filterM doesDirectoryExist $ map (src </>) entries
-      files <- filterM doesFileExist $ map (src </>) entries
-
-      -- For each directory in src, create it in dest, then descend
-      -- into that directory in both src and dest.
-      forM_ files $ \f -> copyFile f $ dst </> takeFileName f
-      forM_ dirs $ \dir ->
-          do
-            let dstDir = dst </> dirName
-                dirName = takeFileName dir
-
-            createDirectory dstDir
-            copyTree' (src </> dirName) dstDir
 
 setup :: Config -> IO ()
 setup config = do
