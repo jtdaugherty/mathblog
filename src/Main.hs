@@ -154,8 +154,8 @@ writePost h post = do
 buildLinks :: Maybe Post -> Maybe Post -> String
 buildLinks prev next =
     "<div id=\"prev-next-links\">"
-      ++ link "prev-link" "&laquo; newer" prev
-      ++ link "next-link" "older &raquo;" next
+      ++ link "prev-link" "newer" prev
+      ++ link "next-link" "older" next
       ++ "</div>"
         where
           link cls name Nothing =
