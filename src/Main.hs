@@ -208,7 +208,7 @@ gladTex config htexPath color = do
   let args = [ "-d"
              , imageDir config
              , "-u"
-             , "/images/"
+             , "/generated-images/"
              , "-r"
              , "120"
              , "-s"
@@ -394,7 +394,7 @@ mkConfig base = Config { baseDir = base
                        , stylesheetDir = base </> "html" </> "stylesheets"
                        , postHtmlDir = base </> "html" </> "posts"
                        , postIntermediateDir = base </> "generated"
-                       , imageDir = base </> "html" </> "images"
+                       , imageDir = base </> "html" </> "generated-images"
                        , templateDir = base </> "templates"
                        , htmlTempDir = base </> "temp"
                        }
