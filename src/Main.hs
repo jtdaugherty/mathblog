@@ -120,9 +120,19 @@ buildLinks prev next =
               "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl p ++
                                 "\">" ++ name ++ "</a>"
 
+jsInfo :: Post -> String
+jsInfo post =
+    "<script type=\"text/javascript\">\n\
+    \Blog = {\n\
+    \  pageName: " ++ show (Files.postBaseName post) ++
+    "\n\
+    \};\n\
+    \</script>\n"
+
 buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h config post prevNext = do
   hPutStr h =<< (readFile $ Files.pagePreamble config)
+  hPutStr h $ jsInfo post
   hPutStr h $ uncurry buildLinks prevNext
   hPutStr h =<< (readFile $ Files.postPreamble config)
   hPutStr h =<< (readFile $ Files.postIntermediateHtml config post)
