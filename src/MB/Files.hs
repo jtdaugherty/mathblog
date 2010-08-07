@@ -14,7 +14,7 @@ indexHtml :: Config -> FilePath
 indexHtml c = htmlDir c </> "index.html"
 
 rssXml :: Config -> FilePath
-rssXml c = htmlDir c </> "rss.xml"
+rssXml c = htmlDir c </> "feed.xml"
 
 rssPreamble :: Config -> FilePath
 rssPreamble c = templateDir c </> "rssPreamble.xml"
