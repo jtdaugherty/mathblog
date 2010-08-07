@@ -56,6 +56,8 @@ import MB.Util
     , toUtcTime
     , toLocalTime
     , pandocTitle
+    , pandocTitleRaw
+    , rssModificationTime
     )
 import MB.Gladtex
     ( gladTex
@@ -72,6 +74,9 @@ skelDir = getDataFileName "skel"
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
+
+baseUrlEnvName :: String
+baseUrlEnvName = "MB_BASE_URL"
 
 allPosts :: Config -> IO [Post]
 allPosts config = do
@@ -90,6 +95,7 @@ allPosts config = do
                  t = toUtcTime $ modificationTime info
 
              return $ Post { postTitle = pandocTitle doc
+                           , postTitleRaw = pandocTitleRaw doc
                            , postFilename = fullPath
                            , postModificationTime = t
                            , postAst = doc
@@ -238,6 +244,29 @@ generateList config posts = do
   removeFile $ Files.listHtex config
   removeFile $ Files.listTmpHtml config
 
+fullPostUrl :: Config -> Post -> String
+fullPostUrl config p = baseUrl config ++ Files.postUrl p
+
+rssItem :: Config -> Post -> String
+rssItem config p =
+    concat [ "<item>"
+           , "<title>" ++ postTitleRaw p ++ "</title>\n"
+           , "<link>" ++ fullPostUrl config p ++ "</link>\n"
+           , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
+           , "<guid>" ++ fullPostUrl config p ++ "</guid>\n"
+           , "</item>\n"
+           ]
+
+generateRssFeed :: Config -> [Post] -> IO ()
+generateRssFeed config posts = do
+  h <- openFile (Files.rssXml config) WriteMode
+  hPutStr h =<< (readFile $ Files.rssPreamble config)
+
+  forM_ posts (hPutStr h . rssItem config)
+
+  hPutStr h =<< (readFile $ Files.rssPostamble config)
+  hClose h
+
 setup :: Config -> IO ()
 setup config = do
   exists <- doesDirectoryExist $ baseDir config
@@ -266,25 +295,27 @@ ensureDirs config = do
         exists <- doesDirectoryExist d
         when (not exists) $ createDirectory d
 
-mkConfig :: FilePath -> Config
-mkConfig base = Config { baseDir = base
-                       , postSourceDir = base </> "posts"
-                       , htmlDir = base </> "html"
-                       , stylesheetDir = base </> "html" </> "stylesheets"
-                       , postHtmlDir = base </> "html" </> "posts"
-                       , postIntermediateDir = base </> "generated"
-                       , imageDir = base </> "html" </> "generated-images"
-                       , templateDir = base </> "templates"
-                       , htmlTempDir = base </> "tmp"
-                       }
+mkConfig :: FilePath -> String -> Config
+mkConfig base url = Config { baseDir = base
+                           , postSourceDir = base </> "posts"
+                           , htmlDir = base </> "html"
+                           , stylesheetDir = base </> "html" </> "stylesheets"
+                           , postHtmlDir = base </> "html" </> "posts"
+                           , postIntermediateDir = base </> "generated"
+                           , imageDir = base </> "html" </> "generated-images"
+                           , templateDir = base </> "templates"
+                           , htmlTempDir = base </> "tmp"
+                           , baseUrl = url
+                           }
 
 usage :: IO ()
 usage = do
   putStrLn "Usage: mb\n"
   putStrLn "mb is a tool for creating and managing a mathematically-inclined"
-  putStrLn "weblog.  To use mb, you must set an environment variable to the"
-  putStrLn $ "path where blog files will be stored.  Please set " ++ baseDirEnvName
-  putStrLn "and try again."
+  putStrLn "weblog.  To use mb, you must set a few environment variables:"
+  putStrLn ""
+  putStrLn $ "  " ++ baseDirEnvName ++ ": path where blog files will be stored"
+  putStrLn $ "  " ++ baseUrlEnvName ++ ": base URL where blog will be hosted"
 
 main :: IO ()
 main = do
@@ -293,16 +324,20 @@ main = do
   checkForGladtex
 
   let mBase = lookup baseDirEnvName env
+      mBaseUrl = lookup baseUrlEnvName env
 
-  when (isNothing mBase) $ usage >> exitFailure
+  when (isNothing (mBase >> mBaseUrl)) $ usage >> exitFailure
 
   let Just dir = mBase
+      Just url = mBaseUrl
+
   when (head dir /= '/') $ do
          putStrLn $ baseDirEnvName ++ " must contain an absolute path"
          exitFailure
 
   putStrLn $ "mb: using base directory " ++ (show dir)
-  let config = mkConfig dir
+  putStrLn $ "mb: using base url " ++ (show url)
+  let config = mkConfig dir url
   setup config
 
   posts <- allPosts config
@@ -310,5 +345,6 @@ main = do
   generatePosts config posts
   generateIndex config $ head posts
   generateList config posts
+  generateRssFeed config posts
 
   putStrLn "Done."

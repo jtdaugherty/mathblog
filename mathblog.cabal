@@ -17,6 +17,8 @@ Data-Files:
   skel/templates/postPreamble.html
   skel/templates/pagePreamble.html
   skel/templates/pagePostamble.html
+  skel/templates/rssPreamble.xml
+  skel/templates/rssPostamble.xml
   skel/posts/first-post.txt
 
 Executable mb

@@ -13,6 +13,15 @@ import MB.Types
 indexHtml :: Config -> FilePath
 indexHtml c = htmlDir c </> "index.html"
 
+rssXml :: Config -> FilePath
+rssXml c = htmlDir c </> "rss.xml"
+
+rssPreamble :: Config -> FilePath
+rssPreamble c = templateDir c </> "rssPreamble.xml"
+
+rssPostamble :: Config -> FilePath
+rssPostamble c = templateDir c </> "rssPostamble.xml"
+
 listHtml :: Config -> FilePath
 listHtml c = postHtmlDir c </> "index.html"
 

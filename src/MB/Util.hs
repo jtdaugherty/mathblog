@@ -3,6 +3,8 @@ module MB.Util
     , toUtcTime
     , toLocalTime
     , pandocTitle
+    , pandocTitleRaw
+    , rssModificationTime
     )
 where
 import Control.Applicative
@@ -35,6 +37,7 @@ import Data.Time.Clock
     )
 import Data.Time.Format
     ( parseTime
+    , formatTime
     )
 import Data.Time.LocalTime
     ( LocalTime
@@ -43,11 +46,13 @@ import Data.Time.LocalTime
     )
 import System.Locale
     ( defaultTimeLocale
+    , rfc822DateFormat
     )
 import Data.Maybe
     ( fromJust
     )
 import qualified Text.Pandoc.Definition as Pandoc
+import MB.Types
 
 copyTree :: FilePath -> FilePath -> IO ()
 copyTree srcPath dstPath = do
@@ -96,3 +101,15 @@ pandocTitle (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
       getStr (Pandoc.Math _ s) = "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
       getStr Pandoc.Space = " "
       getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
+
+pandocTitleRaw :: Pandoc.Pandoc -> String
+pandocTitleRaw (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
+    where
+      getStr (Pandoc.Str s) = s
+      getStr (Pandoc.Math _ s) = s
+      getStr Pandoc.Space = " "
+      getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
+
+rssModificationTime :: Post -> String
+rssModificationTime =
+    formatTime defaultTimeLocale rfc822DateFormat . postModificationTime

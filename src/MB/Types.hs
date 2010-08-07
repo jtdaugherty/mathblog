@@ -17,9 +17,11 @@ data Config = Config { baseDir :: FilePath
                      , imageDir :: FilePath
                      , templateDir :: FilePath
                      , htmlTempDir :: FilePath
+                     , baseUrl :: String
                      }
 
 data Post = Post { postTitle :: Int -> String
+                 , postTitleRaw :: String
                  , postFilename :: String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
