@@ -47,7 +47,8 @@ postHtex :: Config -> Post -> String
 postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
 
 postIntermediateHtml :: Config -> Post -> FilePath
-postIntermediateHtml config post = postIntermediateDir config </> postBaseName post ++ ".html"
+postIntermediateHtml config post =
+    postIntermediateDir config </> postBaseName post ++ ".html"
 
 postFinalHtml :: Config -> Post -> FilePath
 postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"

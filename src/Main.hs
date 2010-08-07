@@ -75,7 +75,6 @@ baseDirEnvName = "MB_BASE_DIR"
 
 allPosts :: Config -> IO [Post]
 allPosts config = do
-  -- Read all files from the post source directory (except .. and .)
   allFiles <- getDirectoryContents $ postSourceDir config
   let postFiles = [ f | f <- allFiles
                   , ".txt" `isSuffixOf` f
@@ -97,7 +96,8 @@ allPosts config = do
                            }
 
   -- Return posts sorted by modification time, descending
-  return $ sortBy (\a b -> postModificationTime b `compare` postModificationTime a) posts
+  return $ sortBy (\a b -> postModificationTime b `compare`
+                           postModificationTime a) posts
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =

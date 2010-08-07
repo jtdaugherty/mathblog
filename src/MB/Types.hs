@@ -20,7 +20,7 @@ data Config = Config { baseDir :: FilePath
                      }
 
 data Post = Post { postTitle :: Int -> String
-                 , postFilename :: String -- relative to the postSourceDir
+                 , postFilename :: String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
