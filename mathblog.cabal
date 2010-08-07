@@ -7,6 +7,18 @@ Maintainer:          Jonathan Daugherty <drcygnus@gmail.com>
 Build-Type:          Simple
 Cabal-version:       >= 1.2
 
+Data-Files:
+  skel/html/images/older.png
+  skel/html/images/newer-subdued.png
+  skel/html/images/newer.png
+  skel/html/images/older-subdued.png
+  skel/html/stylesheets/stylesheet.css
+  skel/templates/postPostamble.html
+  skel/templates/postPreamble.html
+  skel/templates/pagePreamble.html
+  skel/templates/pagePostamble.html
+  skel/posts/first-post.txt
+
 Executable mb
   Build-depends:
     base >= 3 && < 5,

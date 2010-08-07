@@ -29,6 +29,7 @@ import System.Directory
     , getDirectoryContents
     , removeFile
     , copyFile
+    , createDirectory
     )
 import System.FilePath
     ( (</>)
@@ -62,9 +63,12 @@ import MB.Gladtex
     )
 import MB.Types
 import qualified MB.Files as Files
+import Paths_mathblog
+    ( getDataFileName
+    )
 
-skelDir :: FilePath
-skelDir = "/home/cygnus/src/mathblog/skel"
+skelDir :: IO FilePath
+skelDir = getDataFileName "skel"
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
@@ -237,17 +241,17 @@ generateList config posts = do
 setup :: Config -> IO ()
 setup config = do
   exists <- doesDirectoryExist $ baseDir config
+  dataDir <- skelDir
 
   when (not exists) $ do
-          putStrLn $ "Setting up data directory using skeleton: " ++ skelDir
-          copyTree skelDir $ baseDir config
+          putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
+          copyTree dataDir $ baseDir config
 
-  validate config
+  ensureDirs config
 
-validate :: Config -> IO ()
-validate config = do
-  let dirs = [ baseDir
-             , postSourceDir
+ensureDirs :: Config -> IO ()
+ensureDirs config = do
+  let dirs = [ postSourceDir
              , htmlDir
              , stylesheetDir
              , postHtmlDir
@@ -260,10 +264,7 @@ validate config = do
   forM_ (dirs <*> pure config) $ \d ->
       do
         exists <- doesDirectoryExist d
-        when (not exists) $
-             do
-               putStrLn $ "Required directory missing: " ++ (show d)
-               exitFailure
+        when (not exists) $ createDirectory d
 
 mkConfig :: FilePath -> Config
 mkConfig base = Config { baseDir = base
