@@ -26,8 +26,6 @@ gladTex config htexPath color = do
              , "/generated-images/"
              , "-r"
              , "120"
-             , "-s"
-             , "10"
              , "-b"
              , "FFFFFF"
              , "-c"
