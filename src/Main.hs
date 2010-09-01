@@ -148,12 +148,12 @@ buildLinks prev next =
 
 jsInfo :: Post -> String
 jsInfo post =
-    "<script type=\"text/javascript\">\n\
-    \Blog = {\n\
-    \  pageName: " ++ show (Files.postBaseName post) ++
-    "\n\
-    \};\n\
-    \</script>\n"
+    "<script type=\"text/javascript\">\n" ++
+    "Blog = {\n" ++
+    "  pageName: " ++ show (Files.postBaseName post) ++
+    "\n" ++
+    "};\n" ++
+    "</script>\n"
 
 buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h config post prevNext = do
