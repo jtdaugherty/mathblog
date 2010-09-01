@@ -32,6 +32,9 @@ Executable mb
     time >= 1.1 && < 1.2,
     old-locale >= 1.0 && < 1.1
 
+  Other-modules:
+    Paths_mathblog
+
   GHC-Options: -Wall -Werror
 
   Hs-Source-Dirs:  src
