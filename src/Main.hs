@@ -6,7 +6,6 @@ import Control.Applicative
     )
 import Control.Monad
     ( when
-    , forM
     , forM_
     )
 import System.IO
@@ -78,28 +77,33 @@ baseDirEnvName = "MB_BASE_DIR"
 baseUrlEnvName :: String
 baseUrlEnvName = "MB_BASE_URL"
 
+allPostFilenames :: Config -> IO [FilePath]
+allPostFilenames config = do
+  allFiles <- getDirectoryContents $ postSourceDir config
+  return [ postSourceDir config </> f | f <- allFiles
+         , ".txt" `isSuffixOf` f
+         ]
+
+loadPost :: FilePath -> IO Post
+loadPost fullPath = do
+  info <- getFileStatus fullPath
+  fileContent <- readFile fullPath
+  let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
+      t = toUtcTime $ modificationTime info
+
+  return $ Post { postTitle = pandocTitle doc
+                , postTitleRaw = pandocTitleRaw doc
+                , postFilename = fullPath
+                , postModificationTime = t
+                , postAst = doc
+                }
+
 allPosts :: Config -> IO [Post]
 allPosts config = do
-  allFiles <- getDirectoryContents $ postSourceDir config
-  let postFiles = [ f | f <- allFiles
-                  , ".txt" `isSuffixOf` f
-                  ]
+  postFiles <- allPostFilenames config
 
   -- For each file, construct a Post from it.
-  posts <- forM postFiles $
-           \f -> do
-             let fullPath = postSourceDir config </> f
-             info <- getFileStatus fullPath
-             fileContent <- readFile fullPath
-             let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
-                 t = toUtcTime $ modificationTime info
-
-             return $ Post { postTitle = pandocTitle doc
-                           , postTitleRaw = pandocTitleRaw doc
-                           , postFilename = fullPath
-                           , postModificationTime = t
-                           , postAst = doc
-                           }
+  posts <- mapM loadPost postFiles
 
   -- Return posts sorted by modification time, descending
   return $ sortBy (\a b -> postModificationTime b `compare`
