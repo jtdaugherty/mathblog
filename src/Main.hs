@@ -49,6 +49,9 @@ import Data.Time.LocalTime
     ( TimeZone(timeZoneName)
     , getCurrentTimeZone
     )
+import Data.Time.Clock
+    ( UTCTime
+    )
 import qualified Text.Pandoc as Pandoc
 import MB.Util
     ( copyTree
@@ -84,12 +87,16 @@ allPostFilenames config = do
          , ".txt" `isSuffixOf` f
          ]
 
+getModificationTime :: FilePath -> IO UTCTime
+getModificationTime fullPath = do
+  info <- getFileStatus fullPath
+  return $ toUtcTime $ modificationTime info
+
 loadPost :: FilePath -> IO Post
 loadPost fullPath = do
-  info <- getFileStatus fullPath
   fileContent <- readFile fullPath
+  t <- getModificationTime fullPath
   let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
-      t = toUtcTime $ modificationTime info
 
   return $ Post { postTitle = pandocTitle doc
                 , postTitleRaw = pandocTitleRaw doc
