@@ -1,8 +1,7 @@
 Name:                mathblog
 Version:             0.1
 Synopsis:            A program for creating and managing a
-                     statically-generated, mathematically-inclined
-                     weblog
+                     static, mathematically-inclined weblog
 Description:         This package provides a program for creating and
                      managing a statically-generated, VCS-friendly,
                      mathematically-inclined weblog.  If you're
