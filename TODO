@@ -1,12 +1,4 @@
 
-- need the ability to "preview" posts (possibly for local editing?).
-  One idea is to put mb in "listening" mode in which it periodically
-  (every second or so) looks to see if any blog posts have been
-  created or modified and regenerates content from them.  This would
-  be good if you had a local installation and wanted to work on a post
-  before pushing it up to your server.  If you develop the post on the
-  same machine as the server, this doesn't work as well.
-
 - Record somewhere what I have done to pandoc and gladtex to make all
   of this work nicely
 

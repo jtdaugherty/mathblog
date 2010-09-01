@@ -8,6 +8,9 @@ import Control.Monad
     ( when
     , forM_
     )
+import Control.Concurrent
+    ( threadDelay
+    )
 import System.IO
     ( IOMode(WriteMode)
     , Handle
@@ -21,6 +24,7 @@ import System.Exit
     )
 import System.Environment
     ( getEnvironment
+    , getArgs
     )
 import System.Directory
     ( doesDirectoryExist
@@ -51,6 +55,7 @@ import Data.Time.LocalTime
     )
 import Data.Time.Clock
     ( UTCTime
+    , getCurrentTime
     )
 import qualified Text.Pandoc as Pandoc
 import MB.Util
@@ -306,6 +311,46 @@ ensureDirs config = do
         exists <- doesDirectoryExist d
         when (not exists) $ createDirectory d
 
+-- The files we look at to decide whether to regenerate the blog.
+-- We'll always look at the post input files, but we also want to look
+-- at other files to trigger a regeneration.
+changedFiles :: Config -> [FilePath]
+changedFiles config = [ Files.rssPreamble
+                      , Files.rssPostamble
+                      , Files.pagePreamble
+                      , Files.pagePostamble
+                      , Files.postPreamble
+                      , Files.postPostamble
+                      ] <*> pure config
+
+preserveM :: (Monad m) => (a -> m b) -> a -> m (a, b)
+preserveM act val = act val >>= \r -> return (val, r)
+
+scanForChanges :: Config -> IO () -> IO ()
+scanForChanges config act = do
+  t <- getCurrentTime
+  scan t
+      where
+        scan t = do
+          posts <- allPostFilenames config
+          let filesToInspect = posts ++ changedFiles config
+          allTimes <- mapM (preserveM getModificationTime) filesToInspect
+
+          let modified = filter ((> t) . snd) allTimes
+              nextTime = if null modified
+                         then t
+                         else maximum $ map snd modified
+
+          when (not $ null modified) $
+               do
+                 putStrLn ""
+                 putStrLn "Changes detected:"
+                 forM_ modified $ \(fp, _) -> do
+                              putStrLn $ "  " ++ fp
+                 act
+          threadDelay $ 1 * 1000 * 1000
+          scan nextTime
+
 mkConfig :: FilePath -> String -> Config
 mkConfig base url = Config { baseDir = base
                            , postSourceDir = base </> "posts"
@@ -321,16 +366,21 @@ mkConfig base url = Config { baseDir = base
 
 usage :: IO ()
 usage = do
-  putStrLn "Usage: mb\n"
+  putStrLn "Usage: mb [-l]\n"
   putStrLn "mb is a tool for creating and managing a mathematically-inclined"
   putStrLn "weblog.  To use mb, you must set a few environment variables:"
   putStrLn ""
   putStrLn $ "  " ++ baseDirEnvName ++ ": path where blog files will be stored"
   putStrLn $ "  " ++ baseUrlEnvName ++ ": base URL where blog will be hosted"
+  putStrLn ""
+  putStrLn " -l: make mb poll periodically and regenerate your blog content"
+  putStrLn "     when something changes.  This is useful if you want to run a"
+  putStrLn "     local web server to view your posts as you're writing them."
 
 main :: IO ()
 main = do
   env <- getEnvironment
+  args <- getArgs
 
   checkForGladtex
 
@@ -351,11 +401,15 @@ main = do
   let config = mkConfig dir url
   setup config
 
-  posts <- allPosts config
+  let work = do
+         posts <- allPosts config
+         generatePosts config posts
+         generateIndex config $ head posts
+         generateList config posts
+         generateRssFeed config posts
+         putStrLn "Done."
 
-  generatePosts config posts
-  generateIndex config $ head posts
-  generateList config posts
-  generateRssFeed config posts
-
-  putStrLn "Done."
+  case args of
+    [] -> work
+    ["-l"] -> scanForChanges config work
+    _ -> usage >> exitFailure
