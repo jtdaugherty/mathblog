@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 module Main where
 
 import Control.Applicative
@@ -18,9 +17,6 @@ import System.IO
     , openFile
     , hPutStr
     , hClose
-#if __GLASGOW_HASKELL__ < 612
-    , readFile
-#endif
     )
 import System.Exit
     ( exitFailure
