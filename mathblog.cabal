@@ -8,6 +8,7 @@ Build-Type:          Simple
 Cabal-version:       >= 1.2
 
 Data-Files:
+  README
   skel/html/images/older.png
   skel/html/images/newer-subdued.png
   skel/html/images/newer.png

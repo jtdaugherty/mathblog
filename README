@@ -1,0 +1,209 @@
+
+mathblog
+--------
+
+mathblog is a Haskell program targeted at people who want to write
+statically-generated, mathematically-themed weblogs.
+
+Project vision
+--------------
+
+I wrote mathblog with a very specific set of requirements in mind,
+motivated by the following principles:
+
+ - a blog should be easy to create, host, and update.
+
+ - a blog should be easy to maintain.
+
+ - I should be able to edit posts in my editor of choice and write
+   them in an intelligent textual markup language.
+
+ - It should be easy to embed high-quality mathematical symbols and
+   equations in the blog posts.
+
+As a result, mathblog has the following properties:
+
+ - the software is composed of a single executable which will
+   automatically take care of creating your blog and regenerating
+   pages when your post markup changes.
+
+ - all content is stored in plain text files and is generated
+   statically.  No database, web framework, or templating system is
+   used.
+
+ - a mathblog can be hosted with a simple static fileserver such as
+   thttpd, lighttpd, or apache.
+
+ - blog posts are written in the Markdown format with extensions, as
+   supported by the Pandoc document converter.
+
+ - Math is embedded with $...$ and $$...$$.
+
+These properties have some nice advantages; your blog content is
+cacheable and can be subjected to revision control.  Posts are easy to
+edit and editing doesn't require a web browser.  The static file
+representation model means you can compose a blog post on your laptop
+and get it just right using a local installation of mathblog, then
+push it up to your server to post it to your public blog.
+
+Dependencies
+------------
+
+mathblog takes advantage of three primary software components:
+
+ - pandoc, which will be installed for you automatically if you use
+   "cabal" to install mathblog.  For best results, use the revision
+   control version of Pandoc.
+
+ - gladTeX, a package of tools for rendering LaTeX equations.  At
+   present you MUST get gladTeX from revision control, since mathblog
+   requires features not yet released.
+
+ - a TeX distribution, such as TeX-live
+
+How to use
+----------
+
+mathblog doesn't have any persistent configuration file; the way you
+configure it is by setting two environment variables:
+
+  MB_BASE_DIR
+
+    The location of your blog files on the filesystem.  Must be an
+    absolute path.
+
+  MB_BASE_URL
+
+    The base URL of your blog as it will be hosted.  This is used to
+    generate fully-qualified URLs.  A trailing slash is not expected.
+    E.g., "http://localhost:8080".
+
+Once you've set those environment variables, just run "mb".  It will
+take care of setting up a new blog data directory for you, complete
+with some default pages and a default first blog post:
+
+  $ export MB_BASE_URL="http://localhost:8080"
+  $ export MB_BASE_DIR=`pwd`/myBlog
+  $ mb
+  mb: using base directory "/home/.../myBlog"
+  mb: using base url "http://localhost:8080"
+  Setting up data directory using skeleton: /home/.../.cabal/share/mathblog-0.1/skel
+  Processing: first-post
+  Generating all-posts list.
+  Done.
+
+Now you have a blog; fire up a web server pointing at myBlog/html and
+you'll see a demo post.
+
+Next, you might want to edit or create a new post, or even remove one.
+Just edit the appropriate file in myBlog/posts/ accordingly and re-run
+mb.  Here's an example of adding a new post:
+
+  $ mb
+  mb: using base directory "/home/.../blog/myBlog"
+  mb: using base url "http://localhost:8080"
+  Processing: second-post
+  Generating all-posts list.
+  Done.
+
+Post format
+-----------
+
+Posts are formatted in Markdown and support the extended Markdown
+syntax as implemented by Pandoc.  The only important convention to
+note is that the post title goes on the first line of the file
+following a percent sign, as follows:
+
+  %My First Post
+
+  First paragraph starts here.
+
+Running mb in "listen" mode
+---------------------------
+
+Ordinarily, you'll just run "mb" once in a while to update your
+content.  But if you're in the middle of authoring a new post and you
+want to see what it looks like as you edit it rather than run "mb" by
+hand periodically, you can run "mb" in "listen" mode; this means that
+mb will run forever, peroidically scanning the filesystem for changes
+to your blog posts and other data files and regenerate them when it
+detects a change.  Running mathblog in listen mode is simple:
+
+  $ mb -l
+  mb: using base directory "/home/.../myBlog"
+  mb: using base url "http://localhost:8080"
+
+  Changes detected:
+    /home/.../myBlog/posts/second-post.txt
+  Processing: second-post
+  Generating all-posts list.
+  Done.
+
+Above I ran "mb" in listen mode and then modified one of the posts,
+second-post.txt, and "mb" detected the change and ran its typical
+regeneration routine.
+
+Customizing your blog
+---------------------
+
+It's likely that you'll want to customize the look and feel of your
+blog.  To this end, mathblog generates the pages of your blog by
+assembling various pieces of the page to create the final result.  The
+biggest piece of a generated page is the blog post itself, but the
+surrounding elements are read from various files that are created by
+mathblog when it creates your blog data directory.  These files are
+stored in the "templates/" subdirectory of your blog data directory
+and are as follows:
+
+  templates/rssPreamble.xml
+  templates/rssPostamble.xml
+
+    These files make up the leading and trailing RSS XML that will be
+    used to wrap the individual elements of your blog's RSS feed.
+    You'll probably want to change the rssPreamble.xml file, since it
+    contains information about the blog author.
+
+  templates/pagePreamble.html
+  templates/pagePostamble.html
+
+    These files make up the outermost HTML content of the blog post
+    pages, including the index page and the post list page.
+
+  templates/postPreamble.html
+  templates/postPostamble.html
+
+    These files make up the HTML content surrounding the post body
+    itself.
+
+In addition, subdirectories of the "html/" directory contain things
+you might want to customize, such as a CSS stylesheet.
+
+Other features
+--------------
+
+Since mathblog doesn't provide many moving parts, it's up to you to
+outsource various web site features, such as comments.  I've
+successfully integrated mathblog with the Disqus comments service.  To
+do this, some javascript needs to be embedded in the blog pages.
+Disqus works best when you supply it with a page identifier so it can
+guarantee that comments are post-specific rather than URL-specific.
+The way mathblog makes this possible is by exposing a JavaScript
+variable to other scripts in your page:
+
+  Blog.pageName = "foobar-baz";
+
+This variable name can be used by scripts you embed, such as with
+Disqus comment forms:
+
+  var disqus_identifier = Blog.pageName;
+
+Afterword
+---------
+
+I personally use this software package but I'll be pleased if others
+find it useful.  In addition, I'm open to accepting contributions on
+the project if they're consistent with what I've outlined above.
+Happy blogging!
+
+Jonathan Daugherty
+drcygnus@gmail.com
