@@ -1,7 +1,7 @@
 Name:                mathblog
 Version:             0.1
-Synopsis:            A program for generating static
-                     mathematically-inclined content
+Synopsis:            A program for creating and managing a statically-generated,
+                     mathematically-inclined weblog
 Author:              Jonathan Daugherty <drcygnus@gmail.com>
 Maintainer:          Jonathan Daugherty <drcygnus@gmail.com>
 Build-Type:          Simple
