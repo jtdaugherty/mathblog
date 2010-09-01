@@ -8,3 +8,7 @@
 
   - differentiate between inline and display math in pandoc HTML
     writer (added to git HEAD)
+
+- It's a little annoying (and, for some, possibly broken) that the
+  colors for LaTeX equations in pages and titles are hardcoded in the
+  source (see calls to MB.Gladtex.gladTex)
