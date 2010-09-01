@@ -1,11 +1,24 @@
 Name:                mathblog
 Version:             0.1
-Synopsis:            A program for creating and managing a statically-generated,
-                     mathematically-inclined weblog
+Synopsis:            A program for creating and managing a
+                     statically-generated, mathematically-inclined
+                     weblog
+Description:         This package provides a program for creating and
+                     managing a statically-generated, VCS-friendly,
+                     mathematically-inclined weblog.  If you're
+                     interested in managing a blog with few moving
+                     parts and support for embedded LaTeX math and the
+                     UNIX editor of your choice, then this is the
+                     blogging platform for you!  For detailed
+                     information, please see the README.
 Author:              Jonathan Daugherty <drcygnus@gmail.com>
 Maintainer:          Jonathan Daugherty <drcygnus@gmail.com>
 Build-Type:          Simple
 Cabal-version:       >= 1.2
+License:             BSD3
+License-file:        LICENSE
+Category:            Web
+Homepage:            http://repos.codevine.org/mathblog/
 
 Data-Files:
   README
@@ -36,7 +49,7 @@ Executable mb
   Other-modules:
     Paths_mathblog
 
-  GHC-Options: -Wall -Werror
+  GHC-Options: -Wall
 
   Hs-Source-Dirs:  src
   Main-is:         Main.hs
