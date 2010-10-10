@@ -136,7 +136,9 @@ loadPostIndex config = do
     False -> return $ PostIndex []
     True -> do
            h <- openFile fn ReadMode
-           idx <- unserializePostIndex <$> hGetContents h
+           s <- hGetContents h
+           s `seq` return ()
+           let idx = unserializePostIndex s
            hClose h
            return idx
 
