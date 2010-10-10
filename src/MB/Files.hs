@@ -28,6 +28,9 @@ listHtml c = postHtmlDir c </> "index.html"
 listHtex :: Config -> FilePath
 listHtex c = htmlTempDir c </> "list.htex"
 
+postIndex :: Config -> FilePath
+postIndex c = postSourceDir c </> "posts-index"
+
 listTmpHtml :: Config -> FilePath
 listTmpHtml c = htmlTempDir c </> "list.html"
 

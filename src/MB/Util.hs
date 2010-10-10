@@ -5,6 +5,10 @@ module MB.Util
     , pandocTitle
     , pandocTitleRaw
     , rssModificationTime
+    , loadPostIndex
+    , savePostIndex
+    , extractPostfilename
+    , updatePostIndex
     )
 where
 import Control.Applicative
@@ -48,10 +52,20 @@ import System.Locale
     ( defaultTimeLocale
     , rfc822DateFormat
     )
+import System.IO
+    ( IOMode(ReadMode)
+    , openFile
+    , hClose
+    , hGetContents
+    )
+import Data.List
+    ( sortBy
+    )
 import Data.Maybe
     ( fromJust
     )
 import qualified Text.Pandoc.Definition as Pandoc
+import qualified MB.Files as Files
 import MB.Types
 
 copyTree :: FilePath -> FilePath -> IO ()
@@ -113,3 +127,46 @@ pandocTitleRaw (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
 rssModificationTime :: Post -> String
 rssModificationTime =
     formatTime defaultTimeLocale rfc822DateFormat . postModificationTime
+
+loadPostIndex :: Config -> IO PostIndex
+loadPostIndex config = do
+  let fn = Files.postIndex config
+  e <- doesFileExist fn
+  case e of
+    False -> return $ PostIndex []
+    True -> do
+           h <- openFile fn ReadMode
+           idx <- unserializePostIndex <$> hGetContents h
+           hClose h
+           return idx
+
+savePostIndex :: Config -> PostIndex -> IO ()
+savePostIndex config postIndex =
+    writeFile (Files.postIndex config) $ serializePostIndex postIndex
+
+extractPostfilename :: PostFilename -> String
+extractPostfilename (PostFilename s) = s
+
+serializePostIndex :: PostIndex -> String
+serializePostIndex (PostIndex ps) = unlines $ map extractPostfilename ps
+
+unserializePostIndex :: String -> PostIndex
+unserializePostIndex = PostIndex . map PostFilename . lines
+
+postToFilename :: Post -> PostFilename
+postToFilename = PostFilename . takeFileName . postFilename
+
+sortPosts :: [Post] -> [Post]
+sortPosts = sortBy (\a b -> postModificationTime b `compare`
+                            postModificationTime a)
+
+updatePostIndex :: PostIndex -> [Post] -> (PostIndex, [Post])
+updatePostIndex (PostIndex oldNames) posts =
+    ( PostIndex (map postToFilename sortedNewPosts ++ oldNames')
+    , sortedNewPosts ++ posts )
+        where
+          newPosts = [ p | p <- posts, not $ postToFilename p `elem` oldNames ]
+          sortedNewPosts = sortPosts newPosts
+          postFilenames = map postToFilename posts
+          -- Garbage-collect posts that have been deleted
+          oldNames' = [ n | n <- oldNames, n `elem` postFilenames ]

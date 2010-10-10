@@ -42,8 +42,7 @@ import System.Posix.Files
     , createSymbolicLink
     )
 import Data.List
-    ( sortBy
-    , isSuffixOf
+    ( isSuffixOf
     )
 import Data.Maybe
     ( isNothing
@@ -64,6 +63,9 @@ import MB.Util
     , pandocTitle
     , pandocTitleRaw
     , rssModificationTime
+    , loadPostIndex
+    , savePostIndex
+    , updatePostIndex
     )
 import MB.Gladtex
     ( gladTex
@@ -116,9 +118,19 @@ allPosts config = do
   -- For each file, construct a Post from it.
   posts <- mapM loadPost postFiles
 
-  -- Return posts sorted by modification time, descending
-  return $ sortBy (\a b -> postModificationTime b `compare`
-                           postModificationTime a) posts
+  -- Load the post index
+  oldPostIndex <- loadPostIndex config
+
+  -- Update the post index
+  let (newPostIndex, newPosts) = updatePostIndex oldPostIndex posts
+
+  when (oldPostIndex /= newPostIndex) $
+       do
+         putStrLn "Updating post index."
+         savePostIndex config newPostIndex
+
+  -- Return posts sorted by the index
+  return newPosts
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =
