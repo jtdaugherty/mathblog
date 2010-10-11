@@ -43,6 +43,7 @@ import System.Posix.Files
     )
 import Data.List
     ( isSuffixOf
+    , isPrefixOf
     )
 import Data.Maybe
     ( isNothing
@@ -91,6 +92,7 @@ allPostFilenames config = do
   allFiles <- getDirectoryContents $ postSourceDir config
   return [ postSourceDir config </> f | f <- allFiles
          , ".txt" `isSuffixOf` f
+         , not $ "." `isPrefixOf` f
          ]
 
 getModificationTime :: FilePath -> IO UTCTime
