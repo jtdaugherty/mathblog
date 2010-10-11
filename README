@@ -88,6 +88,7 @@ with some default pages and a default first blog post:
   mb: using base directory "/home/.../myBlog"
   mb: using base url "http://localhost:8080"
   Setting up data directory using skeleton: /home/.../.cabal/share/mathblog-0.1/skel
+  Updating post index.
   Processing: first-post
   Generating all-posts list.
   Done.
@@ -196,6 +197,24 @@ This variable name can be used by scripts you embed, such as with
 Disqus comment forms:
 
   var disqus_identifier = Blog.pageName;
+
+Controlling Post Order
+----------------------
+
+Whenever you add a new post, mb automatically updates the "post
+index", a file called "posts-index" in the post source directory.
+This file lists the filenames of all posts from newest to oldest.  By
+default, new posts get added to the beginning of the list, as you
+would expect.  Any new posts added to the list are sorted by
+modification time so that the newest post on disk appears earlier in
+the index.
+
+At any time, you can edit the index to reorder the posts as you see
+fit.  mb will preserve ordering of posts already in the index when you
+run it in the future.
+
+mb will also take care of removing posts from the index if they've
+been removed from the post source directory.
 
 Afterword
 ---------
