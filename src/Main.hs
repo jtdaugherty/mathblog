@@ -422,5 +422,5 @@ main = do
 
   case args of
     [] -> work
-    ["-l"] -> scanForChanges config work
+    ["-l"] -> work >> scanForChanges config work
     _ -> usage >> exitFailure
