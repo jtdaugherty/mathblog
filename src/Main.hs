@@ -28,7 +28,6 @@ import System.Environment
 import System.Directory
     ( doesDirectoryExist
     , doesFileExist
-    , getDirectoryContents
     , removeFile
     , copyFile
     , createDirectory
@@ -41,10 +40,6 @@ import System.Posix.Files
     , modificationTime
     , createSymbolicLink
     )
-import Data.List
-    ( isSuffixOf
-    , isPrefixOf
-    )
 import Data.Maybe
     ( isNothing
     )
@@ -53,20 +48,18 @@ import Data.Time.LocalTime
     , getCurrentTimeZone
     )
 import Data.Time.Clock
-    ( UTCTime
-    , getCurrentTime
+    ( getCurrentTime
     )
 import qualified Text.Pandoc as Pandoc
 import MB.Util
     ( copyTree
     , toUtcTime
     , toLocalTime
-    , pandocTitle
-    , pandocTitleRaw
     , rssModificationTime
     , loadPostIndex
     , savePostIndex
-    , updatePostIndex
+    , getModificationTime
+    , allPostFilenames
     )
 import MB.Gladtex
     ( gladTex
@@ -87,52 +80,17 @@ baseDirEnvName = "MB_BASE_DIR"
 baseUrlEnvName :: String
 baseUrlEnvName = "MB_BASE_URL"
 
-allPostFilenames :: Config -> IO [FilePath]
-allPostFilenames config = do
-  allFiles <- getDirectoryContents $ postSourceDir config
-  return [ postSourceDir config </> f | f <- allFiles
-         , ".txt" `isSuffixOf` f
-         , not $ "." `isPrefixOf` f
-         ]
-
-getModificationTime :: FilePath -> IO UTCTime
-getModificationTime fullPath = do
-  info <- getFileStatus fullPath
-  return $ toUtcTime $ modificationTime info
-
-loadPost :: FilePath -> IO Post
-loadPost fullPath = do
-  fileContent <- readFile fullPath
-  t <- getModificationTime fullPath
-  let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
-
-  return $ Post { postTitle = pandocTitle doc
-                , postTitleRaw = pandocTitleRaw doc
-                , postFilename = fullPath
-                , postModificationTime = t
-                , postAst = doc
-                }
-
 allPosts :: Config -> IO [Post]
 allPosts config = do
-  postFiles <- allPostFilenames config
-
-  -- For each file, construct a Post from it.
-  posts <- mapM loadPost postFiles
-
   -- Load the post index
-  oldPostIndex <- loadPostIndex config
+  postIndex <- loadPostIndex config
 
-  -- Update the post index
-  let (newPostIndex, newPosts) = updatePostIndex oldPostIndex posts
-
-  when (oldPostIndex /= newPostIndex) $
-       do
-         putStrLn "Updating post index."
-         savePostIndex config newPostIndex
+  -- Save the post index
+  savePostIndex config postIndex
 
   -- Return posts sorted by the index
-  return newPosts
+  let PostIndex posts = postIndex
+  return posts
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =

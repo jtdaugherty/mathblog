@@ -7,8 +7,8 @@ module MB.Util
     , rssModificationTime
     , loadPostIndex
     , savePostIndex
-    , extractPostfilename
-    , updatePostIndex
+    , getModificationTime
+    , allPostFilenames
     )
 where
 import Control.Applicative
@@ -33,8 +33,16 @@ import Control.Monad
 import System.Exit
     ( exitFailure
     )
+import System.Posix.Files
+    ( getFileStatus
+    , modificationTime
+    )
 import System.Posix.Types
     ( EpochTime
+    )
+import Data.List
+    ( isSuffixOf
+    , isPrefixOf
     )
 import Data.Time.Clock
     ( UTCTime
@@ -63,8 +71,9 @@ import Data.List
     )
 import Data.Maybe
     ( fromJust
+    , catMaybes
     )
-import qualified Text.Pandoc.Definition as Pandoc
+import qualified Text.Pandoc as Pandoc
 import qualified MB.Files as Files
 import MB.Types
 
@@ -128,47 +137,74 @@ rssModificationTime :: Post -> String
 rssModificationTime =
     formatTime defaultTimeLocale rfc822DateFormat . postModificationTime
 
+loadPost :: FilePath -> IO Post
+loadPost fullPath = do
+  fileContent <- readFile fullPath
+  t <- getModificationTime fullPath
+  let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
+
+  return $ Post { postTitle = pandocTitle doc
+                , postTitleRaw = pandocTitleRaw doc
+                , postPath = fullPath
+                , postFilename = takeFileName fullPath
+                , postModificationTime = t
+                , postAst = doc
+                }
+
+allPostFilenames :: Config -> IO [FilePath]
+allPostFilenames config = do
+  allFiles <- getDirectoryContents $ postSourceDir config
+  return [ postSourceDir config </> f | f <- allFiles
+         , ".txt" `isSuffixOf` f
+         , not $ "." `isPrefixOf` f
+         ]
+
+getModificationTime :: FilePath -> IO UTCTime
+getModificationTime fullPath = do
+  info <- getFileStatus fullPath
+  return $ toUtcTime $ modificationTime info
+
 loadPostIndex :: Config -> IO PostIndex
 loadPostIndex config = do
   let fn = Files.postIndex config
   e <- doesFileExist fn
-  case e of
-    False -> return $ PostIndex []
-    True -> do
-           h <- openFile fn ReadMode
-           s <- hGetContents h
-           s `seq` return ()
-           let idx = unserializePostIndex s
-           hClose h
-           return idx
+
+  indexNames <- case e of
+                  False -> return []
+                  True -> do
+                         h <- openFile fn ReadMode
+                         s <- hGetContents h
+                         s `seq` return ()
+                         let idx = unserializePostIndex s
+                         hClose h
+                         return idx
+
+  -- Now that we have a postIndex to deal with, load posts from disk
+  -- and insert them into the post index in the proper order
+
+  postFiles <- allPostFilenames config
+  posts <- mapM loadPost postFiles
+
+  -- There are two types of posts to put into the index: the ones that
+  -- are not already in the index, and the ones that are (and in a
+  -- specific order).
+
+  let pairs = [ (postFilename p, p) | p <- posts ]
+      newPosts = [ p | p <- posts, not $ postFilename p `elem` indexNames ]
+      preexistingPosts = catMaybes [ lookup n pairs | n <- indexNames ]
+
+  return $ PostIndex $ sortPosts newPosts ++ preexistingPosts
 
 savePostIndex :: Config -> PostIndex -> IO ()
 savePostIndex config postIndex =
     writeFile (Files.postIndex config) $ serializePostIndex postIndex
 
-extractPostfilename :: PostFilename -> String
-extractPostfilename (PostFilename s) = s
-
 serializePostIndex :: PostIndex -> String
-serializePostIndex (PostIndex ps) = unlines $ map extractPostfilename ps
+serializePostIndex (PostIndex ps) = unlines $ map postFilename ps
 
-unserializePostIndex :: String -> PostIndex
-unserializePostIndex = PostIndex . map PostFilename . lines
-
-postToFilename :: Post -> PostFilename
-postToFilename = PostFilename . takeFileName . postFilename
+unserializePostIndex :: String -> [String]
+unserializePostIndex = lines
 
 sortPosts :: [Post] -> [Post]
 sortPosts = sortBy (\a b -> postModificationTime b `compare`
                             postModificationTime a)
-
-updatePostIndex :: PostIndex -> [Post] -> (PostIndex, [Post])
-updatePostIndex (PostIndex oldNames) posts =
-    ( PostIndex (map postToFilename sortedNewPosts ++ oldNames')
-    , sortedNewPosts ++ posts )
-        where
-          newPosts = [ p | p <- posts, not $ postToFilename p `elem` oldNames ]
-          sortedNewPosts = sortPosts newPosts
-          postFilenames = map postToFilename posts
-          -- Garbage-collect posts that have been deleted
-          oldNames' = [ n | n <- oldNames, n `elem` postFilenames ]

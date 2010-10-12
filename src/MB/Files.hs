@@ -3,7 +3,6 @@ module MB.Files where
 import System.FilePath
     ( (</>)
     , takeBaseName
-    , takeFileName
     )
 import MB.Types
     ( Config(..)
@@ -53,7 +52,7 @@ postUrl :: Post -> String
 postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 
 postBaseName :: Post -> String
-postBaseName = takeBaseName . takeFileName . postFilename
+postBaseName = takeBaseName . postFilename
 
 postHtex :: Config -> Post -> String
 postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
