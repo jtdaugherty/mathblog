@@ -207,7 +207,9 @@ This file lists the filenames of all posts from newest to oldest.  By
 default, new posts get added to the beginning of the list, as you
 would expect.  Any new posts added to the list are sorted by
 modification time so that the newest post on disk appears earlier in
-the index.
+the index.  This feature exists to make it possible for older posts to
+be updated without changing their ordering in the overall sequence of
+posts.
 
 At any time, you can edit the index to reorder the posts as you see
 fit.  mb will preserve ordering of posts already in the index when you
