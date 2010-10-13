@@ -108,3 +108,16 @@ div#prev-next-links {
 #post span.post-created {
   color: #999;
 }
+.eq-left {
+    float: left;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+}
+.eq-right {
+    float: right;
+}
+.eq-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}

@@ -36,6 +36,7 @@ Data-Files:
   skel/templates/pagePostamble.html
   skel/templates/rssPreamble.xml
   skel/templates/rssPostamble.xml
+  skel/eq-templates/eq-basic.txt
   skel/posts/first-post.txt
 
 Executable mb
@@ -47,10 +48,17 @@ Executable mb
     unix >= 2.3 && < 2.5,
     process >= 1.0 && < 1.1,
     time >= 1.1 && < 1.2,
-    old-locale >= 1.0 && < 1.1
+    old-locale >= 1.0 && < 1.1,
+    SHA >= 1.4 && < 1.5,
+    bytestring >= 0.9 && < 1.0
 
   Other-modules:
     Paths_mathblog
+    MB.Files
+    MB.Types
+    MB.Util
+    MB.Gladtex
+    MB.Processing
 
   GHC-Options: -Wall
 

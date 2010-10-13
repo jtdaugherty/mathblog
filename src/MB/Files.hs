@@ -12,8 +12,14 @@ import MB.Types
 indexHtml :: Config -> FilePath
 indexHtml c = htmlDir c </> "index.html"
 
+imageFilename :: Config -> String -> FilePath
+imageFilename c fn = imageDir c </> fn
+
 rssXml :: Config -> FilePath
 rssXml c = htmlDir c </> "feed.xml"
+
+eqPreambleFile :: Config -> String -> FilePath
+eqPreambleFile config n = eqPreamblesDir config </> n
 
 rssPreamble :: Config -> FilePath
 rssPreamble c = templateDir c </> "rssPreamble.xml"

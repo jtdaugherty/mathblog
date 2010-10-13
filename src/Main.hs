@@ -51,6 +51,9 @@ import Data.Time.Clock
     ( getCurrentTime
     )
 import qualified Text.Pandoc as Pandoc
+import MB.Processing
+    ( processPost
+    )
 import MB.Util
     ( copyTree
     , toUtcTime
@@ -152,7 +155,7 @@ generatePost config post = do
     putStrLn $ "Processing: " ++ Files.postBaseName post
 
     h <- openFile (Files.postHtex config post) WriteMode
-    writePost h post
+    writePost h =<< processPost config post
     hClose h
 
     -- Run gladtex on the temp file to generate the final file.
@@ -275,6 +278,7 @@ ensureDirs config = do
              , imageDir
              , templateDir
              , htmlTempDir
+             , eqPreamblesDir
              ]
 
   forM_ (dirs <*> pure config) $ \d ->
@@ -333,6 +337,7 @@ mkConfig base url = Config { baseDir = base
                            , templateDir = base </> "templates"
                            , htmlTempDir = base </> "tmp"
                            , baseUrl = url
+                           , eqPreamblesDir = base </> "eq-preambles"
                            }
 
 usage :: IO ()

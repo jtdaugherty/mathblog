@@ -20,6 +20,7 @@ data Config = Config { baseDir :: FilePath
                      , templateDir :: FilePath
                      , htmlTempDir :: FilePath
                      , baseUrl :: String
+                     , eqPreamblesDir :: FilePath
                      }
 
 data Post = Post { postTitle :: Int -> String
