@@ -51,9 +51,9 @@ Dependencies
 
 mathblog takes advantage of three primary software components:
 
- - pandoc, which will be installed for you automatically if you use
-   "cabal" to install mathblog.  For best results, use the revision
-   control version of Pandoc.
+ - pandoc, a document-processing library.  For best results, use the
+   revision control version of Pandoc.  If you do not, inline and
+   block-level equations will look the same.
 
  - gladTeX, a package of tools for rendering LaTeX equations.  At
    present you MUST get gladTeX from revision control, since mathblog
