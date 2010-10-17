@@ -39,17 +39,11 @@ listTmpHtml c = htmlTempDir c </> "list.html"
 firstPost :: Config -> FilePath
 firstPost c = postSourceDir c </> "first-post.txt"
 
-pagePreamble :: Config -> FilePath
-pagePreamble c = templateDir c </> "pagePreamble.html"
+pageTemplatePath :: Config -> FilePath
+pageTemplatePath c = templateDir c </> "pageTemplate.html"
 
-pagePostamble :: Config -> FilePath
-pagePostamble c = templateDir c </> "pagePostamble.html"
-
-postPreamble :: Config -> FilePath
-postPreamble c = templateDir c </> "postPreamble.html"
-
-postPostamble :: Config -> FilePath
-postPostamble c = templateDir c </> "postPostamble.html"
+postTemplatePath :: Config -> FilePath
+postTemplatePath c = templateDir c </> "postTemplate.html"
 
 postUrl :: Config -> Post -> String
 postUrl c p = baseUrl c ++ "/posts/" ++ postBaseName p ++ ".html"

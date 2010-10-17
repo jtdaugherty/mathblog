@@ -4,9 +4,6 @@ module MB.Templates
     )
 where
 
-import Control.Applicative
-    ( (<$>)
-    )
 import Text.StringTemplate
     ( newSTMP
     , render
@@ -19,11 +16,15 @@ import MB.Types
 
 loadTemplate :: FilePath -> IO (Either String Template)
 loadTemplate path = do
-  t <- newSTMP <$> readFile path
+  s <- readFile path
+  s `seq` return ()
+
   let (a, _, _) = checkTemplate t
+      t = newSTMP s
+
   case a of
     Nothing -> return $ Right t
-    Just s -> return $ Left $ "Error parsing template " ++ path ++ ": " ++ s
+    Just msg -> return $ Left $ "Error parsing template " ++ path ++ ": " ++ msg
 
 renderTemplate :: [(String, String)] -> Template -> String
 renderTemplate attrs = render . setManyAttrib attrs

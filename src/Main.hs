@@ -7,6 +7,7 @@ import Control.Applicative
 import Control.Monad
     ( when
     , forM_
+    , forM
     )
 import Control.Concurrent
     ( threadDelay
@@ -91,11 +92,12 @@ commonTemplateAttrs :: Config -> [(String, String)]
 commonTemplateAttrs config = [ ("baseUrl", baseUrl config )
                              ]
 
+fillTemplate :: Config -> Template -> [(String, String)] -> String
+fillTemplate config t attrs = renderTemplate attrs' t
+    where attrs' = commonTemplateAttrs config ++ attrs
+
 writeTemplate :: Config -> Handle -> Template -> [(String, String)] -> IO ()
-writeTemplate config h t attrs = do
-  let out = renderTemplate attrs' t
-      attrs' = commonTemplateAttrs config ++ attrs
-  hPutStr h out
+writeTemplate config h t attrs = hPutStr h $ fillTemplate config t attrs
 
 allPosts :: Config -> IO [Post]
 allPosts config = do
@@ -143,15 +145,37 @@ jsInfo post =
     "};\n" ++
     "</script>\n"
 
+buildPage :: Handle -> Config -> String -> IO ()
+buildPage h config content = do
+  eTmpl <- loadTemplate $ Files.pageTemplatePath config
+
+  case eTmpl of
+    Left msg -> putStrLn msg >> exitFailure
+    Right tmpl ->
+        do
+          let attrs = [ ("content", content)
+                      ]
+
+          writeTemplate config h tmpl attrs
+          hClose h
+
 buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h config post prevNext = do
-  hPutStr h =<< (readFile $ Files.pagePreamble config)
-  hPutStr h $ jsInfo post
-  hPutStr h $ uncurry (buildLinks config) prevNext
-  hPutStr h =<< (readFile $ Files.postPreamble config)
-  hPutStr h =<< (readFile $ Files.postIntermediateHtml config post)
-  hPutStr h =<< (readFile $ Files.postPostamble config)
-  hPutStr h =<< (readFile $ Files.pagePostamble config)
+  eTmpl <- loadTemplate $ Files.postTemplatePath config
+
+  case eTmpl of
+    Left msg -> putStrLn msg >> exitFailure
+    Right tmpl ->
+        do
+          html <- readFile $ Files.postIntermediateHtml config post
+
+          let attrs = [ ("post", html)
+                      , ("nextPrevLinks", uncurry (buildLinks config) prevNext)
+                      , ("jsInfo", jsInfo post)
+                      ]
+
+          let out = (fillTemplate config tmpl attrs)
+          buildPage h config out
 
 generatePost :: Config -> Post -> IO ()
 generatePost config post = do
@@ -216,26 +240,24 @@ generateList :: Config -> [Post] -> IO ()
 generateList config posts = do
   putStrLn "Generating all-posts list."
 
-  h <- openFile (Files.listHtex config) WriteMode
-
-  hPutStr h =<< (readFile $ Files.pagePreamble config)
-  hPutStr h "<div id=\"all-posts\">"
-
   -- For each post in the order they were given, extract the
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
-  forM_ posts $ \p -> do
-    created <- postModificationString p
-    hPutStr h $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
-                       , "<a href=\"" ++ Files.postUrl config p ++ "\">"
-                       , postTitle p 110
-                       , "</a></span><span class=\"post-created\">Posted "
-                       , created
-                       , "</span></div>\n"
-                       ]
+  entries <- forM posts $ \p ->
+             do
+               created <- postModificationString p
+               return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
+                               , "<a href=\"" ++ Files.postUrl config p ++ "\">"
+                               , postTitle p 110
+                               , "</a></span><span class=\"post-created\">Posted "
+                               , created
+                               , "</span></div>\n"
+                               ]
 
-  hPutStr h "</div>"
-  hPutStr h =<< (readFile $ Files.pagePostamble config)
+  let content = "<div id=\"all-posts\">" ++ concat entries ++ "</div>"
+
+  h <- openFile (Files.listHtex config) WriteMode
+  buildPage h config content
   hClose h
 
   gladTex config (Files.listHtex config) "0000FF"
@@ -310,10 +332,8 @@ ensureDirs config = do
 -- at other files to trigger a regeneration.
 changedFiles :: Config -> [FilePath]
 changedFiles config = [ Files.rssTemplatePath
-                      , Files.pagePreamble
-                      , Files.pagePostamble
-                      , Files.postPreamble
-                      , Files.postPostamble
+                      , Files.pageTemplatePath
+                      , Files.postTemplatePath
                       ] <*> pure config
 
 preserveM :: (Monad m) => (a -> m b) -> a -> m (a, b)
