@@ -27,6 +27,9 @@ data Config = Config { baseDir :: FilePath
                      , htmlTempDir :: FilePath
                      , baseUrl :: String
                      , eqPreamblesDir :: FilePath
+                     , title :: String
+                     , authorName :: String
+                     , authorEmail :: String
                      }
 
 data Post = Post { postTitle :: Int -> String

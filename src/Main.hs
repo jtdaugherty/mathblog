@@ -52,6 +52,7 @@ import Data.Time.Clock
     ( getCurrentTime
     )
 import qualified Text.Pandoc as Pandoc
+import qualified MB.Config as Config
 import MB.Templates
     ( loadTemplate
     , renderTemplate
@@ -89,7 +90,10 @@ baseUrlEnvName :: String
 baseUrlEnvName = "MB_BASE_URL"
 
 commonTemplateAttrs :: Config -> [(String, String)]
-commonTemplateAttrs config = [ ("baseUrl", baseUrl config )
+commonTemplateAttrs config = [ ( "baseUrl", baseUrl config )
+                             , ( "title", title config )
+                             , ( "authorName", authorName config )
+                             , ( "authorEmail", authorEmail config )
                              ]
 
 fillTemplate :: Config -> Template -> [(String, String)] -> String
@@ -298,16 +302,14 @@ generateRssFeed config posts = do
           writeTemplate config h tmpl attrs
           hClose h
 
-setup :: Config -> IO ()
-setup config = do
-  exists <- doesDirectoryExist $ baseDir config
+setup :: FilePath -> IO ()
+setup dir = do
+  exists <- doesDirectoryExist dir
   dataDir <- skelDir
 
   when (not exists) $ do
           putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
-          copyTree dataDir $ baseDir config
-
-  ensureDirs config
+          copyTree dataDir dir
 
 ensureDirs :: Config -> IO ()
 ensureDirs config = do
@@ -364,19 +366,43 @@ scanForChanges config act = do
           threadDelay $ 1 * 1000 * 1000
           scan nextTime
 
-mkConfig :: FilePath -> String -> Config
-mkConfig base url = Config { baseDir = base
-                           , postSourceDir = base </> "posts"
-                           , htmlDir = base </> "html"
-                           , stylesheetDir = base </> "html" </> "stylesheets"
-                           , postHtmlDir = base </> "html" </> "posts"
-                           , postIntermediateDir = base </> "generated"
-                           , imageDir = base </> "html" </> "generated-images"
-                           , templateDir = base </> "templates"
-                           , htmlTempDir = base </> "tmp"
-                           , baseUrl = url
-                           , eqPreamblesDir = base </> "eq-preambles"
-                           }
+mkConfig :: FilePath -> IO Config
+mkConfig base = do
+  let configPath = base </> "blog.cfg"
+  e <- doesFileExist configPath
+
+  when (not e) $ do
+                  putStrLn $ "Configuration file " ++ configPath ++ " not found"
+                  exitFailure
+
+  let requiredValues = [ "baseUrl"
+                       , "title"
+                       , "authorName"
+                       , "authorEmail"
+                       ]
+
+  cfg <- Config.readConfig configPath requiredValues
+
+  let Just cfg_baseUrl = lookup "baseUrl" cfg
+      Just cfg_title = lookup "title" cfg
+      Just cfg_authorName = lookup "authorName" cfg
+      Just cfg_authorEmail = lookup "authorEmail" cfg
+
+  return $ Config { baseDir = base
+                  , postSourceDir = base </> "posts"
+                  , htmlDir = base </> "html"
+                  , stylesheetDir = base </> "html" </> "stylesheets"
+                  , postHtmlDir = base </> "html" </> "posts"
+                  , postIntermediateDir = base </> "generated"
+                  , imageDir = base </> "html" </> "generated-images"
+                  , templateDir = base </> "templates"
+                  , htmlTempDir = base </> "tmp"
+                  , baseUrl = cfg_baseUrl
+                  , title = cfg_title
+                  , authorName = cfg_authorName
+                  , authorEmail = cfg_authorEmail
+                  , eqPreamblesDir = base </> "eq-preambles"
+                  }
 
 usage :: IO ()
 usage = do
@@ -399,21 +425,20 @@ main = do
   checkForGladtex
 
   let mBase = lookup baseDirEnvName env
-      mBaseUrl = lookup baseUrlEnvName env
 
-  when (isNothing (mBase >> mBaseUrl)) $ usage >> exitFailure
+  when (isNothing mBase) $ usage >> exitFailure
 
   let Just dir = mBase
-      Just url = mBaseUrl
 
   when (head dir /= '/') $ do
          putStrLn $ baseDirEnvName ++ " must contain an absolute path"
          exitFailure
 
   putStrLn $ "mb: using base directory " ++ (show dir)
-  putStrLn $ "mb: using base url " ++ (show url)
-  let config = mkConfig dir url
-  setup config
+
+  setup dir
+  config <- mkConfig dir
+  ensureDirs config
 
   let work = do
          posts <- allPosts config
