@@ -145,8 +145,8 @@ jsInfo post =
     "};\n" ++
     "</script>\n"
 
-buildPage :: Handle -> Config -> String -> IO ()
-buildPage h config content = do
+buildPage :: Handle -> Config -> String -> Maybe String -> IO ()
+buildPage h config content extraTitle = do
   eTmpl <- loadTemplate $ Files.pageTemplatePath config
 
   case eTmpl of
@@ -154,7 +154,7 @@ buildPage h config content = do
     Right tmpl ->
         do
           let attrs = [ ("content", content)
-                      ]
+                      ] ++ maybe [] (\t -> [("extraTitle", t)]) extraTitle
 
           writeTemplate config h tmpl attrs
           hClose h
@@ -175,7 +175,7 @@ buildPost h config post prevNext = do
                       ]
 
           let out = (fillTemplate config tmpl attrs)
-          buildPage h config out
+          buildPage h config out $ Just $ postTitleRaw post
 
 generatePost :: Config -> Post -> IO ()
 generatePost config post = do
@@ -257,7 +257,7 @@ generateList config posts = do
   let content = "<div id=\"all-posts\">" ++ concat entries ++ "</div>"
 
   h <- openFile (Files.listHtex config) WriteMode
-  buildPage h config content
+  buildPage h config content Nothing
   hClose h
 
   gladTex config (Files.listHtex config) "0000FF"
