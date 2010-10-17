@@ -37,9 +37,8 @@ import System.FilePath
     ( (</>)
     )
 import System.Posix.Files
-    ( getFileStatus
-    , modificationTime
-    , createSymbolicLink
+    ( createSymbolicLink
+    , touchFile
     )
 import Data.Maybe
     ( isNothing
@@ -62,7 +61,6 @@ import MB.Processing
     )
 import MB.Util
     ( copyTree
-    , toUtcTime
     , toLocalTime
     , rssModificationTime
     , loadPostIndex
@@ -85,6 +83,9 @@ skelDir = getDataFileName "skel"
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
+
+configFilename :: String
+configFilename = "blog.cfg"
 
 commonTemplateAttrs :: Config -> [(String, String)]
 commonTemplateAttrs config = [ ( "baseUrl", baseUrl config )
@@ -184,13 +185,14 @@ generatePost config post = do
       finalHtml = Files.postIntermediateHtml config post
 
   htmlExists <- doesFileExist finalHtml
-  skip <- case htmlExists of
-            False -> return False
-            True -> do
-              info <- getFileStatus finalHtml
-              return $ (toUtcTime $ modificationTime info) > postModificationTime post
+  generate <- case htmlExists of
+                False -> return True
+                True -> do
+                  t <- getModificationTime finalHtml
+                  return $ (postModificationTime post > t) ||
+                        (configModificationTime config > postModificationTime post)
 
-  when (not skip) $ do
+  when generate $ do
     putStrLn $ "Processing: " ++ Files.postBaseName post
 
     h <- openFile (Files.postHtex config post) WriteMode
@@ -220,6 +222,11 @@ generatePosts config posts = do
         h <- openFile (Files.postFinalHtml config p) WriteMode
         buildPost h config p (prevPost, nextPost)
         hClose h
+        -- Touch the post source, final HTML, and intermediate HTML
+        -- files so next time we know which ones are newer
+        touchFile $ postPath p
+        touchFile $ Files.postFinalHtml config p
+        touchFile $ Files.postIntermediateHtml config p
 
 generateIndex :: Config -> Post -> IO ()
 generateIndex config post = do
@@ -365,12 +372,14 @@ scanForChanges config act = do
 
 mkConfig :: FilePath -> IO Config
 mkConfig base = do
-  let configPath = base </> "blog.cfg"
-  e <- doesFileExist configPath
+  let configFilePath = base </> configFilename
+  e <- doesFileExist configFilePath
 
   when (not e) $ do
-                  putStrLn $ "Configuration file " ++ configPath ++ " not found"
+                  putStrLn $ "Configuration file " ++ configFilePath ++ " not found"
                   exitFailure
+
+  t <- getModificationTime configFilePath
 
   let requiredValues = [ "baseUrl"
                        , "title"
@@ -378,7 +387,7 @@ mkConfig base = do
                        , "authorEmail"
                        ]
 
-  cfg <- Config.readConfig configPath requiredValues
+  cfg <- Config.readConfig configFilePath requiredValues
 
   let Just cfg_baseUrl = lookup "baseUrl" cfg
       Just cfg_title = lookup "title" cfg
@@ -399,6 +408,8 @@ mkConfig base = do
                   , authorName = cfg_authorName
                   , authorEmail = cfg_authorEmail
                   , eqPreamblesDir = base </> "eq-preambles"
+                  , configModificationTime = t
+                  , configPath = configFilePath
                   }
 
 usage :: IO ()
@@ -442,6 +453,7 @@ main = do
          generateIndex config $ head posts
          generateList config posts
          generateRssFeed config posts
+         touchFile $ configPath config
          putStrLn "Done."
 
   case args of

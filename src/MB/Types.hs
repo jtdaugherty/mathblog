@@ -30,6 +30,8 @@ data Config = Config { baseDir :: FilePath
                      , title :: String
                      , authorName :: String
                      , authorEmail :: String
+                     , configModificationTime :: UTCTime
+                     , configPath :: FilePath
                      }
 
 data Post = Post { postTitle :: Int -> String
