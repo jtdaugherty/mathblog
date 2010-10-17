@@ -64,31 +64,21 @@ mathblog takes advantage of three primary software components:
 How to use
 ----------
 
-mathblog doesn't have any persistent configuration file; the way you
-configure it is by setting two environment variables:
+To begin, set the following environment variable:
 
   MB_BASE_DIR
 
-    The location of your blog files on the filesystem.  Must be an
-    absolute path.
+This is the location of your blog files on the filesystem.  Must be an
+absolute path.
 
-  MB_BASE_URL
+Once you've set the environment variable, just run "mb".  It will take
+care of setting up a new blog data directory for you, complete with
+some default pages and a default first blog post:
 
-    The base URL of your blog as it will be hosted.  This is used to
-    generate fully-qualified URLs.  A trailing slash is not expected.
-    E.g., "http://localhost:8080".
-
-Once you've set those environment variables, just run "mb".  It will
-take care of setting up a new blog data directory for you, complete
-with some default pages and a default first blog post:
-
-  $ export MB_BASE_URL="http://localhost:8080"
   $ export MB_BASE_DIR=`pwd`/myBlog
   $ mb
-  mb: using base directory "/home/.../myBlog"
-  mb: using base url "http://localhost:8080"
-  Setting up data directory using skeleton: /home/.../.cabal/share/mathblog-0.1/skel
-  Updating post index.
+  mb: using base directory ".../myBlog"
+  Setting up data directory using skeleton: /.../skel
   Processing: first-post
   Generating all-posts list.
   Done.
@@ -96,13 +86,19 @@ with some default pages and a default first blog post:
 Now you have a blog; fire up a web server pointing at myBlog/html and
 you'll see a demo post.
 
+Next, you'll need to make a few changes to the default configuration,
+"blog.cfg".  This file contains information about you which may be
+included in the generated pages, such as your name, e-mail address,
+and the title of your blog.  Most importantly, this file contains the
+base URL of your blog which is used to generate URLs in the blog's
+pages.
+
 Next, you might want to edit or create a new post, or even remove one.
 Just edit the appropriate file in myBlog/posts/ accordingly and re-run
 mb.  Here's an example of adding a new post:
 
   $ mb
-  mb: using base directory "/home/.../blog/myBlog"
-  mb: using base url "http://localhost:8080"
+  mb: using base directory ".../myBlog"
   Processing: second-post
   Generating all-posts list.
   Done.
@@ -132,7 +128,6 @@ detects a change.  Running mathblog in listen mode is simple:
 
   $ mb -l
   mb: using base directory "/home/.../myBlog"
-  mb: using base url "http://localhost:8080"
 
   Changes detected:
     /home/.../myBlog/posts/second-post.txt
@@ -156,28 +151,56 @@ mathblog when it creates your blog data directory.  These files are
 stored in the "templates/" subdirectory of your blog data directory
 and are as follows:
 
-  templates/rssPreamble.xml
-  templates/rssPostamble.xml
+  templates/rssTemplate.xml
 
-    These files make up the leading and trailing RSS XML that will be
-    used to wrap the individual elements of your blog's RSS feed.
-    You'll probably want to change the rssPreamble.xml file, since it
-    contains information about the blog author.
+    This is the template used to generate your RSS feed.
 
-  templates/pagePreamble.html
-  templates/pagePostamble.html
+  templates/pageTemplate.html
 
-    These files make up the outermost HTML content of the blog post
-    pages, including the index page and the post list page.
+    This file makes up the overall structure of every page on the
+    blog.
 
-  templates/postPreamble.html
-  templates/postPostamble.html
+  templates/postTemplate.html
 
-    These files make up the HTML content surrounding the post body
-    itself.
+    This file makes up the structure of the post portion of the page,
+    for pages which show posts (i.e., not the post index).
 
 In addition, subdirectories of the "html/" directory contain things
 you might want to customize, such as a CSS stylesheet.
+
+The templates mentioned above are StringTemplate templates and are
+processed with the HStringTemplate library.  The following template
+placeholders are supported in each template:
+
+  $title$
+  $baseUrl$
+  $authorName$
+  $authorEmail$
+
+    These placeholders all correspond directly to fields on the
+    blog.cfg configuration file.
+
+These placeholders are supported in the post template:
+
+  $jsInfo$
+
+    A brief javascript used to provide information about the page to
+    other javascripts (see "Other features" below for usage).
+
+  $nextPrevLinks$
+
+    HTML displaying the "next" and "previous" links for older/newer
+    posts.
+
+  $post$
+
+    The body of the post itself.
+
+These placeholders are supported in the page template:
+
+  $content$
+
+    The content of the page to be rendered.
 
 Other features
 --------------
