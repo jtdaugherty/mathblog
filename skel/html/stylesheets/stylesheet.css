@@ -59,6 +59,7 @@ span.post-created {
   display: block;
   margin-left: 1em;
   color: #555;
+  margin-bottom: 1em;
 }
 div#prev-next-links {
   margin-top: 1em;
