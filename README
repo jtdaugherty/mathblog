@@ -103,6 +103,25 @@ mb.  Here's an example of adding a new post:
   Generating all-posts list.
   Done.
 
+When to run mb
+--------------
+
+mb looks at the modification times of your post files in posts/ as
+well as the config file, blog.cfg, when determining when to render
+posts.  It also looks for new posts that haven't been rendered in the
+past.  The rule of thumb is: re-run mb whenever you make any changes
+to:
+
+ - templates in templates/
+ - post files in posts/
+ - the post index, posts/posts-index
+ - blog.cfg
+
+Modifying a post will cause that post to be re-rendered, but
+modifiying the configuration file will cause ALL posts to be
+re-rendered (since the configuration file contains values that will
+affect all hyperlinks contained inside each post).
+
 Post format
 -----------
 
