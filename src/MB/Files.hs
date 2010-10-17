@@ -54,8 +54,8 @@ postPreamble c = templateDir c </> "postPreamble.html"
 postPostamble :: Config -> FilePath
 postPostamble c = templateDir c </> "postPostamble.html"
 
-postUrl :: Post -> String
-postUrl p = "/posts/" ++ postBaseName p ++ ".html"
+postUrl :: Config -> Post -> String
+postUrl c p = baseUrl c ++ "/posts/" ++ postBaseName p ++ ".html"
 
 postBaseName :: Post -> String
 postBaseName = takeBaseName . postFilename

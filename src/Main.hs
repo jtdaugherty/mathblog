@@ -107,8 +107,8 @@ writePost h post = do
   hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
 
-buildLinks :: Maybe Post -> Maybe Post -> String
-buildLinks prev next =
+buildLinks :: Config -> Maybe Post -> Maybe Post -> String
+buildLinks config prev next =
     "<div id=\"prev-next-links\">"
       ++ link "next-link" "older" next
       ++ link "prev-link" "newer" prev
@@ -117,7 +117,7 @@ buildLinks prev next =
           link cls name Nothing =
               "<span class=\"" ++ cls ++ "-subdued\">" ++ name ++ "</span>"
           link cls name (Just p) =
-              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl p ++
+              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl config p ++
                                 "\">" ++ name ++ "</a>"
 
 jsInfo :: Post -> String
@@ -133,7 +133,7 @@ buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h config post prevNext = do
   hPutStr h =<< (readFile $ Files.pagePreamble config)
   hPutStr h $ jsInfo post
-  hPutStr h $ uncurry buildLinks prevNext
+  hPutStr h $ uncurry (buildLinks config) prevNext
   hPutStr h =<< (readFile $ Files.postPreamble config)
   hPutStr h =<< (readFile $ Files.postIntermediateHtml config post)
   hPutStr h =<< (readFile $ Files.postPostamble config)
@@ -213,7 +213,7 @@ generateList config posts = do
   forM_ posts $ \p -> do
     created <- postModificationString p
     hPutStr h $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
-                       , "<a href=\"" ++ Files.postUrl p ++ "\">"
+                       , "<a href=\"" ++ Files.postUrl config p ++ "\">"
                        , postTitle p 110
                        , "</a></span><span class=\"post-created\">Posted "
                        , created
@@ -234,16 +234,13 @@ generateList config posts = do
   removeFile $ Files.listHtex config
   removeFile $ Files.listTmpHtml config
 
-fullPostUrl :: Config -> Post -> String
-fullPostUrl config p = baseUrl config ++ Files.postUrl p
-
 rssItem :: Config -> Post -> String
 rssItem config p =
     concat [ "<item>"
            , "<title>" ++ postTitleRaw p ++ "</title>\n"
-           , "<link>" ++ fullPostUrl config p ++ "</link>\n"
+           , "<link>" ++ Files.postUrl config p ++ "</link>\n"
            , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
-           , "<guid>" ++ fullPostUrl config p ++ "</guid>\n"
+           , "<guid>" ++ Files.postUrl config p ++ "</guid>\n"
            , "</item>\n"
            ]
 
