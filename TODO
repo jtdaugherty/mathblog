@@ -13,20 +13,13 @@
   colors for LaTeX equations in pages and titles are hardcoded in the
   source (see calls to MB.Gladtex.gladTex)
 
-- Support for embedded gnuplot scripts with configurable preamble, e.g.,
+  - Now this can be put into the config file!
 
-  set samples 500
-  set zeroaxis
-  set noborder
-  set xtics axis nomirror
-  set ytics axis nomirror
-  set term png
-  set output "bar.png" # some temp file name that gets written to an
-                       # image in the images directory
+- Make listen mode detect configuration changes
 
-  foo(x) = (x <= 1.0 ? x : 1/0)
-  bar(x) = (x > 1.0 ? x + 0.5 : 1/0)
-  plot [-5.0:5.0] [-5.0:5.0] foo(x) lt rgb "red", bar(x) lt rgb "red" notitle
+- Try to unify change detection in listen mode with post re-rendering
+  determination
 
-- Migrate to actual templates to support things like setting per-page
-  titles
+- Take further advantage of new template support by moving more and
+  more HTML out of Main.hs and into templates (while trying to keep
+  the number of templates small)
