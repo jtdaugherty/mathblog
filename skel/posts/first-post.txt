@@ -25,6 +25,10 @@ as opposed to this:
 $\int^n_0{\ldots} = \sum^n_{i=1}{b_0 G(u^s)}
 \Longrightarrow \frac{\tan x}{\lim_{h \to \infty}{\Phi}}$
 
+(NOTE: if the two images immediately above are identical, then you
+must run the revision control version of Pandoc, which includes an
+unreleased fix!)
+
 The content of this post can be found in the `posts` subdirectory of
 your blog data directory; the rest of the content of this page can be
 found in "preamble" and "postamble" files in the `templates`
