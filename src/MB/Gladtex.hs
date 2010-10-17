@@ -23,7 +23,7 @@ gladTex config htexPath color = do
   let args = [ "-d"
              , imageDir config
              , "-u"
-             , "/generated-images/"
+             , baseUrl config ++ "/generated-images/"
              , "-r"
              , "120"
              , "-b"
