@@ -3,12 +3,18 @@ module MB.Types
     ( Config(..)
     , Post(..)
     , PostIndex(..)
+    , Template
     )
 where
 import Data.Time.Clock
     ( UTCTime
     )
 import qualified Text.Pandoc.Definition as Pandoc
+import Text.StringTemplate
+    ( StringTemplate
+    )
+
+type Template = StringTemplate String
 
 data Config = Config { baseDir :: FilePath
                      , postSourceDir :: FilePath

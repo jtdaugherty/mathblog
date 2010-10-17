@@ -51,6 +51,10 @@ import Data.Time.Clock
     ( getCurrentTime
     )
 import qualified Text.Pandoc as Pandoc
+import MB.Templates
+    ( loadTemplate
+    , renderTemplate
+    )
 import MB.Processing
     ( processPost
     )
@@ -82,6 +86,16 @@ baseDirEnvName = "MB_BASE_DIR"
 
 baseUrlEnvName :: String
 baseUrlEnvName = "MB_BASE_URL"
+
+commonTemplateAttrs :: Config -> [(String, String)]
+commonTemplateAttrs config = [ ("baseUrl", baseUrl config )
+                             ]
+
+writeTemplate :: Config -> Handle -> Template -> [(String, String)] -> IO ()
+writeTemplate config h t attrs = do
+  let out = renderTemplate attrs' t
+      attrs' = commonTemplateAttrs config ++ attrs
+  hPutStr h out
 
 allPosts :: Config -> IO [Post]
 allPosts config = do
@@ -247,12 +261,20 @@ rssItem config p =
 generateRssFeed :: Config -> [Post] -> IO ()
 generateRssFeed config posts = do
   h <- openFile (Files.rssXml config) WriteMode
-  hPutStr h =<< (readFile $ Files.rssPreamble config)
 
-  forM_ posts (hPutStr h . rssItem config)
+  eTmpl <- loadTemplate $ Files.rssTemplatePath config
 
-  hPutStr h =<< (readFile $ Files.rssPostamble config)
-  hClose h
+  case eTmpl of
+    Left msg -> putStrLn msg >> exitFailure
+    Right tmpl ->
+        do
+          let items = map (rssItem config) posts
+              itemStr = concat items
+              attrs = [ ("items", itemStr)
+                      ]
+
+          writeTemplate config h tmpl attrs
+          hClose h
 
 setup :: Config -> IO ()
 setup config = do
@@ -287,8 +309,7 @@ ensureDirs config = do
 -- We'll always look at the post input files, but we also want to look
 -- at other files to trigger a regeneration.
 changedFiles :: Config -> [FilePath]
-changedFiles config = [ Files.rssPreamble
-                      , Files.rssPostamble
+changedFiles config = [ Files.rssTemplatePath
                       , Files.pagePreamble
                       , Files.pagePostamble
                       , Files.postPreamble

@@ -21,11 +21,8 @@ rssXml c = htmlDir c </> "feed.xml"
 eqPreambleFile :: Config -> String -> FilePath
 eqPreambleFile config n = eqPreamblesDir config </> n
 
-rssPreamble :: Config -> FilePath
-rssPreamble c = templateDir c </> "rssPreamble.xml"
-
-rssPostamble :: Config -> FilePath
-rssPostamble c = templateDir c </> "rssPostamble.xml"
+rssTemplatePath :: Config -> FilePath
+rssTemplatePath c = templateDir c </> "rssTemplate.xml"
 
 listHtml :: Config -> FilePath
 listHtml c = postHtmlDir c </> "index.html"

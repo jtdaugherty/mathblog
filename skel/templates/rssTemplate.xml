@@ -1,8 +1,11 @@
 <rss version="2.0">
   <channel>
     <title>A Blog</title>
-    <link>http://localhost:8080/</link>
+    <link>$baseUrl$</link>
     <description>A Blog.</description>
     <language>en-us</language>
     <managingEditor>your@email.com</managingEditor>
     <webMaster>your@email.com</webMaster>
+    $items$
+  </channel>
+</rss>
