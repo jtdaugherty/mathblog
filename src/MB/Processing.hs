@@ -99,7 +99,7 @@ renderGnuPlotScript config preambleName rawScript classes = do
                        putStrLn out
                        putStrLn err
 
-      return $ Pandoc.Para [Pandoc.HtmlInline $ concat [ "<img src=\"/generated-images/"
+      return $ Pandoc.Para [Pandoc.HtmlInline $ concat [ "<img src=\"" ++ baseUrl config ++ "/generated-images/"
                                                        , imageFilename
                                                        , "\" class=\""
                                                        , intercalate " " classes
