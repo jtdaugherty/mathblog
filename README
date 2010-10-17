@@ -68,8 +68,8 @@ To begin, set the following environment variable:
 
   MB_BASE_DIR
 
-This is the location of your blog files on the filesystem.  Must be an
-absolute path.
+This is the location of your blog files on the filesystem.  It must be
+an absolute path.
 
 Once you've set the environment variable, just run "mb".  It will take
 care of setting up a new blog data directory for you, complete with
@@ -85,6 +85,13 @@ some default pages and a default first blog post:
 
 Now you have a blog; fire up a web server pointing at myBlog/html and
 you'll see a demo post.
+
+(NOTE: to serve your blog files you can either make the "html"
+directory a document root for your web server or virtual host, or you
+can symlink the "html" directory to the location of choice.  The
+mathblog directory itself is not intended to be in your web server's
+document tree because it contains many files that shouldn't be served
+to users.)
 
 Next, you'll need to make a few changes to the default configuration,
 "blog.cfg".  This file contains information about you which may be
