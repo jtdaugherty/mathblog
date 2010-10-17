@@ -86,9 +86,6 @@ skelDir = getDataFileName "skel"
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
 
-baseUrlEnvName :: String
-baseUrlEnvName = "MB_BASE_URL"
-
 commonTemplateAttrs :: Config -> [(String, String)]
 commonTemplateAttrs config = [ ( "baseUrl", baseUrl config )
                              , ( "title", title config )
@@ -411,7 +408,6 @@ usage = do
   putStrLn "weblog.  To use mb, you must set a few environment variables:"
   putStrLn ""
   putStrLn $ "  " ++ baseDirEnvName ++ ": path where blog files will be stored"
-  putStrLn $ "  " ++ baseUrlEnvName ++ ": base URL where blog will be hosted"
   putStrLn ""
   putStrLn " -l: make mb poll periodically and regenerate your blog content"
   putStrLn "     when something changes.  This is useful if you want to run a"
