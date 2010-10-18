@@ -38,7 +38,6 @@ import System.FilePath
     )
 import System.Posix.Files
     ( createSymbolicLink
-    , touchFile
     )
 import Data.Maybe
     ( isNothing
@@ -333,7 +332,7 @@ changedFiles config = [ Files.rssTemplatePath
 preserveM :: (Monad m) => (a -> m b) -> a -> m (a, b)
 preserveM act val = act val >>= \r -> return (val, r)
 
-scanForChanges :: Config -> IO () -> IO ()
+scanForChanges :: Config -> (Config -> IO ()) -> IO ()
 scanForChanges config act = do
   t <- getCurrentTime
   scan t
@@ -354,7 +353,7 @@ scanForChanges config act = do
                  putStrLn "Changes detected:"
                  forM_ modified $ \(fp, _) -> do
                               putStrLn $ "  " ++ fp
-                 act
+                 act config
           threadDelay $ 1 * 1000 * 1000
           scan nextTime
 
@@ -441,6 +440,14 @@ usage = do
   putStrLn "     when something changes.  This is useful if you want to run a"
   putStrLn "     local web server to view your posts as you're writing them."
 
+regenerateContent :: Config -> IO ()
+regenerateContent config = do
+  generatePosts config
+  generateIndex config
+  generateList config
+  generateRssFeed config
+  putStrLn "Done."
+
 main :: IO ()
 main = do
   env <- getEnvironment
@@ -464,15 +471,7 @@ main = do
   config <- mkConfig dir
   ensureDirs config
 
-  let work = do
-         generatePosts config
-         generateIndex config
-         generateList config
-         generateRssFeed config
-         touchFile $ configPath config
-         putStrLn "Done."
-
   case args of
-    [] -> work
-    ["-l"] -> work >> scanForChanges config work
+    [] -> regenerateContent config
+    ["-l"] -> regenerateContent config >> scanForChanges config regenerateContent
     _ -> usage >> exitFailure
