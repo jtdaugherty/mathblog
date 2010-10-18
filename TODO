@@ -15,11 +15,6 @@
 
   - Now this can be put into the config file!
 
-- Make listen mode detect configuration changes
-
-- Try to unify change detection in listen mode with post re-rendering
-  determination
-
 - Take further advantage of new template support by moving more and
   more HTML out of Main.hs and into templates (while trying to keep
   the number of templates small)
