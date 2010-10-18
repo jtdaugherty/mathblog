@@ -68,8 +68,9 @@ import MB.Util
     , rssModificationTime
     , loadPostIndex
     , getModificationTime
-    , allPostFilenames
     , dirFilenames
+    , anyChanges
+    , serializePostIndex
     )
 import MB.Gladtex
     ( gladTex
@@ -170,20 +171,16 @@ buildPost h config post prevNext = do
           let out = (fillTemplate config tmpl attrs)
           buildPage h config out $ Just $ postTitleRaw post
 
-generatePost :: Config -> Post -> IO ()
-generatePost config post = do
+generatePost :: Config -> Post -> ChangeSummary -> IO ()
+generatePost config post summary = do
   let tempHtml = htmlTempDir config </> Files.postBaseName post ++ ".html"
       finalHtml = Files.postIntermediateHtml config post
 
-  htmlExists <- doesFileExist finalHtml
-  generate <- case htmlExists of
-                False -> return True
-                True -> do
-                  t <- getModificationTime finalHtml
-                  return $ (postModificationTime post > t)
+  let generate = (postFilename post `elem` (postsChanged summary))
+                 || configChanged summary
 
   when generate $ do
-    putStrLn $ "Processing: " ++ Files.postBaseName post
+    putStrLn $ "Rendering " ++ Files.postBaseName post
 
     h <- openFile (Files.postHtex config post) WriteMode
     writePost h =<< processPost config post
@@ -200,8 +197,13 @@ generatePost config post = do
     removeFile $ Files.postHtex config post
     removeFile tempHtml
 
-generatePosts :: Config -> IO ()
-generatePosts config = do
+generatePosts :: Config -> ChangeSummary -> IO ()
+generatePosts config summary = do
+  let numRegenerated = if configChanged summary
+                       then length $ blogPosts config
+                       else length $ postsChanged summary
+  when (numRegenerated > 0) $ putStrLn $ "Rendering " ++ (show numRegenerated) ++ " post(s)..."
+
   let n = length posts
       posts = blogPosts config
   forM_ (zip posts [0..]) $ \(p, i) ->
@@ -209,7 +211,7 @@ generatePosts config = do
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
 
-        generatePost config p
+        generatePost config p summary
         h <- openFile (Files.postFinalHtml config p) WriteMode
         buildPost h config p (prevPost, nextPost)
         hClose h
@@ -233,8 +235,6 @@ postModificationString p = do
 
 generateList :: Config -> IO ()
 generateList config = do
-  putStrLn "Generating all-posts list."
-
   -- For each post in the order they were given, extract the
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
@@ -332,30 +332,15 @@ changedFiles config = [ Files.rssTemplatePath
 preserveM :: (Monad m) => (a -> m b) -> a -> m (a, b)
 preserveM act val = act val >>= \r -> return (val, r)
 
-scanForChanges :: Config -> (Config -> IO ()) -> IO ()
-scanForChanges config act = do
-  t <- getCurrentTime
-  scan t
+scanForChanges :: FilePath -> (FilePath -> IO Bool) -> IO ()
+scanForChanges dir act = do
+  scan
       where
-        scan t = do
-          posts <- allPostFilenames $ postSourceDir config
-          let filesToInspect = posts ++ changedFiles config
-          allTimes <- mapM (preserveM getModificationTime) filesToInspect
-
-          let modified = filter ((> t) . snd) allTimes
-              nextTime = if null modified
-                         then t
-                         else maximum $ map snd modified
-
-          when (not $ null modified) $
-               do
-                 putStrLn ""
-                 putStrLn "Changes detected:"
-                 forM_ modified $ \(fp, _) -> do
-                              putStrLn $ "  " ++ fp
-                 act config
+        scan = do
+          didWork <- act dir
+          when didWork $ putStrLn ""
           threadDelay $ 1 * 1000 * 1000
-          scan nextTime
+          scan
 
 mkConfig :: FilePath -> IO Config
 mkConfig base = do
@@ -414,6 +399,13 @@ summarizeChanges config = do
                   return $ t { utctDay = addDays (- 1) $ utctDay t }
                 True -> getModificationTime $ Files.indexHtml config
 
+  postIndexExists <- doesFileExist $ Files.postIndex config
+  postIndexChanged' <- case postIndexExists of
+                         False -> return True
+                         True -> do
+                            t <- getModificationTime $ Files.postIndex config
+                            return $ t > baseTime
+
   let configChanged' = configMtime > baseTime
       modifiedPosts = filter (\p -> postModificationTime p > baseTime) $ blogPosts config
 
@@ -426,6 +418,7 @@ summarizeChanges config = do
   return $ ChangeSummary { configChanged = configChanged'
                          , postsChanged = map postFilename modifiedPosts
                          , templatesChanged = or templateChanges
+                         , postIndexChanged = postIndexChanged'
                          }
 
 usage :: IO ()
@@ -440,13 +433,33 @@ usage = do
   putStrLn "     when something changes.  This is useful if you want to run a"
   putStrLn "     local web server to view your posts as you're writing them."
 
-regenerateContent :: Config -> IO ()
-regenerateContent config = do
-  generatePosts config
-  generateIndex config
-  generateList config
-  generateRssFeed config
-  putStrLn "Done."
+regenerateContent :: FilePath -> IO Bool
+regenerateContent dir = do
+  config <- mkConfig dir
+  summary <- summarizeChanges config
+
+  case anyChanges summary of
+    True -> do
+      putStrLn $ "Blog directory: " ++ baseDir config
+
+      when (configChanged summary) $ putStrLn "Configuration file changed; regenerating all content."
+      when (templatesChanged summary) $ putStrLn "Templates changed; regenerating accordingly."
+      when (not $ null $ postsChanged summary) $ do
+                            putStrLn "Posts changed:"
+                            forM_ (postsChanged summary) $ \n -> putStrLn $ "  " ++ n
+      when (postIndexChanged summary) $ putStrLn "Post index changed; regenerating next/previous links."
+
+      generatePosts config summary
+
+      generateIndex config
+      generateList config
+      generateRssFeed config
+
+      writeFile (Files.postIndex config) $ serializePostIndex $ blogPosts config
+
+      putStrLn "Done."
+      return True
+    False -> return False
 
 main :: IO ()
 main = do
@@ -465,13 +478,13 @@ main = do
          putStrLn $ baseDirEnvName ++ " must contain an absolute path"
          exitFailure
 
-  putStrLn $ "mb: using base directory " ++ (show dir)
-
   setup dir
   config <- mkConfig dir
   ensureDirs config
 
   case args of
-    [] -> regenerateContent config
-    ["-l"] -> regenerateContent config >> scanForChanges config regenerateContent
+    [] -> do
+         didWork <- regenerateContent dir
+         when (not didWork) $ putStrLn "No changes found!"
+    ["-l"] -> scanForChanges dir regenerateContent
     _ -> usage >> exitFailure

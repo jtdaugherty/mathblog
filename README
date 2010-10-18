@@ -77,10 +77,14 @@ some default pages and a default first blog post:
 
   $ export MB_BASE_DIR=`pwd`/myBlog
   $ mb
-  mb: using base directory ".../myBlog"
+  Blog directory: .../myBlog
   Setting up data directory using skeleton: /.../skel
-  Processing: first-post
-  Generating all-posts list.
+  Configuration file changed; regenerating all content.
+  Templates changed; regenerating accordingly.
+  Posts changed:
+    first-post.txt
+  Post index changed; regenerating next/previous links.
+  Rendering first-post
   Done.
 
 Now you have a blog; fire up a web server pointing at myBlog/html and

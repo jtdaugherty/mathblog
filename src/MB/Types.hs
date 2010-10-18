@@ -50,5 +50,6 @@ data ChangeSummary =
     ChangeSummary { postsChanged :: [String]
                   , configChanged :: Bool
                   , templatesChanged :: Bool
+                  , postIndexChanged :: Bool
                   }
     deriving (Show)

@@ -9,10 +9,14 @@ module MB.Util
     , getModificationTime
     , allPostFilenames
     , dirFilenames
+    , anyChanges
+    , serializePostIndex
     )
 where
 import Control.Applicative
     ( (<$>)
+    , (<*>)
+    , pure
     )
 import System.Directory
     ( doesDirectoryExist
@@ -199,8 +203,6 @@ loadPostIndex postSrcDir = do
       preexistingPosts = catMaybes [ lookup n pairs | n <- indexNames ]
       ps = sortPosts newPosts ++ preexistingPosts
 
-  writeFile indexFilename $ serializePostIndex ps
-
   return ps
 
 serializePostIndex :: [Post] -> String
@@ -212,3 +214,12 @@ unserializePostIndex = lines
 sortPosts :: [Post] -> [Post]
 sortPosts = sortBy (\a b -> postModificationTime b `compare`
                             postModificationTime a)
+
+anyChanges :: ChangeSummary -> Bool
+anyChanges s = or $ predicates <*> pure s
+    where
+      predicates = [ configChanged
+                   , not . null . postsChanged
+                   , templatesChanged
+                   , postIndexChanged
+                   ]
