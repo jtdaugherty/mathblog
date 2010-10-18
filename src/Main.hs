@@ -64,7 +64,6 @@ import MB.Util
     , toLocalTime
     , rssModificationTime
     , loadPostIndex
-    , savePostIndex
     , getModificationTime
     , allPostFilenames
     )
@@ -100,18 +99,6 @@ fillTemplate config t attrs = renderTemplate attrs' t
 
 writeTemplate :: Config -> Handle -> Template -> [(String, String)] -> IO ()
 writeTemplate config h t attrs = hPutStr h $ fillTemplate config t attrs
-
-allPosts :: Config -> IO [Post]
-allPosts config = do
-  -- Load the post index
-  postIndex <- loadPostIndex config
-
-  -- Save the post index
-  savePostIndex config postIndex
-
-  -- Return posts sorted by the index
-  let PostIndex posts = postIndex
-  return posts
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =
@@ -210,9 +197,10 @@ generatePost config post = do
     removeFile $ Files.postHtex config post
     removeFile tempHtml
 
-generatePosts :: Config -> [Post] -> IO ()
-generatePosts config posts = do
+generatePosts :: Config -> IO ()
+generatePosts config = do
   let n = length posts
+      posts = blogPosts config
   forM_ (zip posts [0..]) $ \(p, i) ->
       do
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
@@ -228,10 +216,11 @@ generatePosts config posts = do
         touchFile $ Files.postFinalHtml config p
         touchFile $ Files.postIntermediateHtml config p
 
-generateIndex :: Config -> Post -> IO ()
-generateIndex config post = do
+generateIndex :: Config -> IO ()
+generateIndex config = do
   let dest = Files.postFinalHtml config post
       index = Files.indexHtml config
+      post = head $ blogPosts config
 
   exists <- doesFileExist index
   when exists $ removeFile index
@@ -244,14 +233,14 @@ postModificationString p = do
   localTime <- toLocalTime $ postModificationTime p
   return $ show localTime ++ "  " ++ timeZoneName tz
 
-generateList :: Config -> [Post] -> IO ()
-generateList config posts = do
+generateList :: Config -> IO ()
+generateList config = do
   putStrLn "Generating all-posts list."
 
   -- For each post in the order they were given, extract the
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
-  entries <- forM posts $ \p ->
+  entries <- forM (blogPosts config) $ \p ->
              do
                created <- postModificationString p
                return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
@@ -288,8 +277,8 @@ rssItem config p =
            , "</item>\n"
            ]
 
-generateRssFeed :: Config -> [Post] -> IO ()
-generateRssFeed config posts = do
+generateRssFeed :: Config -> IO ()
+generateRssFeed config = do
   h <- openFile (Files.rssXml config) WriteMode
 
   eTmpl <- loadTemplate $ Files.rssTemplatePath config
@@ -298,7 +287,7 @@ generateRssFeed config posts = do
     Left msg -> putStrLn msg >> exitFailure
     Right tmpl ->
         do
-          let items = map (rssItem config) posts
+          let items = map (rssItem config) $ blogPosts config
               itemStr = concat items
               attrs = [ ("items", itemStr)
                       ]
@@ -351,7 +340,7 @@ scanForChanges config act = do
   scan t
       where
         scan t = do
-          posts <- allPostFilenames config
+          posts <- allPostFilenames $ postSourceDir config
           let filesToInspect = posts ++ changedFiles config
           allTimes <- mapM (preserveM getModificationTime) filesToInspect
 
@@ -394,8 +383,12 @@ mkConfig base = do
       Just cfg_authorName = lookup "authorName" cfg
       Just cfg_authorEmail = lookup "authorEmail" cfg
 
+  -- Load blog posts from disk
+  let postSrcDir = base </> "posts"
+  allPosts <- loadPostIndex postSrcDir
+
   return $ Config { baseDir = base
-                  , postSourceDir = base </> "posts"
+                  , postSourceDir = postSrcDir
                   , htmlDir = base </> "html"
                   , stylesheetDir = base </> "html" </> "stylesheets"
                   , postHtmlDir = base </> "html" </> "posts"
@@ -410,6 +403,7 @@ mkConfig base = do
                   , eqPreamblesDir = base </> "eq-preambles"
                   , configModificationTime = t
                   , configPath = configFilePath
+                  , blogPosts = allPosts
                   }
 
 usage :: IO ()
@@ -448,11 +442,10 @@ main = do
   ensureDirs config
 
   let work = do
-         posts <- allPosts config
-         generatePosts config posts
-         generateIndex config $ head posts
-         generateList config posts
-         generateRssFeed config posts
+         generatePosts config
+         generateIndex config
+         generateList config
+         generateRssFeed config
          touchFile $ configPath config
          putStrLn "Done."
 

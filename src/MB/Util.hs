@@ -6,7 +6,6 @@ module MB.Util
     , pandocTitleRaw
     , rssModificationTime
     , loadPostIndex
-    , savePostIndex
     , getModificationTime
     , allPostFilenames
     )
@@ -74,7 +73,6 @@ import Data.Maybe
     , catMaybes
     )
 import qualified Text.Pandoc as Pandoc
-import qualified MB.Files as Files
 import MB.Types
 
 copyTree :: FilePath -> FilePath -> IO ()
@@ -151,10 +149,10 @@ loadPost fullPath = do
                 , postAst = doc
                 }
 
-allPostFilenames :: Config -> IO [FilePath]
-allPostFilenames config = do
-  allFiles <- getDirectoryContents $ postSourceDir config
-  return [ postSourceDir config </> f | f <- allFiles
+allPostFilenames :: FilePath -> IO [FilePath]
+allPostFilenames postSrcDir = do
+  allFiles <- getDirectoryContents postSrcDir
+  return [ postSrcDir </> f | f <- allFiles
          , ".txt" `isSuffixOf` f
          , not $ "." `isPrefixOf` f
          ]
@@ -164,15 +162,15 @@ getModificationTime fullPath = do
   info <- getFileStatus fullPath
   return $ toUtcTime $ modificationTime info
 
-loadPostIndex :: Config -> IO PostIndex
-loadPostIndex config = do
-  let fn = Files.postIndex config
-  e <- doesFileExist fn
+loadPostIndex :: FilePath -> IO [Post]
+loadPostIndex postSrcDir = do
+  let indexFilename = postSrcDir </> "posts-index"
+  e <- doesFileExist indexFilename
 
   indexNames <- case e of
                   False -> return []
                   True -> do
-                         h <- openFile fn ReadMode
+                         h <- openFile indexFilename ReadMode
                          s <- hGetContents h
                          s `seq` return ()
                          let idx = unserializePostIndex s
@@ -182,7 +180,7 @@ loadPostIndex config = do
   -- Now that we have a postIndex to deal with, load posts from disk
   -- and insert them into the post index in the proper order
 
-  postFiles <- allPostFilenames config
+  postFiles <- allPostFilenames postSrcDir
   posts <- mapM loadPost postFiles
 
   -- There are two types of posts to put into the index: the ones that
@@ -192,15 +190,14 @@ loadPostIndex config = do
   let pairs = [ (postFilename p, p) | p <- posts ]
       newPosts = [ p | p <- posts, not $ postFilename p `elem` indexNames ]
       preexistingPosts = catMaybes [ lookup n pairs | n <- indexNames ]
+      ps = sortPosts newPosts ++ preexistingPosts
 
-  return $ PostIndex $ sortPosts newPosts ++ preexistingPosts
+  writeFile indexFilename $ serializePostIndex ps
 
-savePostIndex :: Config -> PostIndex -> IO ()
-savePostIndex config postIndex =
-    writeFile (Files.postIndex config) $ serializePostIndex postIndex
+  return ps
 
-serializePostIndex :: PostIndex -> String
-serializePostIndex (PostIndex ps) = unlines $ map postFilename ps
+serializePostIndex :: [Post] -> String
+serializePostIndex ps = unlines $ map postFilename ps
 
 unserializePostIndex :: String -> [String]
 unserializePostIndex = lines

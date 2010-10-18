@@ -2,7 +2,6 @@
 module MB.Types
     ( Config(..)
     , Post(..)
-    , PostIndex(..)
     , Template
     )
 where
@@ -32,6 +31,7 @@ data Config = Config { baseDir :: FilePath
                      , authorEmail :: String
                      , configModificationTime :: UTCTime
                      , configPath :: FilePath
+                     , blogPosts :: [Post]
                      }
 
 data Post = Post { postTitle :: Int -> String
@@ -41,5 +41,3 @@ data Post = Post { postTitle :: Int -> String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
-
-newtype PostIndex = PostIndex [Post]
