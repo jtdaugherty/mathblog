@@ -320,15 +320,6 @@ ensureDirs config = do
         exists <- doesDirectoryExist d
         when (not exists) $ createDirectory d
 
--- The files we look at to decide whether to regenerate the blog.
--- We'll always look at the post input files, but we also want to look
--- at other files to trigger a regeneration.
-changedFiles :: Config -> [FilePath]
-changedFiles config = [ Files.rssTemplatePath
-                      , Files.pageTemplatePath
-                      , Files.postTemplatePath
-                      ] <*> pure config
-
 preserveM :: (Monad m) => (a -> m b) -> a -> m (a, b)
 preserveM act val = act val >>= \r -> return (val, r)
 
