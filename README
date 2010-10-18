@@ -159,17 +159,26 @@ to your blog posts and other data files and regenerate them when it
 detects a change.  Running mathblog in listen mode is simple:
 
   $ mb -l
-  mb: using base directory "/home/.../myBlog"
-
-  Changes detected:
-    /home/.../myBlog/posts/second-post.txt
-  Processing: second-post
-  Generating all-posts list.
+  Blog directory: /.../blog
+  Post index changed; regenerating next/previous links.
   Done.
 
-Above I ran "mb" in listen mode and then modified one of the posts,
-second-post.txt, and "mb" detected the change and ran its typical
-regeneration routine.
+  Blog directory: /.../blog
+  Configuration file changed; regenerating all content.
+  Rendering 1 post(s)...
+  Rendering first-post
+  Done.
+
+  Blog directory: /Users/cygnus/blog3
+  Posts changed:
+    first-post.txt
+  Rendering 1 post(s)...
+  Rendering first-post
+  Done.
+
+Above I ran "mb" in listen mode and then modified the post index, then
+the blog config file, then one of the posts.  In each case "mb"
+detected the change and ran its typical regeneration routine.
 
 Customizing your blog
 ---------------------
