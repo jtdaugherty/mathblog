@@ -46,13 +46,6 @@ import Data.Time.LocalTime
     ( TimeZone(timeZoneName)
     , getCurrentTimeZone
     )
-import Data.Time.Clock
-    ( getCurrentTime
-    , UTCTime(utctDay)
-    )
-import Data.Time.Calendar
-    ( addDays
-    )
 import qualified Text.Pandoc as Pandoc
 import qualified MB.Config as Config
 import MB.Templates
@@ -67,10 +60,9 @@ import MB.Util
     , toLocalTime
     , rssModificationTime
     , loadPostIndex
-    , getModificationTime
-    , dirFilenames
     , anyChanges
     , serializePostIndex
+    , summarizeChanges
     )
 import MB.Gladtex
     ( gladTex
@@ -377,41 +369,6 @@ mkConfig base = do
                   , blogPosts = allPosts
                   }
 
-summarizeChanges :: Config -> IO ChangeSummary
-summarizeChanges config = do
-  -- Determine whether the configuration file changed.  Check to see
-  -- if it's newer than the index.html file, or if no index.html
-  -- exists then that's equivalent to "the config changed"
-  configMtime <- getModificationTime $ configPath config
-  indexExists <- doesFileExist $ Files.indexHtml config
-  baseTime <- case indexExists of
-                False -> do
-                  t <- getCurrentTime
-                  return $ t { utctDay = addDays (- 1) $ utctDay t }
-                True -> getModificationTime $ Files.indexHtml config
-
-  postIndexExists <- doesFileExist $ Files.postIndex config
-  postIndexChanged' <- case postIndexExists of
-                         False -> return True
-                         True -> do
-                            t <- getModificationTime $ Files.postIndex config
-                            return $ t > baseTime
-
-  let configChanged' = configMtime > baseTime
-      modifiedPosts = filter (\p -> postModificationTime p > baseTime) $ blogPosts config
-
-  -- Determine whether any templates changed
-  templateFiles <- dirFilenames (templateDir config)
-  templateChanges <- forM templateFiles $ \f -> do
-                            mtime <- getModificationTime f
-                            return $ mtime > baseTime
-
-  return $ ChangeSummary { configChanged = configChanged'
-                         , postsChanged = map postFilename modifiedPosts
-                         , templatesChanged = or templateChanges
-                         , postIndexChanged = postIndexChanged'
-                         }
-
 usage :: IO ()
 usage = do
   putStrLn "Usage: mb [-l]\n"
@@ -433,12 +390,16 @@ regenerateContent dir = do
     True -> do
       putStrLn $ "Blog directory: " ++ baseDir config
 
-      when (configChanged summary) $ putStrLn "Configuration file changed; regenerating all content."
-      when (templatesChanged summary) $ putStrLn "Templates changed; regenerating accordingly."
-      when (not $ null $ postsChanged summary) $ do
-                            putStrLn "Posts changed:"
-                            forM_ (postsChanged summary) $ \n -> putStrLn $ "  " ++ n
-      when (postIndexChanged summary) $ putStrLn "Post index changed; regenerating next/previous links."
+      when (configChanged summary) $
+           putStrLn "Configuration file changed; regenerating all content."
+      when (templatesChanged summary) $
+           putStrLn "Templates changed; regenerating accordingly."
+      when (not $ null $ postsChanged summary) $
+           do
+             putStrLn "Posts changed:"
+             forM_ (postsChanged summary) $ \n -> putStrLn $ "  " ++ n
+      when (postIndexChanged summary) $
+           putStrLn "Post index changed; regenerating next/previous links."
 
       generatePosts config summary
 
@@ -446,7 +407,8 @@ regenerateContent dir = do
       generateList config
       generateRssFeed config
 
-      writeFile (Files.postIndex config) $ serializePostIndex $ blogPosts config
+      writeFile (Files.postIndex config) $
+                serializePostIndex $ blogPosts config
 
       putStrLn "Done."
       return True
