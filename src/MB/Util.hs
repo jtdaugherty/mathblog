@@ -8,6 +8,7 @@ module MB.Util
     , loadPostIndex
     , getModificationTime
     , allPostFilenames
+    , dirFilenames
     )
 where
 import Control.Applicative
@@ -149,12 +150,18 @@ loadPost fullPath = do
                 , postAst = doc
                 }
 
+dirFilenames :: FilePath -> IO [FilePath]
+dirFilenames dir = do
+  allFiles <- getDirectoryContents dir
+  return [ dir </> f | f <- allFiles
+         , not $ "." `isPrefixOf` f
+         ]
+
 allPostFilenames :: FilePath -> IO [FilePath]
 allPostFilenames postSrcDir = do
-  allFiles <- getDirectoryContents postSrcDir
-  return [ postSrcDir </> f | f <- allFiles
+  allFiles <- dirFilenames postSrcDir
+  return [ f | f <- allFiles
          , ".txt" `isSuffixOf` f
-         , not $ "." `isPrefixOf` f
          ]
 
 getModificationTime :: FilePath -> IO UTCTime

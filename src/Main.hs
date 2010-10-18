@@ -49,6 +49,10 @@ import Data.Time.LocalTime
     )
 import Data.Time.Clock
     ( getCurrentTime
+    , UTCTime(utctDay)
+    )
+import Data.Time.Calendar
+    ( addDays
     )
 import qualified Text.Pandoc as Pandoc
 import qualified MB.Config as Config
@@ -66,6 +70,7 @@ import MB.Util
     , loadPostIndex
     , getModificationTime
     , allPostFilenames
+    , dirFilenames
     )
 import MB.Gladtex
     ( gladTex
@@ -176,8 +181,7 @@ generatePost config post = do
                 False -> return True
                 True -> do
                   t <- getModificationTime finalHtml
-                  return $ (postModificationTime post > t) ||
-                        (configModificationTime config > postModificationTime post)
+                  return $ (postModificationTime post > t)
 
   when generate $ do
     putStrLn $ "Processing: " ++ Files.postBaseName post
@@ -210,11 +214,6 @@ generatePosts config = do
         h <- openFile (Files.postFinalHtml config p) WriteMode
         buildPost h config p (prevPost, nextPost)
         hClose h
-        -- Touch the post source, final HTML, and intermediate HTML
-        -- files so next time we know which ones are newer
-        touchFile $ postPath p
-        touchFile $ Files.postFinalHtml config p
-        touchFile $ Files.postIntermediateHtml config p
 
 generateIndex :: Config -> IO ()
 generateIndex config = do
@@ -368,8 +367,6 @@ mkConfig base = do
                   putStrLn $ "Configuration file " ++ configFilePath ++ " not found"
                   exitFailure
 
-  t <- getModificationTime configFilePath
-
   let requiredValues = [ "baseUrl"
                        , "title"
                        , "authorName"
@@ -401,10 +398,36 @@ mkConfig base = do
                   , authorName = cfg_authorName
                   , authorEmail = cfg_authorEmail
                   , eqPreamblesDir = base </> "eq-preambles"
-                  , configModificationTime = t
                   , configPath = configFilePath
                   , blogPosts = allPosts
                   }
+
+summarizeChanges :: Config -> IO ChangeSummary
+summarizeChanges config = do
+  -- Determine whether the configuration file changed.  Check to see
+  -- if it's newer than the index.html file, or if no index.html
+  -- exists then that's equivalent to "the config changed"
+  configMtime <- getModificationTime $ configPath config
+  indexExists <- doesFileExist $ Files.indexHtml config
+  baseTime <- case indexExists of
+                False -> do
+                  t <- getCurrentTime
+                  return $ t { utctDay = addDays (- 1) $ utctDay t }
+                True -> getModificationTime $ Files.indexHtml config
+
+  let configChanged' = configMtime > baseTime
+      modifiedPosts = filter (\p -> postModificationTime p > baseTime) $ blogPosts config
+
+  -- Determine whether any templates changed
+  templateFiles <- dirFilenames (templateDir config)
+  templateChanges <- forM templateFiles $ \f -> do
+                            mtime <- getModificationTime f
+                            return $ mtime > baseTime
+
+  return $ ChangeSummary { configChanged = configChanged'
+                         , postsChanged = map postFilename modifiedPosts
+                         , templatesChanged = or templateChanges
+                         }
 
 usage :: IO ()
 usage = do

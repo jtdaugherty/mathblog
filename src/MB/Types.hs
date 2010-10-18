@@ -3,6 +3,7 @@ module MB.Types
     ( Config(..)
     , Post(..)
     , Template
+    , ChangeSummary(..)
     )
 where
 import Data.Time.Clock
@@ -29,7 +30,6 @@ data Config = Config { baseDir :: FilePath
                      , title :: String
                      , authorName :: String
                      , authorEmail :: String
-                     , configModificationTime :: UTCTime
                      , configPath :: FilePath
                      , blogPosts :: [Post]
                      }
@@ -41,3 +41,14 @@ data Post = Post { postTitle :: Int -> String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
+
+-- Summarize changes in files so we know what to do during the
+-- regeneration phase.  postsChanged and configChanged are the primary
+-- measurements, but knowing whether other metadata files changed
+-- (like templates) is useful for the "listen" mode of mb.
+data ChangeSummary =
+    ChangeSummary { postsChanged :: [String]
+                  , configChanged :: Bool
+                  , templatesChanged :: Bool
+                  }
+    deriving (Show)
