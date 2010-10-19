@@ -18,3 +18,7 @@
 - Take further advantage of new template support by moving more and
   more HTML out of Main.hs and into templates (while trying to keep
   the number of templates small)
+
+- Add intermediate type for storing configuration file settings before
+  consuming them in mkConfig (right now they're unsafe accesses
+  predicated on the requiredValues list)
