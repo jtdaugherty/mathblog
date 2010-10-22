@@ -84,11 +84,14 @@ configFilename :: String
 configFilename = "blog.cfg"
 
 commonTemplateAttrs :: Config -> [(String, String)]
-commonTemplateAttrs config = [ ( "baseUrl", baseUrl config )
-                             , ( "title", title config )
-                             , ( "authorName", authorName config )
-                             , ( "authorEmail", authorEmail config )
-                             ]
+commonTemplateAttrs config =
+    [ ( "baseUrl", baseUrl config )
+    , ( "title", title config )
+    , ( "authorName", authorName config )
+    , ( "authorEmail", authorEmail config )
+    , ( "texImageLinkFgColor", texImageLinkFgColor config )
+    , ( "texImageDefaultFgColor", texImageDefaultFgColor config )
+    ]
 
 fillTemplate :: Config -> Template -> [(String, String)] -> String
 fillTemplate config t attrs = renderTemplate attrs' t

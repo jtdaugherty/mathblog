@@ -217,6 +217,8 @@ placeholders are supported in each template:
   $baseUrl$
   $authorName$
   $authorEmail$
+  $texImageDefaultFgColor$
+  $texImageLinkFgColor$
 
     These placeholders all correspond directly to fields on the
     blog.cfg configuration file.
