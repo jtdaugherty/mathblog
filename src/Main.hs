@@ -179,7 +179,7 @@ generatePost config post summary = do
     hClose h
 
     -- Run gladtex on the temp file to generate the final file.
-    gladTex config (Files.postHtex config post) "000000"
+    gladTex config (Files.postHtex config post) $ texImageDefaultFgColor config
 
     -- Gladtex generates the HTML in the same directory as the source
     -- file, so we need to copy that to the final location.
@@ -247,7 +247,7 @@ generateList config = do
   buildPage h config content Nothing
   hClose h
 
-  gladTex config (Files.listHtex config) "0000FF"
+  gladTex config (Files.listHtex config) $ texImageLinkFgColor config
 
   -- Gladtex generates the HTML in the same directory as the source
   -- file, so we need to copy that to the final location.
@@ -338,6 +338,8 @@ mkConfig base = do
                        , "title"
                        , "authorName"
                        , "authorEmail"
+                       , "texImageLinkFgColor"
+                       , "texImageDefaultFgColor"
                        ]
 
   cfg <- Config.readConfig configFilePath requiredValues
@@ -346,6 +348,8 @@ mkConfig base = do
       Just cfg_title = lookup "title" cfg
       Just cfg_authorName = lookup "authorName" cfg
       Just cfg_authorEmail = lookup "authorEmail" cfg
+      Just cfg_texImageDefaultFgColor = lookup "texImageDefaultFgColor" cfg
+      Just cfg_texImageLinkFgColor = lookup "texImageLinkFgColor" cfg
 
   -- Load blog posts from disk
   let postSrcDir = base </> "posts"
@@ -367,6 +371,8 @@ mkConfig base = do
                   , eqPreamblesDir = base </> "eq-preambles"
                   , configPath = configFilePath
                   , blogPosts = allPosts
+                  , texImageLinkFgColor = cfg_texImageLinkFgColor
+                  , texImageDefaultFgColor = cfg_texImageDefaultFgColor
                   }
 
 usage :: IO ()

@@ -32,6 +32,8 @@ data Config = Config { baseDir :: FilePath
                      , authorEmail :: String
                      , configPath :: FilePath
                      , blogPosts :: [Post]
+                     , texImageLinkFgColor :: String
+                     , texImageDefaultFgColor :: String
                      }
 
 data Post = Post { postTitle :: Int -> String
