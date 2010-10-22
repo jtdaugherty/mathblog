@@ -22,3 +22,7 @@
 - Add intermediate type for storing configuration file settings before
   consuming them in mkConfig (right now they're unsafe accesses
   predicated on the requiredValues list)
+
+- Think about how to provide an upgrade path for people who upgrade mb
+  to use on preexisting blog data directories.  Set a version in the
+  config?
