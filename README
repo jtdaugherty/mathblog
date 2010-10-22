@@ -135,6 +135,41 @@ affect all hyperlinks contained inside each post).  mb will always
 rebuild the portions of each page affected by template changes even if
 post source files are unchanged.
 
+Configuration File Fields
+-------------------------
+
+The configuration file "blog.cfg" must have the following fields set:
+
+  baseUrl
+
+    The base URL of your blog; this URL will be used to generate all
+    links in the blog's pages.
+
+  title
+
+    The title of your blog, such as "My math blog".
+
+  authorName
+
+    Your name (for the RSS feed metadata).
+
+  authorEmail
+
+    Your e-mail address (for the RSS feed metadata).
+
+  texImageLinkFgColor
+
+    The foreground color of LaTeX images generated for blog post
+    links.
+
+  texImageDefaultFgColor
+
+    The foreground color of LaTeX images generated in the body of your
+    blog posts.
+
+All of the above fields can be accessed in templates using the syntax
+described in "Customizing your blog" below.
+
 Post format
 -----------
 
