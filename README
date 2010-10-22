@@ -3,7 +3,18 @@ mathblog
 --------
 
 mathblog is a Haskell program targeted at people who want to write
-statically-generated, mathematically-themed weblogs.
+statically-generated, mathematically-themed weblogs.  It supports:
+
+ - inline and block-level LaTeX math
+
+ - embedded Gnuplot scripts for rendering graphs
+
+ - Extended Markdown input syntax as supported by the Pandoc library
+
+ - Integration of Javascript-based web services such as Disqus
+
+ - Template-based document rendering with support for layout and style
+   customization
 
 Project vision
 --------------
