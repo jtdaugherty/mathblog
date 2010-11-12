@@ -9,12 +9,6 @@
   - differentiate between inline and display math in pandoc HTML
     writer (added to git HEAD)
 
-- It's a little annoying (and, for some, possibly broken) that the
-  colors for LaTeX equations in pages and titles are hardcoded in the
-  source (see calls to MB.Gladtex.gladTex)
-
-  - Now this can be put into the config file!
-
 - Take further advantage of new template support by moving more and
   more HTML out of Main.hs and into templates (while trying to keep
   the number of templates small)
