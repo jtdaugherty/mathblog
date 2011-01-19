@@ -10,6 +10,8 @@
       MathJax.Hub.Config({
         extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js"],
         jax: ["input/TeX", "output/HTML-CSS"],
+        showProcessingMessages: false,
+        messageStyle: "none",
         tex2jax: {
           element: null,
           inlineMath: [['\$','\$'],["\\\\(","\\\\)"]],
@@ -17,8 +19,6 @@
           processEscapes: true,
           skipTags: ["script","noscript","style","textarea","pre","code"],
           preview: "none",
-          showProcessingMessages: false,
-          messageStyle: "none",
         },
       });
       MathJax.Hub.Queue(function () {
