@@ -67,34 +67,17 @@ div#prev-next-links {
 .prev-link {
   color: blue;
   text-decoration: none;
-  background-image: url('/images/newer.png');
-  background-repeat: no-repeat;
-  background-position: 0px 5px;
-  padding-left: 30px;
 }
 .prev-link-subdued {
   color: #aaa;
-  background-image: url('/images/newer-subdued.png');
-  background-repeat: no-repeat;
-  background-position: 0px 5px;
-  padding-left: 30px;
 }
 .next-link {
   float: right;
   color: blue;
-  text-decoration: none;
-  background-image: url('/images/older.png');
-  background-repeat: no-repeat;
-  background-position: right 5px;
-  padding-right: 25px;
 }
 .next-link-subdued {
   color: #aaa;
   float: right;
-  background-image: url('/images/older-subdued.png');
-  background-repeat: no-repeat;
-  background-position: right 5px;
-  padding-right: 25px;
 }
 #footer {
   border-top: 1px solid #ddd;

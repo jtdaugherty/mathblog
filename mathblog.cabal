@@ -26,10 +26,6 @@ Homepage:            http://repos.codevine.org/mathblog/
 
 Data-Files:
   README
-  skel/html/images/older.png
-  skel/html/images/newer-subdued.png
-  skel/html/images/newer.png
-  skel/html/images/older-subdued.png
   skel/html/stylesheets/stylesheet.css
   skel/templates/postTemplate.html
   skel/templates/pageTemplate.html
