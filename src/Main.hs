@@ -84,8 +84,6 @@ commonTemplateAttrs config =
     , ( "title", title config )
     , ( "authorName", authorName config )
     , ( "authorEmail", authorEmail config )
-    , ( "texImageLinkFgColor", texImageLinkFgColor config )
-    , ( "texImageDefaultFgColor", texImageDefaultFgColor config )
     ]
 
 fillTemplate :: Config -> Template -> [(String, String)] -> String
@@ -310,8 +308,6 @@ mkConfig base = do
                        , "title"
                        , "authorName"
                        , "authorEmail"
-                       , "texImageLinkFgColor"
-                       , "texImageDefaultFgColor"
                        ]
 
   cfg <- Config.readConfig configFilePath requiredValues
@@ -320,8 +316,6 @@ mkConfig base = do
       Just cfg_title = lookup "title" cfg
       Just cfg_authorName = lookup "authorName" cfg
       Just cfg_authorEmail = lookup "authorEmail" cfg
-      Just cfg_texImageDefaultFgColor = lookup "texImageDefaultFgColor" cfg
-      Just cfg_texImageLinkFgColor = lookup "texImageLinkFgColor" cfg
 
   -- Load blog posts from disk
   let postSrcDir = base </> "posts"
@@ -343,8 +337,6 @@ mkConfig base = do
                   , eqPreamblesDir = base </> "eq-preambles"
                   , configPath = configFilePath
                   , blogPosts = allPosts
-                  , texImageLinkFgColor = cfg_texImageLinkFgColor
-                  , texImageDefaultFgColor = cfg_texImageDefaultFgColor
                   }
 
 usage :: IO ()

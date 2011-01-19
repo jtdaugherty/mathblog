@@ -168,16 +168,6 @@ The configuration file "blog.cfg" must have the following fields set:
 
     Your e-mail address (for the RSS feed metadata).
 
-  texImageLinkFgColor
-
-    The foreground color of LaTeX images generated for blog post
-    links.
-
-  texImageDefaultFgColor
-
-    The foreground color of LaTeX images generated in the body of your
-    blog posts.
-
 All of the above fields can be accessed in templates using the syntax
 described in "Customizing your blog" below.
 
@@ -263,8 +253,6 @@ placeholders are supported in each template:
   $baseUrl$
   $authorName$
   $authorEmail$
-  $texImageDefaultFgColor$
-  $texImageLinkFgColor$
 
     These placeholders all correspond directly to fields on the
     blog.cfg configuration file.
