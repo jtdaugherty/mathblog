@@ -5,7 +5,8 @@ mathblog
 mathblog is a Haskell program targeted at people who want to write
 statically-generated, mathematically-themed weblogs.  It supports:
 
- - inline and block-level LaTeX math
+ - high-quality, scalable inline and block-level TeX math, rendered by
+   MathJax
 
  - embedded Gnuplot scripts for rendering graphs
 
@@ -39,8 +40,7 @@ As a result, mathblog has the following properties:
    pages when your post markup changes.
 
  - all content is stored in plain text files and is generated
-   statically.  No database, web framework, or templating system is
-   used.
+   statically.  No database or web framework is used.
 
  - a mathblog can be hosted with a simple static fileserver such as
    thttpd, lighttpd, or apache.
@@ -48,7 +48,8 @@ As a result, mathblog has the following properties:
  - blog posts are written in the Markdown format with extensions, as
    supported by the Pandoc document converter.
 
- - Math is embedded with $...$ and $$...$$.
+ - Math is embedded with $...$ or \(...\) for inline math and $$...$$
+   or \[...\] for block-level math.
 
 These properties have some nice advantages; your blog content is
 cacheable and can be subjected to revision control.  Posts are easy to
@@ -66,11 +67,9 @@ mathblog takes advantage of three primary software components:
    revision control version of Pandoc.  If you do not, inline and
    block-level equations will look the same.
 
- - gladTeX, a package of tools for rendering LaTeX equations.  At
-   present you MUST get gladTeX from revision control, since mathblog
-   requires features not yet released.
-
- - a TeX distribution, such as TeX-live
+ - MathJax, a JavaScript package for scalable, cross-browser Math
+   typesetting.  You can get it from http://mathjax.com/.  See below
+   for details on setting up MathJax with mathblog.
 
 How to use
 ----------
@@ -98,8 +97,49 @@ some default pages and a default first blog post:
   Rendering first-post
   Done.
 
-Now you have a blog; fire up a web server pointing at myBlog/html and
-you'll see a demo post.
+Now you have a blog; next, we need to install MathJax to get the math
+rendering working.
+
+Installing MathJax
+------------------
+
+First, download MathJax:
+
+  http://mathjax.com/
+
+The default mathblog templates expect MathJax to be installed into the
+`html` subdirectory of your blog data directory; you can certainly
+change that, but these instructions will assume that configuration.
+
+The zip file you downloaded should include just a "MathJax" directory
+with all of the MathJax files contained inside.  You have two options
+for installation:
+
+ - You can unzip the zip file into the HTML directory, resulting in a
+   "MathJax" subdirectory of the "html" directory.  This is the most
+   direct option, but it has the disadvantage that all of the MathJax
+   files will now be in your blog data directory; this is perhaps not
+   what you want if, for example, you are keeping your blog data files
+   under revision control.
+
+   cd html && unzip /path/to/MathJax.zip
+
+ - Unzip the MathJax files elsewhere and create a "MathJax" symlink in
+   your "html" subdirectory.
+
+   unzip MathJax.zip
+   cd html && ln -s /path/to/MathJax/
+
+The default mathblog templates include a MathJax configuration which
+will override the default configuration provided in the MathJax
+distribution.  See the MathJax documentation if you want to customize
+that configuration.
+
+Viewing the Blog
+----------------
+
+Now that MathJax is set up, we need to make some configuration
+changes.
 
 (NOTE: to serve your blog files you can either make the "html"
 directory a document root for your web server or virtual host, or you
@@ -108,21 +148,27 @@ mathblog directory itself is not intended to be in your web server's
 document tree because it contains many files that shouldn't be served
 to users.)
 
-Next, you'll need to make a few changes to the default configuration,
-"blog.cfg".  This file contains information about you which may be
-included in the generated pages, such as your name, e-mail address,
+The default blog configuration file is called "blog.cfg".  This file
+contains information about you which may be included in the generated
+pages, such as your name, e-mail address (used for the RSS feed only),
 and the title of your blog.  Most importantly, this file contains the
 base URL of your blog which is used to generate URLs in the blog's
-pages.
+pages and MathJax scripts.
 
-Next, you might want to edit or create a new post, or even remove one.
-Just edit the appropriate file in myBlog/posts/ accordingly and re-run
-mb.  Here's an example of adding a new post:
+Once you've updated your configuration, feel free to start up a web
+server pointing at the "html" directory and take a look; MathJax
+should be working, as the default first post shows.
+
+Now you might want to edit or create a new post, or even remove one.
+Just edit the appropriate file in posts/ accordingly and re-run mb.
+Here's an example of adding a new post:
 
   $ mb
   mb: using base directory ".../myBlog"
-  Processing: second-post
-  Generating all-posts list.
+  Posts changed:
+    first-post.txt
+  Rendering 1 post(s)...
+  Rendering first-post
   Done.
 
 When to run mb
