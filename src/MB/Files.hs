@@ -27,9 +27,6 @@ rssTemplatePath c = templateDir c </> "rssTemplate.xml"
 listHtml :: Config -> FilePath
 listHtml c = postHtmlDir c </> "index.html"
 
-listHtex :: Config -> FilePath
-listHtex c = htmlTempDir c </> "list.htex"
-
 postIndex :: Config -> FilePath
 postIndex c = postSourceDir c </> "posts-index"
 
@@ -50,9 +47,6 @@ postUrl c p = baseUrl c ++ "/posts/" ++ postBaseName p ++ ".html"
 
 postBaseName :: Post -> String
 postBaseName = takeBaseName . postFilename
-
-postHtex :: Config -> Post -> String
-postHtex config p = htmlTempDir config </> postBaseName p ++ ".htex"
 
 postIntermediateHtml :: Config -> Post -> FilePath
 postIntermediateHtml config post =

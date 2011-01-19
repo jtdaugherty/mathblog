@@ -1,5 +1,5 @@
 Name:                mathblog
-Version:             0.2
+Version:             0.3
 Synopsis:            A program for creating and managing a
                      static, mathematically-inclined weblog
 Description:         This package provides a program for creating and
@@ -43,7 +43,8 @@ Executable mb
     base >= 3 && < 5,
     directory >= 1.0 && < 1.1,
     filepath >= 1.1 && < 1.2,
-    pandoc >= 1.6 && < 1.7,
+    pandoc >= 1.7 && < 1.8,
+    pandoc-types >= 1.7 && < 1.8,
     unix >= 2.3 && < 2.5,
     process >= 1.0 && < 1.1,
     time >= 1.1 && < 1.2,
@@ -60,7 +61,6 @@ Executable mb
     MB.Files
     MB.Types
     MB.Util
-    MB.Gladtex
     MB.Processing
 
   GHC-Options: -Wall

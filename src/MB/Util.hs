@@ -127,11 +127,11 @@ toLocalTime u = do
   tz <- getCurrentTimeZone
   return $ utcToLocalTime tz u
 
-pandocTitle :: Pandoc.Pandoc -> Int -> String
-pandocTitle (Pandoc.Pandoc m _) dpi = concat $ map getStr $ Pandoc.docTitle m
+pandocTitle :: Pandoc.Pandoc -> String
+pandocTitle (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
     where
       getStr (Pandoc.Str s) = s
-      getStr (Pandoc.Math _ s) = "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
+      getStr (Pandoc.Math _ s) = "\\(" ++ s ++ "\\)"
       getStr Pandoc.Space = " "
       getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 

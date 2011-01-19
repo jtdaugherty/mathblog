@@ -30,7 +30,6 @@ import System.Directory
     ( doesDirectoryExist
     , doesFileExist
     , removeFile
-    , copyFile
     , createDirectory
     )
 import System.FilePath
@@ -63,10 +62,6 @@ import MB.Util
     , anyChanges
     , serializePostIndex
     , summarizeChanges
-    )
-import MB.Gladtex
-    ( gladTex
-    , checkForGladtex
     )
 import MB.Types
 import qualified MB.Files as Files
@@ -102,13 +97,13 @@ writeTemplate config h t attrs = hPutStr h $ fillTemplate config t attrs
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =
-    Pandoc.defaultWriterOptions { Pandoc.writerHTMLMathMethod = Pandoc.GladTeX
+    Pandoc.defaultWriterOptions { Pandoc.writerHTMLMathMethod = Pandoc.MathJax "MathJax/MathJax.js"
                                 }
 
 writePost :: Handle -> Post -> IO ()
 writePost h post = do
   created <- postModificationString post
-  hPutStr h $ "<h1>" ++ postTitle post 175 ++ "</h1>"
+  hPutStr h $ "<h1>" ++ postTitle post ++ "</h1>"
   hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
 
@@ -168,29 +163,16 @@ buildPost h config post prevNext = do
 
 generatePost :: Config -> Post -> ChangeSummary -> IO ()
 generatePost config post summary = do
-  let tempHtml = htmlTempDir config </> Files.postBaseName post ++ ".html"
-      finalHtml = Files.postIntermediateHtml config post
-
-  let generate = (postFilename post `elem` (postsChanged summary))
+  let finalHtml = Files.postIntermediateHtml config post
+      generate = (postFilename post `elem` (postsChanged summary))
                  || configChanged summary
 
   when generate $ do
     putStrLn $ "Rendering " ++ Files.postBaseName post
 
-    h <- openFile (Files.postHtex config post) WriteMode
+    h <- openFile finalHtml WriteMode
     writePost h =<< processPost config post
     hClose h
-
-    -- Run gladtex on the temp file to generate the final file.
-    gladTex config (Files.postHtex config post) $ texImageDefaultFgColor config
-
-    -- Gladtex generates the HTML in the same directory as the source
-    -- file, so we need to copy that to the final location.
-    copyFile tempHtml finalHtml
-
-    -- Remove the temporary file.
-    removeFile $ Files.postHtex config post
-    removeFile tempHtml
 
 generatePosts :: Config -> ChangeSummary -> IO ()
 generatePosts config summary = do
@@ -238,7 +220,7 @@ generateList config = do
                created <- postModificationString p
                return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
                                , "<a href=\"" ++ Files.postUrl config p ++ "\">"
-                               , postTitle p 110
+                               , postTitle p
                                , "</a></span><span class=\"post-created\">Posted "
                                , created
                                , "</span></div>\n"
@@ -246,19 +228,9 @@ generateList config = do
 
   let content = "<div id=\"all-posts\">" ++ concat entries ++ "</div>"
 
-  h <- openFile (Files.listHtex config) WriteMode
+  h <- openFile (Files.listHtml config) WriteMode
   buildPage h config content Nothing
   hClose h
-
-  gladTex config (Files.listHtex config) $ texImageLinkFgColor config
-
-  -- Gladtex generates the HTML in the same directory as the source
-  -- file, so we need to copy that to the final location.
-  copyFile (Files.listTmpHtml config) (Files.listHtml config)
-
-  -- Remove the temporary file.
-  removeFile $ Files.listHtex config
-  removeFile $ Files.listTmpHtml config
 
 rssItem :: Config -> Post -> String
 rssItem config p =
@@ -314,9 +286,6 @@ ensureDirs config = do
       do
         exists <- doesDirectoryExist d
         when (not exists) $ createDirectory d
-
-preserveM :: (Monad m) => (a -> m b) -> a -> m (a, b)
-preserveM act val = act val >>= \r -> return (val, r)
 
 scanForChanges :: FilePath -> (FilePath -> IO Bool) -> IO ()
 scanForChanges dir act = do
@@ -427,8 +396,6 @@ main :: IO ()
 main = do
   env <- getEnvironment
   args <- getArgs
-
-  checkForGladtex
 
   let mBase = lookup baseDirEnvName env
 

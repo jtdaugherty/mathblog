@@ -36,7 +36,7 @@ data Config = Config { baseDir :: FilePath
                      , texImageDefaultFgColor :: String
                      }
 
-data Post = Post { postTitle :: Int -> String
+data Post = Post { postTitle :: String
                  , postTitleRaw :: String
                  , postPath :: String
                  , postFilename :: String
