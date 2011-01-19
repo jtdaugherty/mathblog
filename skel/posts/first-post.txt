@@ -8,14 +8,12 @@ href="http://johnmacfarlane.net/pandoc/">Pandoc</a>.  They employ an
 extended Markdown syntax as described in the <a
 href="http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown-vs.standard-markdown">Pandoc
 User Guide</a>.  You can embed LaTeX math in your posts; it will be
-processed with <a
-href="http://ans.hsh.no/home/mgg/gladtex/">gladTeX</a>.
+processed with <a href="http://mathjax.com/">MathJax</a>.
 
-Inline math is introduced with `$...$` and looks like $x \in Y$.  Math
-can be embedded in post titles, as well!  To insert a block-level
-equation, use `$$...$$` as a block-level Markdown element.  This
-causes the math to be typeset in the `displaymath` environment.  The
-results look like this:
+Inline math is introduced with `$...$` or `\(...\)` and looks like $x
+\in Y$.  Math can be embedded in post titles, as well!  To insert a
+block-level equation, use `$$...$$` or `\[...\]`.  The results look
+like this:
 
 $$\int^n_0{\ldots} = \sum^n_{i=1}{b_0 G(u^s)}
 \Longrightarrow \frac{\tan x}{\lim_{h \to \infty}{\Phi}}$$
@@ -25,17 +23,14 @@ as opposed to this:
 $\int^n_0{\ldots} = \sum^n_{i=1}{b_0 G(u^s)}
 \Longrightarrow \frac{\tan x}{\lim_{h \to \infty}{\Phi}}$
 
-(NOTE: if the two images immediately above are identical, then you
-must run the revision control version of Pandoc, which includes an
-unreleased fix!)
-
 The content of this post can be found in the `posts` subdirectory of
 your blog data directory; the rest of the content of this page can be
-found in "preamble" and "postamble" files in the `templates`
-subdirectory.  You can modify those files and re-run `mb` to
-regenerate all of your blog content.  Note that some defaults, such as
-the blog title and footer text, are probably bogus and need to be
-changed.
+found in "pageTemplate.html" and "postTemplate.html" files in the
+`templates` subdirectory.  You can modify those files and re-run `mb`
+to regenerate all of your blog content.  Note that some defaults, such
+as the blog title and footer text, are probably bogus and need to be
+changed.  See the configuration file, `blog.cfg`, for some of those
+settings and see the templates for the rest.
 
 Note that `mb` will not bother to regenerate the actual content of
 your blog posts unless the corresponding source file in `posts` has
