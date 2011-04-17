@@ -68,12 +68,15 @@ import qualified MB.Files as Files
 import Paths_mathblog
     ( getDataFileName
     )
+import MB.Params
+    ( findBaseDir
+    , baseDirEnvName
+    , baseDirParamName
+    , usage
+    )
 
 skelDir :: IO FilePath
 skelDir = getDataFileName "skel"
-
-baseDirEnvName :: String
-baseDirEnvName = "MB_BASE_DIR"
 
 configFilename :: String
 configFilename = "blog.cfg"
@@ -339,18 +342,6 @@ mkConfig base = do
                   , blogPosts = allPosts
                   }
 
-usage :: IO ()
-usage = do
-  putStrLn "Usage: mb [-l]\n"
-  putStrLn "mb is a tool for creating and managing a mathematically-inclined"
-  putStrLn "weblog.  To use mb, you must set a few environment variables:"
-  putStrLn ""
-  putStrLn $ "  " ++ baseDirEnvName ++ ": path where blog files will be stored"
-  putStrLn ""
-  putStrLn " -l: make mb poll periodically and regenerate your blog content"
-  putStrLn "     when something changes.  This is useful if you want to run a"
-  putStrLn "     local web server to view your posts as you're writing them."
-
 regenerateContent :: FilePath -> IO Bool
 regenerateContent dir = do
   config <- mkConfig dir
@@ -386,17 +377,18 @@ regenerateContent dir = do
 
 main :: IO ()
 main = do
-  env <- getEnvironment
+  env  <- getEnvironment
   args <- getArgs
 
-  let mBase = lookup baseDirEnvName env
-
+  let mBase = findBaseDir args env
   when (isNothing mBase) $ usage >> exitFailure
 
   let Just dir = mBase
 
   when (head dir /= '/') $ do
-         putStrLn $ baseDirEnvName ++ " must contain an absolute path"
+         putStrLn $ baseDirEnvName ++ " or " ++
+                    "--" ++ baseDirParamName ++ "=<path>" ++
+                    " must specify an absolute path"
          exitFailure
 
   setup dir
