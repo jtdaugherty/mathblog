@@ -5,8 +5,8 @@ module MB.Startup
 #ifdef TESTING
     , startupConfig
     , baseDirEnvName
-    , argValue
-    , findBaseDir
+    , baseDirParamName
+    , getDataDirFlag
 #endif
     )
 where
@@ -15,13 +15,6 @@ import Control.Monad
     ( mplus
     , when
     )
-import Data.List
-    ( isPrefixOf
-    )
-import Data.Maybe
-    ( listToMaybe
-    , isJust
-    )
 import System.Exit
     ( exitFailure
     )
@@ -29,10 +22,32 @@ import System.Environment
     ( getEnvironment
     , getArgs
     )
+import System.Console.GetOpt
 
 data StartupConfig = StartupConfig { listenMode :: Bool
                                    , dataDirectory :: FilePath
                                    }
+
+data Flag = Listen | DataDir FilePath
+            deriving (Eq)
+
+getDataDirFlag :: [Flag] -> Maybe FilePath
+getDataDirFlag [] = Nothing
+getDataDirFlag (DataDir p:_) = Just p
+getDataDirFlag (_:fs) = getDataDirFlag fs
+
+options :: [OptDescr Flag]
+options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
+                       $ "Path where blog files will be stored.  If this is\n" ++
+                             "not specified, " ++ baseDirEnvName ++ " must be set in the\n" ++
+                             "environment."
+
+          , Option ['l'] ["listen"] (NoArg Listen)
+                       $ "Make mb poll periodically and regenerate your\n" ++
+                             "blog content when something changes.  This is\n" ++
+                             "useful if you want to run a local web server\n" ++
+                             "to view your posts as you're writing them."
+          ]
 
 -- |Inspect the program environment to create a startup configuration.
 -- If the configuration information is invalid or absent, this will
@@ -58,13 +73,16 @@ startupConfigFromEnv = do
 -- and environment variable list.  Returns Nothing if the required
 -- information was absent.
 startupConfig :: [String] -> [(String, String)] -> Maybe StartupConfig
-startupConfig args env = do
-  d <- findBaseDir args env
-  let lm = isJust $ argValue "l" args
+startupConfig args env =
+    case getOpt Permute options args of
+      (_, _, (_:_)) -> Nothing
+      (flags, _, []) -> do
+        let lm = Listen `elem` flags
+        d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
 
-  return $ StartupConfig { listenMode = lm
-                         , dataDirectory = d
-                         }
+        return $ StartupConfig { listenMode = lm
+                               , dataDirectory = d
+                               }
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
@@ -74,42 +92,8 @@ baseDirParamName = "baseDir"
 
 usage :: IO ()
 usage = do
-  putStrLn "Usage: mb [-l]\n"
-  putStrLn "mb is a tool for creating and managing a mathematically-inclined"
-  putStrLn "weblog.  To use mb, you must either set an environment variable or"
-  putStrLn "specify the corresponding command-line parameters:"
-  putStrLn ""
-  putStrLn $ "  " ++ baseDirEnvName ++ ": path where blog files will be stored"
-  putStrLn $ "  --" ++ baseDirParamName ++ "=<path>"
-  putStrLn ""
-  putStrLn " -l: make mb poll periodically and regenerate your blog content"
-  putStrLn "     when something changes.  This is useful if you want to run a"
-  putStrLn "     local web server to view your posts as you're writing them."
-
-
-
--- | Determine the MB_BASE_DIR, either via a command line parameter or
--- through the environment.  The command line parameter takes
--- precedence over the environment variable.
---
--- Returns @Nothing@ if neither command line argument or env variable
--- is specified.
-findBaseDir :: [String] -> [(String, String)] -> Maybe FilePath
-findBaseDir args env = let mArgBase = argValue baseDirParamName args
-                           mEnvBase = lookup baseDirEnvName env
-                       in mArgBase `mplus` mEnvBase
-
--- | Search a list of strings for a given command line argument.
--- The first param is used as the long argument name, eg:
---
--- > argValue "foo" ["-v", "--foo=bar"]
--- Just "bar"
---
--- > argValue "v" ["-v", "--foo=bar"]
--- Nothing
---
-argValue :: String -> [String] -> Maybe String
-argValue arg aList = listToMaybe $ map dropKey $ filteredArgs
-    where filteredArgs = filter (isPrefixOf $ toArgPfx arg) aList
-          dropKey str  = drop 1 (dropWhile (/= '=') str)
-          toArgPfx str = "--"++str++"="
+  let h = concat [ "Usage: mb [args]\n\n"
+                 , "mb is a tool for creating and managing a mathematically-inclined\n"
+                 , "weblog.\n"
+                 ]
+  putStrLn $ usageInfo h options
