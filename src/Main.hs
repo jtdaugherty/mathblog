@@ -254,8 +254,8 @@ generateRssFeed blog = do
           writeTemplate blog h tmpl attrs
           hClose h
 
-setup :: FilePath -> IO ()
-setup dir = do
+initializeDataDir :: FilePath -> IO ()
+initializeDataDir dir = do
   existsBase <- doesDirectoryExist dir
   existsConfig <- doesFileExist $ dir </> configFilename
 
@@ -383,7 +383,7 @@ main = do
   conf <- startupConfigFromEnv
   let dir = dataDirectory conf
 
-  when (initDataDirectory conf) $ setup dir
+  when (initDataDirectory conf) $ initializeDataDir dir
 
   case listenMode conf of
     False -> do
