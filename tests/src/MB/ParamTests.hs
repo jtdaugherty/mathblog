@@ -12,7 +12,7 @@ import MB.Params
 tests :: Test
 tests = testGroup "Param parsing tests" [
          testGroup "argValue tests" $ map testArgValue [
-                      -- (arg1,      arg2,                      resutlt)
+                      -- (arg1,      arg2,                      result)
                          ("foo",    ["-v", "--foo=bar"],        Just "bar")
                        , ("--foo",  ["-v", "--foo=bar"],        Nothing)
                        , ("--foo=", ["-v", "--foo=bar"],        Nothing)
@@ -20,7 +20,7 @@ tests = testGroup "Param parsing tests" [
                        , ("v",      ["-v", "--foo=bar"],        Nothing)
                        , ("-v",     ["-v", "--foo=bar"],        Nothing)
 
-                       -- The next tests exhibit arguabbly confusing behavior:
+                       -- The next tests exhibit arguably confusing behavior:
 
                        -- Nothing? Just "bar"?
                        , ("foo", ["--foo=", "--foo=bar"], Just "")
