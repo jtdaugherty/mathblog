@@ -65,6 +65,7 @@ import MB.Startup
     ( dataDirectory
     , listenMode
     , startupConfigFromEnv
+    , initDataDirectory
     )
 
 skelDir :: IO FilePath
@@ -255,12 +256,19 @@ generateRssFeed blog = do
 
 setup :: FilePath -> IO ()
 setup dir = do
-  exists <- doesDirectoryExist dir
+  existsBase <- doesDirectoryExist dir
+  existsConfig <- doesFileExist $ dir </> configFilename
+
   dataDir <- skelDir
 
-  when (not exists) $ do
+  when (not existsBase || not existsConfig) $ do
           putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
+          when (not existsBase) $ createDirectory dir
           copyTree dataDir dir
+
+  when existsConfig $
+       putStrLn $ "Data directory already initialized; found " ++
+                    (dir </> configFilename)
 
 ensureDirs :: Blog -> IO ()
 ensureDirs blog = do
@@ -316,23 +324,26 @@ mkBlog base = do
   let postSrcDir = base </> "posts"
   allPosts <- loadPostIndex postSrcDir
 
-  return $ Blog { baseDir = base
-                , postSourceDir = postSrcDir
-                , htmlDir = base </> "html"
-                , stylesheetDir = base </> "html" </> "stylesheets"
-                , postHtmlDir = base </> "html" </> "posts"
-                , postIntermediateDir = base </> "generated"
-                , imageDir = base </> "html" </> "generated-images"
-                , templateDir = base </> "templates"
-                , htmlTempDir = base </> "tmp"
-                , baseUrl = cfg_baseUrl
-                , title = cfg_title
-                , authorName = cfg_authorName
-                , authorEmail = cfg_authorEmail
-                , eqPreamblesDir = base </> "eq-preambles"
-                , configPath = configFilePath
-                , blogPosts = allPosts
-                }
+  let b = Blog { baseDir = base
+               , postSourceDir = postSrcDir
+               , htmlDir = base </> "html"
+               , stylesheetDir = base </> "html" </> "stylesheets"
+               , postHtmlDir = base </> "html" </> "posts"
+               , postIntermediateDir = base </> "generated"
+               , imageDir = base </> "html" </> "generated-images"
+               , templateDir = base </> "templates"
+               , htmlTempDir = base </> "tmp"
+               , baseUrl = cfg_baseUrl
+               , title = cfg_title
+               , authorName = cfg_authorName
+               , authorEmail = cfg_authorEmail
+               , eqPreamblesDir = base </> "eq-preambles"
+               , configPath = configFilePath
+               , blogPosts = allPosts
+               }
+
+  ensureDirs b
+  return b
 
 regenerateContent :: FilePath -> IO Bool
 regenerateContent dir = do
@@ -372,9 +383,7 @@ main = do
   conf <- startupConfigFromEnv
   let dir = dataDirectory conf
 
-  setup dir
-  blog <- mkBlog dir
-  ensureDirs blog
+  when (initDataDirectory conf) $ setup dir
 
   case listenMode conf of
     False -> do

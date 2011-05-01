@@ -92,12 +92,12 @@ copyTree srcPath dstPath = do
   dstFExists <- doesFileExist dstPath
   dstDExists <- doesDirectoryExist dstPath
 
-  when (dstFExists || dstDExists) $ do
+  when (dstFExists) $ do
     putStrLn $ "Cannot copy " ++ (show srcPath) ++ " to existing destination path " ++
                  (show dstPath) ++ "; remove to continue."
     exitFailure
 
-  createDirectory dstPath
+  when (not dstDExists) $ createDirectory dstPath
   copyTree' srcPath dstPath
 
   where

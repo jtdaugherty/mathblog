@@ -26,10 +26,11 @@ import System.Console.GetOpt
 
 data StartupConfig = StartupConfig { listenMode :: Bool
                                    , dataDirectory :: FilePath
+                                   , initDataDirectory :: Bool
                                    }
                      deriving (Show, Eq)
 
-data Flag = Listen | DataDir FilePath
+data Flag = Listen | DataDir FilePath | InitDataDirectory
             deriving (Eq)
 
 getDataDirFlag :: [Flag] -> Maybe FilePath
@@ -43,6 +44,8 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                              "not specified, " ++ baseDirEnvName ++ " must be set in the\n" ++
                              "environment."
 
+          , Option ['i'] ["init"] (NoArg InitDataDirectory)
+                       $ "Initialize the blog data directory."
           , Option ['l'] ["listen"] (NoArg Listen)
                        $ "Make mb poll periodically and regenerate your\n" ++
                              "blog content when something changes.  This is\n" ++
@@ -79,10 +82,12 @@ startupConfig args env =
       (_, _, (_:_)) -> Nothing
       (flags, _, []) -> do
         let lm = Listen `elem` flags
+            i = InitDataDirectory `elem` flags
         d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
 
         return $ StartupConfig { listenMode = lm
                                , dataDirectory = d
+                               , initDataDirectory = i
                                }
 
 baseDirEnvName :: String
