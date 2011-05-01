@@ -186,8 +186,8 @@ generatePosts config summary = do
         buildPost h config p (prevPost, nextPost)
         hClose h
 
-generateIndex :: Blog -> IO ()
-generateIndex config = do
+linkIndexPage :: Blog -> IO ()
+linkIndexPage config = do
   let dest = Files.postFinalHtml config post
       index = Files.indexHtml config
       post = head $ blogPosts config
@@ -203,8 +203,8 @@ postModificationString p = do
   localTime <- toLocalTime $ postModificationTime p
   return $ show localTime ++ "  " ++ timeZoneName tz
 
-generateList :: Blog -> IO ()
-generateList config = do
+generatePostList :: Blog -> IO ()
+generatePostList config = do
   -- For each post in the order they were given, extract the
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
@@ -356,8 +356,8 @@ regenerateContent dir = do
 
       generatePosts config summary
 
-      generateIndex config
-      generateList config
+      linkIndexPage config
+      generatePostList config
       generateRssFeed config
 
       writeFile (Files.postIndex config) $
