@@ -80,14 +80,17 @@ To begin, set the following environment variable:
   MB_BASE_DIR
 
 This is the location of your blog files on the filesystem.  It must be
-an absolute path.
+an absolute path.  If you would rather use a command-line parameter,
+specify '-d' or '--baseDir' when running 'mb'.  The command line
+directory parameter will always override the environment variable if
+it is set.
 
-Once you've set the environment variable, just run "mb".  It will take
-care of setting up a new blog data directory for you, complete with
-some default pages and a default first blog post:
+Once you've set the environment variable, just run "mb -i".  It will
+take care of setting up a new blog data directory for you, complete
+with some default pages and a default first blog post:
 
   $ export MB_BASE_DIR=`pwd`/myBlog
-  $ mb
+  $ mb -i
   Blog directory: .../myBlog
   Setting up data directory using skeleton: /.../skel
   Configuration file changed; regenerating all content.
