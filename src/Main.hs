@@ -351,6 +351,7 @@ regenerateContent dir = do
   summary <- summarizeChanges blog
 
   case anyChanges summary of
+    False -> return False
     True -> do
       putStrLn $ "Blog directory: " ++ baseDir blog
 
@@ -376,7 +377,6 @@ regenerateContent dir = do
 
       putStrLn "Done."
       return True
-    False -> return False
 
 main :: IO ()
 main = do
