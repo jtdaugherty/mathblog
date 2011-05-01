@@ -22,10 +22,6 @@ import System.IO
 import System.Exit
     ( exitFailure
     )
-import System.Environment
-    ( getEnvironment
-    , getArgs
-    )
 import System.Directory
     ( doesDirectoryExist
     , doesFileExist
@@ -37,9 +33,6 @@ import System.FilePath
     )
 import System.Posix.Files
     ( createSymbolicLink
-    )
-import Data.Maybe
-    ( isNothing
     )
 import Data.Time.LocalTime
     ( TimeZone(timeZoneName)
@@ -69,10 +62,9 @@ import Paths_mathblog
     ( getDataFileName
     )
 import MB.Startup
-    ( findBaseDir
-    , baseDirEnvName
-    , baseDirParamName
-    , usage
+    ( dataDirectory
+    , listenMode
+    , startupConfigFromEnv
     )
 
 skelDir :: IO FilePath
@@ -377,27 +369,15 @@ regenerateContent dir = do
 
 main :: IO ()
 main = do
-  env  <- getEnvironment
-  args <- getArgs
-
-  let mBase = findBaseDir args env
-  when (isNothing mBase) $ usage >> exitFailure
-
-  let Just dir = mBase
-
-  when (head dir /= '/') $ do
-         putStrLn $ baseDirEnvName ++ " or " ++
-                    "--" ++ baseDirParamName ++ "=<path>" ++
-                    " must specify an absolute path"
-         exitFailure
+  conf <- startupConfigFromEnv
+  let dir = dataDirectory conf
 
   setup dir
-  config <- mkBlog dir
-  ensureDirs config
+  blog <- mkBlog dir
+  ensureDirs blog
 
-  case args of
-    [] -> do
+  case listenMode conf of
+    False -> do
          didWork <- regenerateContent dir
          when (not didWork) $ putStrLn "No changes found!"
-    ["-l"] -> scanForChanges dir regenerateContent
-    _ -> usage >> exitFailure
+    True -> scanForChanges dir regenerateContent

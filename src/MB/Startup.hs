@@ -1,21 +1,70 @@
+{-# LANGUAGE CPP #-}
 module MB.Startup
-    ( findBaseDir
+    ( StartupConfig(..)
+    , startupConfigFromEnv
+#ifdef TESTING
+    , startupConfig
     , baseDirEnvName
-    , baseDirParamName
-    , usage
     , argValue
+    , findBaseDir
+#endif
     )
 where
 
 import Control.Monad
     ( mplus
+    , when
     )
 import Data.List
     ( isPrefixOf
     )
 import Data.Maybe
     ( listToMaybe
+    , isJust
     )
+import System.Exit
+    ( exitFailure
+    )
+import System.Environment
+    ( getEnvironment
+    , getArgs
+    )
+
+data StartupConfig = StartupConfig { listenMode :: Bool
+                                   , dataDirectory :: FilePath
+                                   }
+
+-- |Inspect the program environment to create a startup configuration.
+-- If the configuration information is invalid or absent, this will
+-- automatically emit usage info and exit the program.
+startupConfigFromEnv :: IO StartupConfig
+startupConfigFromEnv = do
+  env  <- getEnvironment
+  args <- getArgs
+
+  case startupConfig args env of
+    Nothing -> usage >> exitFailure
+    Just conf -> do
+      when (head (dataDirectory conf) /= '/') $
+           do
+             putStrLn $ baseDirEnvName ++ " or " ++
+                          "--" ++ baseDirParamName ++ "=<path>" ++
+                                   " must specify an absolute path"
+             exitFailure
+
+      return conf
+
+-- |Create a startup configuration from the specified arguments list
+-- and environment variable list.  Returns Nothing if the required
+-- information was absent.
+startupConfig :: [String] -> [(String, String)] -> Maybe StartupConfig
+startupConfig args env = do
+  d <- findBaseDir args env
+  let lm = isJust $ argValue "l" args
+
+  return $ StartupConfig { listenMode = lm
+                         , dataDirectory = d
+                         }
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_BASE_DIR"
