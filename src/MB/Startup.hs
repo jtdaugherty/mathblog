@@ -27,6 +27,7 @@ import System.Console.GetOpt
 data StartupConfig = StartupConfig { listenMode :: Bool
                                    , dataDirectory :: FilePath
                                    }
+                     deriving (Show, Eq)
 
 data Flag = Listen | DataDir FilePath
             deriving (Eq)
