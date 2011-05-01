@@ -58,7 +58,7 @@ Executable mb
     MB.Types
     MB.Util
     MB.Processing
-    MB.Params
+    MB.Startup
 
   GHC-Options: -Wall
 

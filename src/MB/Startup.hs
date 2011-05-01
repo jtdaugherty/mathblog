@@ -1,4 +1,4 @@
-module MB.Params
+module MB.Startup
     ( findBaseDir
     , baseDirEnvName
     , baseDirParamName

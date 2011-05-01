@@ -1,12 +1,12 @@
 module Main where
 
 
-import qualified MB.ParamTests as ParamTests
+import qualified MB.StartupTests as StartupTests
 import qualified InitTests as InitTests
 
 import Test.Framework ( defaultMain )
 
 main :: IO ()
-main = defaultMain [ ParamTests.tests
+main = defaultMain [ StartupTests.tests
                    , InitTests.tests
                    ]

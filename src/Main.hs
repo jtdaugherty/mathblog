@@ -68,7 +68,7 @@ import qualified MB.Files as Files
 import Paths_mathblog
     ( getDataFileName
     )
-import MB.Params
+import MB.Startup
     ( findBaseDir
     , baseDirEnvName
     , baseDirParamName

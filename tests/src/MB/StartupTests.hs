@@ -1,4 +1,4 @@
-module MB.ParamTests where
+module MB.StartupTests where
 
 import Test.Framework
     ( testGroup
@@ -7,7 +7,7 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit
     ( (@=?) )
 
-import MB.Params
+import MB.Startup
 
 tests :: Test
 tests = testGroup "Param parsing tests" [
