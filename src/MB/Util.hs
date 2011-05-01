@@ -231,7 +231,7 @@ anyChanges s = or $ predicates <*> pure s
                    , postIndexChanged
                    ]
 
-summarizeChanges :: Config -> IO ChangeSummary
+summarizeChanges :: Blog -> IO ChangeSummary
 summarizeChanges config = do
   -- Determine whether the configuration file changed.  Check to see
   -- if it's newer than the index.html file, or if no index.html

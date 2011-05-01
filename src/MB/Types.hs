@@ -1,6 +1,5 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module MB.Types
-    ( Config(..)
+    ( Blog(..)
     , Post(..)
     , Template
     , ChangeSummary(..)
@@ -16,23 +15,23 @@ import Text.StringTemplate
 
 type Template = StringTemplate String
 
-data Config = Config { baseDir :: FilePath
-                     , postSourceDir :: FilePath
-                     , htmlDir :: FilePath
-                     , stylesheetDir :: FilePath
-                     , postHtmlDir :: FilePath
-                     , postIntermediateDir :: FilePath
-                     , imageDir :: FilePath
-                     , templateDir :: FilePath
-                     , htmlTempDir :: FilePath
-                     , baseUrl :: String
-                     , eqPreamblesDir :: FilePath
-                     , title :: String
-                     , authorName :: String
-                     , authorEmail :: String
-                     , configPath :: FilePath
-                     , blogPosts :: [Post]
-                     }
+data Blog = Blog { baseDir :: FilePath
+                 , postSourceDir :: FilePath
+                 , htmlDir :: FilePath
+                 , stylesheetDir :: FilePath
+                 , postHtmlDir :: FilePath
+                 , postIntermediateDir :: FilePath
+                 , imageDir :: FilePath
+                 , templateDir :: FilePath
+                 , htmlTempDir :: FilePath
+                 , baseUrl :: String
+                 , eqPreamblesDir :: FilePath
+                 , title :: String
+                 , authorName :: String
+                 , authorEmail :: String
+                 , configPath :: FilePath
+                 , blogPosts :: [Post]
+                 }
 
 data Post = Post { postTitle :: String
                  , postTitleRaw :: String

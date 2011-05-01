@@ -81,7 +81,7 @@ skelDir = getDataFileName "skel"
 configFilename :: String
 configFilename = "blog.cfg"
 
-commonTemplateAttrs :: Config -> [(String, String)]
+commonTemplateAttrs :: Blog -> [(String, String)]
 commonTemplateAttrs config =
     [ ( "baseUrl", baseUrl config )
     , ( "title", title config )
@@ -89,11 +89,11 @@ commonTemplateAttrs config =
     , ( "authorEmail", authorEmail config )
     ]
 
-fillTemplate :: Config -> Template -> [(String, String)] -> String
+fillTemplate :: Blog -> Template -> [(String, String)] -> String
 fillTemplate config t attrs = renderTemplate attrs' t
     where attrs' = commonTemplateAttrs config ++ attrs
 
-writeTemplate :: Config -> Handle -> Template -> [(String, String)] -> IO ()
+writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> IO ()
 writeTemplate config h t attrs = hPutStr h $ fillTemplate config t attrs
 
 pandocWriterOptions :: Pandoc.WriterOptions
@@ -108,7 +108,7 @@ writePost h post = do
   hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
 
-buildLinks :: Config -> Maybe Post -> Maybe Post -> String
+buildLinks :: Blog -> Maybe Post -> Maybe Post -> String
 buildLinks config prev next =
     "<div id=\"prev-next-links\">"
       ++ link "next-link" "older \\(\\Rightarrow\\)" next
@@ -130,7 +130,7 @@ jsInfo post =
     "};\n" ++
     "</script>\n"
 
-buildPage :: Handle -> Config -> String -> Maybe String -> IO ()
+buildPage :: Handle -> Blog -> String -> Maybe String -> IO ()
 buildPage h config content extraTitle = do
   eTmpl <- loadTemplate $ Files.pageTemplatePath config
 
@@ -144,7 +144,7 @@ buildPage h config content extraTitle = do
           writeTemplate config h tmpl attrs
           hClose h
 
-buildPost :: Handle -> Config -> Post -> (Maybe Post, Maybe Post) -> IO ()
+buildPost :: Handle -> Blog -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h config post prevNext = do
   eTmpl <- loadTemplate $ Files.postTemplatePath config
 
@@ -162,7 +162,7 @@ buildPost h config post prevNext = do
           let out = (fillTemplate config tmpl attrs)
           buildPage h config out $ Just $ postTitleRaw post
 
-generatePost :: Config -> Post -> ChangeSummary -> IO ()
+generatePost :: Blog -> Post -> ChangeSummary -> IO ()
 generatePost config post summary = do
   let finalHtml = Files.postIntermediateHtml config post
       generate = (postFilename post `elem` (postsChanged summary))
@@ -175,7 +175,7 @@ generatePost config post summary = do
     writePost h =<< processPost config post
     hClose h
 
-generatePosts :: Config -> ChangeSummary -> IO ()
+generatePosts :: Blog -> ChangeSummary -> IO ()
 generatePosts config summary = do
   let numRegenerated = if configChanged summary
                        then length $ blogPosts config
@@ -194,7 +194,7 @@ generatePosts config summary = do
         buildPost h config p (prevPost, nextPost)
         hClose h
 
-generateIndex :: Config -> IO ()
+generateIndex :: Blog -> IO ()
 generateIndex config = do
   let dest = Files.postFinalHtml config post
       index = Files.indexHtml config
@@ -211,7 +211,7 @@ postModificationString p = do
   localTime <- toLocalTime $ postModificationTime p
   return $ show localTime ++ "  " ++ timeZoneName tz
 
-generateList :: Config -> IO ()
+generateList :: Blog -> IO ()
 generateList config = do
   -- For each post in the order they were given, extract the
   -- unrendered title and construct an htex document.  Then render it
@@ -233,7 +233,7 @@ generateList config = do
   buildPage h config content Nothing
   hClose h
 
-rssItem :: Config -> Post -> String
+rssItem :: Blog -> Post -> String
 rssItem config p =
     concat [ "<item>"
            , "<title>" ++ postTitleRaw p ++ "</title>\n"
@@ -243,7 +243,7 @@ rssItem config p =
            , "</item>\n"
            ]
 
-generateRssFeed :: Config -> IO ()
+generateRssFeed :: Blog -> IO ()
 generateRssFeed config = do
   h <- openFile (Files.rssXml config) WriteMode
 
@@ -270,7 +270,7 @@ setup dir = do
           putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
           copyTree dataDir dir
 
-ensureDirs :: Config -> IO ()
+ensureDirs :: Blog -> IO ()
 ensureDirs config = do
   let dirs = [ postSourceDir
              , htmlDir
@@ -298,8 +298,8 @@ scanForChanges dir act = do
           threadDelay $ 1 * 1000 * 1000
           scan
 
-mkConfig :: FilePath -> IO Config
-mkConfig base = do
+mkBlog :: FilePath -> IO Blog
+mkBlog base = do
   let configFilePath = base </> configFilename
   e <- doesFileExist configFilePath
 
@@ -324,27 +324,27 @@ mkConfig base = do
   let postSrcDir = base </> "posts"
   allPosts <- loadPostIndex postSrcDir
 
-  return $ Config { baseDir = base
-                  , postSourceDir = postSrcDir
-                  , htmlDir = base </> "html"
-                  , stylesheetDir = base </> "html" </> "stylesheets"
-                  , postHtmlDir = base </> "html" </> "posts"
-                  , postIntermediateDir = base </> "generated"
-                  , imageDir = base </> "html" </> "generated-images"
-                  , templateDir = base </> "templates"
-                  , htmlTempDir = base </> "tmp"
-                  , baseUrl = cfg_baseUrl
-                  , title = cfg_title
-                  , authorName = cfg_authorName
-                  , authorEmail = cfg_authorEmail
-                  , eqPreamblesDir = base </> "eq-preambles"
-                  , configPath = configFilePath
-                  , blogPosts = allPosts
-                  }
+  return $ Blog { baseDir = base
+                , postSourceDir = postSrcDir
+                , htmlDir = base </> "html"
+                , stylesheetDir = base </> "html" </> "stylesheets"
+                , postHtmlDir = base </> "html" </> "posts"
+                , postIntermediateDir = base </> "generated"
+                , imageDir = base </> "html" </> "generated-images"
+                , templateDir = base </> "templates"
+                , htmlTempDir = base </> "tmp"
+                , baseUrl = cfg_baseUrl
+                , title = cfg_title
+                , authorName = cfg_authorName
+                , authorEmail = cfg_authorEmail
+                , eqPreamblesDir = base </> "eq-preambles"
+                , configPath = configFilePath
+                , blogPosts = allPosts
+                }
 
 regenerateContent :: FilePath -> IO Bool
 regenerateContent dir = do
-  config <- mkConfig dir
+  config <- mkBlog dir
   summary <- summarizeChanges config
 
   case anyChanges summary of
@@ -392,7 +392,7 @@ main = do
          exitFailure
 
   setup dir
-  config <- mkConfig dir
+  config <- mkBlog dir
   ensureDirs config
 
   case args of

@@ -29,10 +29,10 @@ import qualified Text.Pandoc as Pandoc
 import MB.Types
 import qualified MB.Files as Files
 
-processPost :: Config -> Post -> IO Post
+processPost :: Blog -> Post -> IO Post
 processPost = renderGnuPlot
 
-renderGnuPlot :: Config -> Post -> IO Post
+renderGnuPlot :: Blog -> Post -> IO Post
 renderGnuPlot config post = do
   let Pandoc.Pandoc m blocks = postAst post
   newBlocks <- forM blocks $ \blk ->
@@ -43,7 +43,7 @@ renderGnuPlot config post = do
 
   return $ post { postAst = Pandoc.Pandoc m newBlocks }
 
-loadPreamble :: Config -> String -> IO (Maybe String)
+loadPreamble :: Blog -> String -> IO (Maybe String)
 loadPreamble config preambleName = do
   let filename = Files.eqPreambleFile config $ preambleName ++ ".txt"
   e <- doesFileExist filename
@@ -54,7 +54,7 @@ loadPreamble config preambleName = do
            s `seq` return ()
            return $ Just s
 
-renderGnuPlotScript :: Config
+renderGnuPlotScript :: Blog
                     -> String
                     -> String
                     -> [String]
