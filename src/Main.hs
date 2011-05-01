@@ -74,19 +74,19 @@ configFilename :: String
 configFilename = "blog.cfg"
 
 commonTemplateAttrs :: Blog -> [(String, String)]
-commonTemplateAttrs config =
-    [ ( "baseUrl", baseUrl config )
-    , ( "title", title config )
-    , ( "authorName", authorName config )
-    , ( "authorEmail", authorEmail config )
+commonTemplateAttrs blog =
+    [ ( "baseUrl", baseUrl blog )
+    , ( "title", title blog )
+    , ( "authorName", authorName blog )
+    , ( "authorEmail", authorEmail blog )
     ]
 
 fillTemplate :: Blog -> Template -> [(String, String)] -> String
-fillTemplate config t attrs = renderTemplate attrs' t
-    where attrs' = commonTemplateAttrs config ++ attrs
+fillTemplate blog t attrs = renderTemplate attrs' t
+    where attrs' = commonTemplateAttrs blog ++ attrs
 
 writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> IO ()
-writeTemplate config h t attrs = hPutStr h $ fillTemplate config t attrs
+writeTemplate blog h t attrs = hPutStr h $ fillTemplate blog t attrs
 
 pandocWriterOptions :: Pandoc.WriterOptions
 pandocWriterOptions =
@@ -101,7 +101,7 @@ writePost h post = do
   hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
 
 buildLinks :: Blog -> Maybe Post -> Maybe Post -> String
-buildLinks config prev next =
+buildLinks blog prev next =
     "<div id=\"prev-next-links\">"
       ++ link "next-link" "older \\(\\Rightarrow\\)" next
       ++ link "prev-link" "\\(\\Leftarrow\\) newer" prev
@@ -110,7 +110,7 @@ buildLinks config prev next =
           link cls name Nothing =
               "<span class=\"" ++ cls ++ "-subdued\">" ++ name ++ "</span>"
           link cls name (Just p) =
-              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl config p ++
+              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl blog p ++
                                 "\">" ++ name ++ "</a>"
 
 jsInfo :: Post -> String
@@ -123,8 +123,8 @@ jsInfo post =
     "</script>\n"
 
 buildPage :: Handle -> Blog -> String -> Maybe String -> IO ()
-buildPage h config content extraTitle = do
-  eTmpl <- loadTemplate $ Files.pageTemplatePath config
+buildPage h blog content extraTitle = do
+  eTmpl <- loadTemplate $ Files.pageTemplatePath blog
 
   case eTmpl of
     Left msg -> putStrLn msg >> exitFailure
@@ -133,30 +133,30 @@ buildPage h config content extraTitle = do
           let attrs = [ ("content", content)
                       ] ++ maybe [] (\t -> [("extraTitle", t)]) extraTitle
 
-          writeTemplate config h tmpl attrs
+          writeTemplate blog h tmpl attrs
           hClose h
 
 buildPost :: Handle -> Blog -> Post -> (Maybe Post, Maybe Post) -> IO ()
-buildPost h config post prevNext = do
-  eTmpl <- loadTemplate $ Files.postTemplatePath config
+buildPost h blog post prevNext = do
+  eTmpl <- loadTemplate $ Files.postTemplatePath blog
 
   case eTmpl of
     Left msg -> putStrLn msg >> exitFailure
     Right tmpl ->
         do
-          html <- readFile $ Files.postIntermediateHtml config post
+          html <- readFile $ Files.postIntermediateHtml blog post
 
           let attrs = [ ("post", html)
-                      , ("nextPrevLinks", uncurry (buildLinks config) prevNext)
+                      , ("nextPrevLinks", uncurry (buildLinks blog) prevNext)
                       , ("jsInfo", jsInfo post)
                       ]
 
-          let out = (fillTemplate config tmpl attrs)
-          buildPage h config out $ Just $ postTitleRaw post
+          let out = (fillTemplate blog tmpl attrs)
+          buildPage h blog out $ Just $ postTitleRaw post
 
 generatePost :: Blog -> Post -> ChangeSummary -> IO ()
-generatePost config post summary = do
-  let finalHtml = Files.postIntermediateHtml config post
+generatePost blog post summary = do
+  let finalHtml = Files.postIntermediateHtml blog post
       generate = (postFilename post `elem` (postsChanged summary))
                  || configChanged summary
 
@@ -164,33 +164,33 @@ generatePost config post summary = do
     putStrLn $ "Rendering " ++ Files.postBaseName post
 
     h <- openFile finalHtml WriteMode
-    writePost h =<< processPost config post
+    writePost h =<< processPost blog post
     hClose h
 
 generatePosts :: Blog -> ChangeSummary -> IO ()
-generatePosts config summary = do
+generatePosts blog summary = do
   let numRegenerated = if configChanged summary
-                       then length $ blogPosts config
+                       then length $ blogPosts blog
                        else length $ postsChanged summary
   when (numRegenerated > 0) $ putStrLn $ "Rendering " ++ (show numRegenerated) ++ " post(s)..."
 
   let n = length posts
-      posts = blogPosts config
+      posts = blogPosts blog
   forM_ (zip posts [0..]) $ \(p, i) ->
       do
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
 
-        generatePost config p summary
-        h <- openFile (Files.postFinalHtml config p) WriteMode
-        buildPost h config p (prevPost, nextPost)
+        generatePost blog p summary
+        h <- openFile (Files.postFinalHtml blog p) WriteMode
+        buildPost h blog p (prevPost, nextPost)
         hClose h
 
 linkIndexPage :: Blog -> IO ()
-linkIndexPage config = do
-  let dest = Files.postFinalHtml config post
-      index = Files.indexHtml config
-      post = head $ blogPosts config
+linkIndexPage blog = do
+  let dest = Files.postFinalHtml blog post
+      index = Files.indexHtml blog
+      post = head $ blogPosts blog
 
   exists <- doesFileExist index
   when exists $ removeFile index
@@ -204,15 +204,15 @@ postModificationString p = do
   return $ show localTime ++ "  " ++ timeZoneName tz
 
 generatePostList :: Blog -> IO ()
-generatePostList config = do
+generatePostList blog = do
   -- For each post in the order they were given, extract the
   -- unrendered title and construct an htex document.  Then render it
   -- to the listing location.
-  entries <- forM (blogPosts config) $ \p ->
+  entries <- forM (blogPosts blog) $ \p ->
              do
                created <- postModificationString p
                return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
-                               , "<a href=\"" ++ Files.postUrl config p ++ "\">"
+                               , "<a href=\"" ++ Files.postUrl blog p ++ "\">"
                                , postTitle p
                                , "</a></span><span class=\"post-created\">Posted "
                                , created
@@ -221,36 +221,36 @@ generatePostList config = do
 
   let content = "<div id=\"all-posts\">" ++ concat entries ++ "</div>"
 
-  h <- openFile (Files.listHtml config) WriteMode
-  buildPage h config content Nothing
+  h <- openFile (Files.listHtml blog) WriteMode
+  buildPage h blog content Nothing
   hClose h
 
 rssItem :: Blog -> Post -> String
-rssItem config p =
+rssItem blog p =
     concat [ "<item>"
            , "<title>" ++ postTitleRaw p ++ "</title>\n"
-           , "<link>" ++ Files.postUrl config p ++ "</link>\n"
+           , "<link>" ++ Files.postUrl blog p ++ "</link>\n"
            , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
-           , "<guid>" ++ Files.postUrl config p ++ "</guid>\n"
+           , "<guid>" ++ Files.postUrl blog p ++ "</guid>\n"
            , "</item>\n"
            ]
 
 generateRssFeed :: Blog -> IO ()
-generateRssFeed config = do
-  h <- openFile (Files.rssXml config) WriteMode
+generateRssFeed blog = do
+  h <- openFile (Files.rssXml blog) WriteMode
 
-  eTmpl <- loadTemplate $ Files.rssTemplatePath config
+  eTmpl <- loadTemplate $ Files.rssTemplatePath blog
 
   case eTmpl of
     Left msg -> putStrLn msg >> exitFailure
     Right tmpl ->
         do
-          let items = map (rssItem config) $ blogPosts config
+          let items = map (rssItem blog) $ blogPosts blog
               itemStr = concat items
               attrs = [ ("items", itemStr)
                       ]
 
-          writeTemplate config h tmpl attrs
+          writeTemplate blog h tmpl attrs
           hClose h
 
 setup :: FilePath -> IO ()
@@ -263,7 +263,7 @@ setup dir = do
           copyTree dataDir dir
 
 ensureDirs :: Blog -> IO ()
-ensureDirs config = do
+ensureDirs blog = do
   let dirs = [ postSourceDir
              , htmlDir
              , stylesheetDir
@@ -275,7 +275,7 @@ ensureDirs config = do
              , eqPreamblesDir
              ]
 
-  forM_ (dirs <*> pure config) $ \d ->
+  forM_ (dirs <*> pure blog) $ \d ->
       do
         exists <- doesDirectoryExist d
         when (not exists) $ createDirectory d
@@ -336,12 +336,12 @@ mkBlog base = do
 
 regenerateContent :: FilePath -> IO Bool
 regenerateContent dir = do
-  config <- mkBlog dir
-  summary <- summarizeChanges config
+  blog <- mkBlog dir
+  summary <- summarizeChanges blog
 
   case anyChanges summary of
     True -> do
-      putStrLn $ "Blog directory: " ++ baseDir config
+      putStrLn $ "Blog directory: " ++ baseDir blog
 
       when (configChanged summary) $
            putStrLn "Configuration file changed; regenerating all content."
@@ -354,14 +354,14 @@ regenerateContent dir = do
       when (postIndexChanged summary) $
            putStrLn "Post index changed; regenerating next/previous links."
 
-      generatePosts config summary
+      generatePosts blog summary
 
-      linkIndexPage config
-      generatePostList config
-      generateRssFeed config
+      linkIndexPage blog
+      generatePostList blog
+      generateRssFeed blog
 
-      writeFile (Files.postIndex config) $
-                serializePostIndex $ blogPosts config
+      writeFile (Files.postIndex blog) $
+                serializePostIndex $ blogPosts blog
 
       putStrLn "Done."
       return True
