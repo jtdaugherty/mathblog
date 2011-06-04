@@ -70,7 +70,7 @@ mathblog takes advantage of three primary software components:
  - MathJax, a JavaScript package for scalable, cross-browser Math
    typesetting.  You can get it from http://mathjax.com/.  See below
    for details on setting up MathJax with mathblog.  mathblog has been
-   tested with MathJax 1.0.1.
+   tested with MathJax 1.1.
 
 How to use
 ----------
@@ -107,8 +107,7 @@ rendering working.
 Installing MathJax
 ------------------
 
-First, download MathJax.  mathblog has been tested with MathJax 1.0.1;
-if it works with newer versions, please let me know!
+First, download MathJax.  mathblog has been tested with MathJax 1.1.
 
   http://mathjax.com/
 
