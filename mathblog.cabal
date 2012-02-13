@@ -59,6 +59,7 @@ Executable mb
     MB.Util
     MB.Processing
     MB.Startup
+    MB.Gladtex
 
   GHC-Options: -Wall
 
