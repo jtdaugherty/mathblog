@@ -45,7 +45,8 @@ import MB.Templates
     , renderTemplate
     )
 import MB.Processing
-    ( processPost
+    ( applyProcessors
+    , getWriterOptions
     )
 import MB.Util
     ( copyTree
@@ -67,6 +68,7 @@ import MB.Startup
     , startupConfigFromEnv
     , initDataDirectory
     )
+import MB.Gnuplot
 
 skelDir :: IO FilePath
 skelDir = getDataFileName "skel"
@@ -89,17 +91,18 @@ fillTemplate blog t attrs = renderTemplate attrs' t
 writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> IO ()
 writeTemplate blog h t attrs = hPutStr h $ fillTemplate blog t attrs
 
-pandocWriterOptions :: Pandoc.WriterOptions
-pandocWriterOptions =
-    Pandoc.defaultWriterOptions { Pandoc.writerHTMLMathMethod = Pandoc.MathJax "MathJax/MathJax.js"
-                                }
+-- defaultWriterOptions :: Pandoc.WriterOptions
+-- defaultWriterOptions =
+--     { Pandoc.writerHTMLMathMethod = Pandoc.MathJax "MathJax/MathJax.js"
+--     }
 
-writePost :: Handle -> Post -> IO ()
-writePost h post = do
+writePost :: Blog -> Handle -> Post -> IO ()
+writePost blog h post = do
+  let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
   created <- postModificationString post
   hPutStr h $ "<h1>" ++ postTitle post ++ "</h1>"
   hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
-  hPutStr h $ Pandoc.writeHtmlString pandocWriterOptions (postAst post)
+  hPutStr h $ Pandoc.writeHtmlString writerOpts (postAst post)
 
 buildLinks :: Blog -> Maybe Post -> Maybe Post -> String
 buildLinks blog prev next =
@@ -165,7 +168,7 @@ generatePost blog post summary = do
     putStrLn $ "Rendering " ++ Files.postBaseName post
 
     h <- openFile finalHtml WriteMode
-    writePost h =<< processPost blog post
+    writePost blog h =<< applyProcessors blog post
     hClose h
 
 generatePosts :: Blog -> ChangeSummary -> IO ()
@@ -324,6 +327,12 @@ mkBlog base = do
   let postSrcDir = base </> "posts"
   allPosts <- loadPostIndex postSrcDir
 
+  -- XXX for now, hard-code, but ultimately, keep a list of known
+  -- processors and look in the config file to decide which ones to
+  -- apply.
+  let procs = [ gnuplotProcessor
+              ]
+
   let b = Blog { baseDir = base
                , postSourceDir = postSrcDir
                , htmlDir = base </> "html"
@@ -340,6 +349,7 @@ mkBlog base = do
                , eqPreamblesDir = base </> "eq-preambles"
                , configPath = configFilePath
                , blogPosts = allPosts
+               , processors = procs
                }
 
   ensureDirs b

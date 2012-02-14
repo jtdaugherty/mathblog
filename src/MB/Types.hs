@@ -3,11 +3,13 @@ module MB.Types
     , Post(..)
     , Template
     , ChangeSummary(..)
+    , Processor(..)
     )
 where
 import Data.Time.Clock
     ( UTCTime
     )
+import qualified Text.Pandoc as Pandoc
 import qualified Text.Pandoc.Definition as Pandoc
 import Text.StringTemplate
     ( StringTemplate
@@ -31,6 +33,7 @@ data Blog = Blog { baseDir :: FilePath
                  , authorEmail :: String
                  , configPath :: FilePath
                  , blogPosts :: [Post]
+                 , processors :: [Processor]
                  }
 
 data Post = Post { postTitle :: String
@@ -40,6 +43,11 @@ data Post = Post { postTitle :: String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
+
+data Processor =
+    Processor { applyWriterOptions :: Pandoc.WriterOptions -> Pandoc.WriterOptions
+              , processPost :: Blog -> Post -> IO Post
+              }
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary

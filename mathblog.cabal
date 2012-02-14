@@ -60,6 +60,7 @@ Executable mb
     MB.Processing
     MB.Startup
     MB.Gladtex
+    MB.Gnuplot
 
   GHC-Options: -Wall
 
