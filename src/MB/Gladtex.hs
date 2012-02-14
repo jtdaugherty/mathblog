@@ -3,6 +3,7 @@ module MB.Gladtex
     , checkForGladtex
     )
 where
+
 import System.Exit
     ( ExitCode(..)
     , exitFailure
