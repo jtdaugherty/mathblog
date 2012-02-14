@@ -56,7 +56,11 @@ commonTemplateAttrs blog =
     , ( "title", title blog )
     , ( "authorName", authorName blog )
     , ( "authorEmail", authorEmail blog )
+    , ( "extraPageHead", extraPageHead blog )
     ]
+
+extraPageHead :: Blog -> String
+extraPageHead b = concat $ pageHead <$> processors b
 
 fillTemplate :: Blog -> Template -> [(String, String)] -> String
 fillTemplate blog t attrs = renderTemplate attrs' t

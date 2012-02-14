@@ -46,6 +46,7 @@ data Post = Post { postTitle :: String
 data Processor =
     Processor { applyWriterOptions :: Pandoc.WriterOptions -> Pandoc.WriterOptions
               , processPost :: Blog -> Post -> IO Post
+              , pageHead :: String
               }
 
 -- Summarize changes in files so we know what to do during the

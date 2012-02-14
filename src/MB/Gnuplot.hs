@@ -33,6 +33,7 @@ gnuplotProcessor :: Processor
 gnuplotProcessor =
     Processor { applyWriterOptions = id
               , processPost = renderGnuPlot
+              , pageHead = ""
               }
 
 renderGnuPlot :: Blog -> Post -> IO Post
