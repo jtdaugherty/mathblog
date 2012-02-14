@@ -69,6 +69,7 @@ import MB.Startup
     , initDataDirectory
     )
 import MB.Gnuplot
+import MB.Mathjax
 
 skelDir :: IO FilePath
 skelDir = getDataFileName "skel"
@@ -90,11 +91,6 @@ fillTemplate blog t attrs = renderTemplate attrs' t
 
 writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> IO ()
 writeTemplate blog h t attrs = hPutStr h $ fillTemplate blog t attrs
-
--- defaultWriterOptions :: Pandoc.WriterOptions
--- defaultWriterOptions =
---     { Pandoc.writerHTMLMathMethod = Pandoc.MathJax "MathJax/MathJax.js"
---     }
 
 writePost :: Blog -> Handle -> Post -> IO ()
 writePost blog h post = do
@@ -331,6 +327,7 @@ mkBlog base = do
   -- processors and look in the config file to decide which ones to
   -- apply.
   let procs = [ gnuplotProcessor
+              , mathjaxProcessor
               ]
 
   let b = Blog { baseDir = base
