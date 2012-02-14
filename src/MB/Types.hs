@@ -10,7 +10,6 @@ import Data.Time.Clock
     ( UTCTime
     )
 import qualified Text.Pandoc as Pandoc
-import qualified Text.Pandoc.Definition as Pandoc
 import Text.StringTemplate
     ( StringTemplate
     )

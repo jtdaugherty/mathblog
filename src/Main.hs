@@ -1,43 +1,16 @@
 module Main where
 
 import Control.Applicative
-    ( (<*>)
-    , pure
-    )
 import Control.Monad
-    ( when
-    , forM_
-    , forM
-    )
 import Control.Concurrent
-    ( threadDelay
-    )
 import System.IO
-    ( IOMode(WriteMode)
-    , Handle
-    , openFile
-    , hPutStr
-    , hClose
-    )
 import System.Exit
-    ( exitFailure
-    )
 import System.Directory
-    ( doesDirectoryExist
-    , doesFileExist
-    , removeFile
-    , createDirectory
-    )
 import System.FilePath
-    ( (</>)
-    )
 import System.Posix.Files
     ( createSymbolicLink
     )
 import Data.Time.LocalTime
-    ( TimeZone(timeZoneName)
-    , getCurrentTimeZone
-    )
 import qualified Text.Pandoc as Pandoc
 import qualified MB.Config as Config
 import MB.Templates
