@@ -1,5 +1,6 @@
 module MB.Processing
-    ( applyProcessors
+    ( applyPreProcessors
+    , applyPostProcessors
     , getWriterOptions
     , getRawPostTitle
     , getPostTitle
@@ -11,16 +12,27 @@ import Data.Maybe (catMaybes)
 import qualified Text.Pandoc as Pandoc
 import MB.Types
 
-applyProcessors :: Blog -> Post -> IO Post
-applyProcessors b post = applyProcessors_ b post (processors b)
+applyPreProcessors :: Blog -> Post -> IO Post
+applyPreProcessors b post = applyPreProcessors_ b post (processors b)
 
-applyProcessors_ :: Blog -> Post -> [Processor] -> IO Post
-applyProcessors_ _ post [] = return post
-applyProcessors_ b post (p:ps) = do
-  post' <- case processPost p of
+applyPostProcessors :: Blog -> FilePath -> IO ()
+applyPostProcessors b path = applyPostProcessors_ b path (processors b)
+
+applyPreProcessors_ :: Blog -> Post -> [Processor] -> IO Post
+applyPreProcessors_ _ post [] = return post
+applyPreProcessors_ b post (p:ps) = do
+  post' <- case preProcessPost p of
              Nothing -> return post
              Just f -> f b post
-  applyProcessors_ b post' ps
+  applyPreProcessors_ b post' ps
+
+applyPostProcessors_ :: Blog -> FilePath -> [Processor] -> IO ()
+applyPostProcessors_ _ _ [] = return ()
+applyPostProcessors_ b pth (p:ps) = do
+  case postProcessPost p of
+    Nothing -> return ()
+    Just f -> f b pth
+  applyPostProcessors_ b pth ps
 
 getWriterOptions :: Blog -> Pandoc.WriterOptions -> Pandoc.WriterOptions
 getWriterOptions b = foldl (.) id (catMaybes $ applyWriterOptions <$> processors b)

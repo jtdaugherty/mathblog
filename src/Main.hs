@@ -140,8 +140,9 @@ generatePost blog post summary = do
     putStrLn $ "Rendering " ++ Files.postBaseName post
 
     h <- openFile finalHtml WriteMode
-    writePost blog h =<< applyProcessors blog post
+    writePost blog h =<< applyPreProcessors blog post
     hClose h
+    applyPostProcessors blog finalHtml
 
 generatePosts :: Blog -> ChangeSummary -> IO ()
 generatePosts blog summary = do
@@ -273,6 +274,12 @@ scanForChanges dir act = do
           threadDelay $ 1 * 1000 * 1000
           scan
 
+mathBackends :: [(String, Processor)]
+mathBackends =
+    [ ("gladtex", gladtexProcessor)
+    , ("mathjax", mathjaxProcessor)
+    ]
+
 mkBlog :: FilePath -> IO Blog
 mkBlog base = do
   let configFilePath = base </> configFilename
@@ -299,13 +306,16 @@ mkBlog base = do
   let postSrcDir = base </> "posts"
   allPosts <- loadPostIndex postSrcDir
 
-  -- XXX for now, hard-code, but ultimately, keep a list of known
-  -- processors and look in the config file to decide which ones to
-  -- apply.
-  let procs = [ gnuplotProcessor
-              , gladtexProcessor
-              -- , mathjaxProcessor
-              ]
+  let requestedMathBackend = lookup "mathBackend" cfg
+      mathBackend = case requestedMathBackend of
+                      Nothing -> mathjaxProcessor
+                      Just b -> case lookup b mathBackends of
+                                  Nothing -> error $ "Unsupported math backend " ++ show b
+                                             ++ "; valid choices are "
+                                             ++ (show $ fst <$> mathBackends)
+                                  Just proc -> proc
+
+      procs = [gnuplotProcessor, mathBackend]
 
   let b = Blog { baseDir = base
                , postSourceDir = postSrcDir

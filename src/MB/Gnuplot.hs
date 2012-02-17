@@ -31,7 +31,7 @@ import qualified MB.Files as Files
 
 gnuplotProcessor :: Processor
 gnuplotProcessor =
-    nullProcessor { processPost = Just renderGnuPlot
+    nullProcessor { preProcessPost = Just renderGnuPlot
                   }
 
 renderGnuPlot :: Blog -> Post -> IO Post

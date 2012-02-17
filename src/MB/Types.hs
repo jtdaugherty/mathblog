@@ -49,7 +49,8 @@ data TitleSetting = BlogPost
 
 data Processor =
     Processor { applyWriterOptions :: Maybe (Pandoc.WriterOptions -> Pandoc.WriterOptions)
-              , processPost :: Maybe (Blog -> Post -> IO Post)
+              , preProcessPost :: Maybe (Blog -> Post -> IO Post)
+              , postProcessPost :: Maybe (Blog -> FilePath -> IO ())
               , pageHead :: Maybe String
               , buildPostTitle :: Maybe (TitleSetting -> [Pandoc.Inline] -> [Pandoc.Inline])
               , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
@@ -57,7 +58,7 @@ data Processor =
 
 nullProcessor :: Processor
 nullProcessor =
-    Processor Nothing Nothing Nothing Nothing Nothing
+    Processor Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary
