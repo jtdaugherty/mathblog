@@ -55,7 +55,7 @@ gladTex blog htexPath color = do
   let args = [ "-d", imageDir blog
              , "-u", baseUrl blog ++ "/generated-images/"
              , "-r", "120"
-             , "-s", "5"
+             , "-s", "4"
              , "-b", "FFFFFF"
              , "-c", color
              , "-l", "displaymath"
