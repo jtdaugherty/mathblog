@@ -139,8 +139,10 @@ generatePost blog post summary = do
   when generate $ do
     putStrLn $ "Rendering " ++ Files.postBaseName post
 
+    newPost <- applyPreProcessors blog post
+
     h <- openFile finalHtml WriteMode
-    writePost blog h =<< applyPreProcessors blog post
+    writePost blog h newPost
     hClose h
     applyPostProcessors blog finalHtml BlogPost
 
