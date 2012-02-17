@@ -8,10 +8,9 @@ import MB.Types
 
 mathjaxProcessor :: Processor
 mathjaxProcessor =
-    Processor { applyWriterOptions = mathjaxOpts
-              , processPost = \_ p -> return p
-              , pageHead = mathjaxPageHead
-              }
+    nullProcessor { applyWriterOptions = Just mathjaxOpts
+                  , pageHead = Just mathjaxPageHead
+                  }
 
 mathjaxOpts :: Pandoc.WriterOptions -> Pandoc.WriterOptions
 mathjaxOpts opts =

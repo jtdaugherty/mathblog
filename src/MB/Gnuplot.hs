@@ -31,10 +31,8 @@ import qualified MB.Files as Files
 
 gnuplotProcessor :: Processor
 gnuplotProcessor =
-    Processor { applyWriterOptions = id
-              , processPost = renderGnuPlot
-              , pageHead = ""
-              }
+    nullProcessor { processPost = Just renderGnuPlot
+                  }
 
 renderGnuPlot :: Blog -> Post -> IO Post
 renderGnuPlot config post = do

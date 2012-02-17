@@ -1,6 +1,5 @@
 module MB.Gladtex
-    ( gladTex
-    , checkForGladtex
+    ( gladtexProcessor
     )
 where
 
@@ -14,10 +13,27 @@ import System.Process
 import Control.Monad
     ( when
     )
+import qualified Text.Pandoc as Pandoc
 import MB.Types
+import qualified MB.Files as Files
+
+gladtexProcessor :: Processor
+gladtexProcessor =
+    nullProcessor { applyWriterOptions = Just gladtexWriterOptions
+                  , processPost = Just processGladtex
+                  }
+
+gladtexWriterOptions :: Pandoc.WriterOptions -> Pandoc.WriterOptions
+gladtexWriterOptions opts =
+    opts { Pandoc.writerHTMLMathMethod = Pandoc.GladTeX
+         }
 
 gladtexProgName :: String
 gladtexProgName = "gladtex"
+
+processGladtex :: Blog -> Post -> IO Post
+processGladtex blog p = do
+  return p
 
 gladTex :: Blog -> FilePath -> String -> IO ()
 gladTex blog htexPath color = do

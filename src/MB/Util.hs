@@ -2,8 +2,6 @@ module MB.Util
     ( copyTree
     , toUtcTime
     , toLocalTime
-    , pandocTitle
-    , pandocTitleRaw
     , rssModificationTime
     , loadPostIndex
     , getModificationTime
@@ -127,22 +125,6 @@ toLocalTime u = do
   tz <- getCurrentTimeZone
   return $ utcToLocalTime tz u
 
-pandocTitle :: Pandoc.Pandoc -> String
-pandocTitle (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
-    where
-      getStr (Pandoc.Str s) = s
-      getStr (Pandoc.Math _ s) = "\\(" ++ s ++ "\\)"
-      getStr Pandoc.Space = " "
-      getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
-
-pandocTitleRaw :: Pandoc.Pandoc -> String
-pandocTitleRaw (Pandoc.Pandoc m _) = concat $ map getStr $ Pandoc.docTitle m
-    where
-      getStr (Pandoc.Str s) = s
-      getStr (Pandoc.Math _ s) = s
-      getStr Pandoc.Space = " "
-      getStr i = error $ "Unexpected inline in document title, got " ++ (show i)
-
 rssModificationTime :: Post -> String
 rssModificationTime =
     formatTime defaultTimeLocale rfc822DateFormat . postModificationTime
@@ -152,9 +134,9 @@ loadPost fullPath = do
   fileContent <- readFile fullPath
   t <- getModificationTime fullPath
   let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
+      Pandoc.Pandoc m _ = doc
 
-  return $ Post { postTitle = pandocTitle doc
-                , postTitleRaw = pandocTitleRaw doc
+  return $ Post { postTitle = Pandoc.docTitle m
                 , postPath = fullPath
                 , postFilename = takeFileName fullPath
                 , postModificationTime = t

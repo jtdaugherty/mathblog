@@ -3,7 +3,9 @@ module MB.Types
     , Post(..)
     , Template
     , ChangeSummary(..)
+    , TitleSetting(..)
     , Processor(..)
+    , nullProcessor
     )
 where
 import Data.Time.Clock
@@ -35,19 +37,27 @@ data Blog = Blog { baseDir :: FilePath
                  , processors :: [Processor]
                  }
 
-data Post = Post { postTitle :: String
-                 , postTitleRaw :: String
+data Post = Post { postTitle :: [Pandoc.Inline]
                  , postPath :: String
                  , postFilename :: String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
 
+data TitleSetting = BlogPost
+                  | Index
+
 data Processor =
-    Processor { applyWriterOptions :: Pandoc.WriterOptions -> Pandoc.WriterOptions
-              , processPost :: Blog -> Post -> IO Post
-              , pageHead :: String
+    Processor { applyWriterOptions :: Maybe (Pandoc.WriterOptions -> Pandoc.WriterOptions)
+              , processPost :: Maybe (Blog -> Post -> IO Post)
+              , pageHead :: Maybe String
+              , buildPostTitle :: Maybe (TitleSetting -> [Pandoc.Inline] -> [Pandoc.Inline])
+              , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
               }
+
+nullProcessor :: Processor
+nullProcessor =
+    Processor Nothing Nothing Nothing Nothing Nothing
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary

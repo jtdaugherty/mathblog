@@ -3,6 +3,7 @@ module Main where
 import Control.Applicative
 import Control.Monad
 import Control.Concurrent
+import Data.Maybe
 import System.IO
 import System.Exit
 import System.Directory
@@ -18,9 +19,6 @@ import MB.Templates
     , renderTemplate
     )
 import MB.Processing
-    ( applyProcessors
-    , getWriterOptions
-    )
 import MB.Util
     ( copyTree
     , toLocalTime
@@ -43,6 +41,7 @@ import MB.Startup
     )
 import MB.Gnuplot
 import MB.Mathjax
+import MB.Gladtex
 
 skelDir :: IO FilePath
 skelDir = getDataFileName "skel"
@@ -60,7 +59,7 @@ commonTemplateAttrs blog =
     ]
 
 extraPageHead :: Blog -> String
-extraPageHead b = concat $ pageHead <$> processors b
+extraPageHead b = concat $ catMaybes $ pageHead <$> processors b
 
 fillTemplate :: Blog -> Template -> [(String, String)] -> String
 fillTemplate blog t attrs = renderTemplate attrs' t
@@ -73,7 +72,7 @@ writePost :: Blog -> Handle -> Post -> IO ()
 writePost blog h post = do
   let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
   created <- postModificationString post
-  hPutStr h $ "<h1>" ++ postTitle post ++ "</h1>"
+  hPutStr h $ "<h1>" ++ getPostTitle blog post BlogPost ++ "</h1>"
   hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
   hPutStr h $ Pandoc.writeHtmlString writerOpts (postAst post)
 
@@ -129,7 +128,7 @@ buildPost h blog post prevNext = do
                       ]
 
           let out = (fillTemplate blog tmpl attrs)
-          buildPage h blog out $ Just $ postTitleRaw post
+          buildPage h blog out $ Just $ getRawPostTitle blog post
 
 generatePost :: Blog -> Post -> ChangeSummary -> IO ()
 generatePost blog post summary = do
@@ -190,7 +189,7 @@ generatePostList blog = do
                created <- postModificationString p
                return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
                                , "<a href=\"" ++ Files.postUrl blog p ++ "\">"
-                               , postTitle p
+                               , getPostTitle blog p Index
                                , "</a></span><span class=\"post-created\">Posted "
                                , created
                                , "</span></div>\n"
@@ -205,7 +204,7 @@ generatePostList blog = do
 rssItem :: Blog -> Post -> String
 rssItem blog p =
     concat [ "<item>"
-           , "<title>" ++ postTitleRaw p ++ "</title>\n"
+           , "<title>" ++ getRawPostTitle blog p ++ "</title>\n"
            , "<link>" ++ Files.postUrl blog p ++ "</link>\n"
            , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
            , "<guid>" ++ Files.postUrl blog p ++ "</guid>\n"
@@ -304,7 +303,8 @@ mkBlog base = do
   -- processors and look in the config file to decide which ones to
   -- apply.
   let procs = [ gnuplotProcessor
-              , mathjaxProcessor
+              , gladtexProcessor
+              -- , mathjaxProcessor
               ]
 
   let b = Blog { baseDir = base
