@@ -3,7 +3,7 @@ module MB.Types
     , Post(..)
     , Template
     , ChangeSummary(..)
-    , TitleSetting(..)
+    , Page(..)
     , Processor(..)
     , nullProcessor
     )
@@ -44,15 +44,15 @@ data Post = Post { postTitle :: [Pandoc.Inline]
                  , postAst :: Pandoc.Pandoc
                  }
 
-data TitleSetting = BlogPost
-                  | Index
+data Page = BlogPost
+          | Index
 
 data Processor =
     Processor { applyWriterOptions :: Maybe (Pandoc.WriterOptions -> Pandoc.WriterOptions)
               , preProcessPost :: Maybe (Blog -> Post -> IO Post)
-              , postProcessPost :: Maybe (Blog -> FilePath -> IO ())
+              , postProcessPost :: Maybe (Blog -> FilePath -> Page -> IO ())
               , pageHead :: Maybe String
-              , buildPostTitle :: Maybe (TitleSetting -> [Pandoc.Inline] -> [Pandoc.Inline])
+              , buildPostTitle :: Maybe (Page -> [Pandoc.Inline] -> [Pandoc.Inline])
               , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
               }
 

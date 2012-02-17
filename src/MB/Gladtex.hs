@@ -36,16 +36,19 @@ gladtexWriterOptions opts =
 gladtexProgName :: String
 gladtexProgName = "gladtex"
 
-processGladtex :: Blog -> FilePath -> IO ()
-processGladtex blog path = do
+processGladtex :: Blog -> FilePath -> Page -> IO ()
+processGladtex blog path page = do
   -- Copy the final HTML path (which was passed in) to temp file since
   -- we ultimately need to write to the final HTML path.
   let htexPath = path ++ ".htex"
+      textColor = case page of
+                    Index -> "0000FF"
+                    BlogPost -> "000000"
+
   copyFile path htexPath
 
-  gladTex blog htexPath "000000"
-
-  return ()
+  -- gladtex will overwrite the original .html file.
+  gladTex blog htexPath textColor
 
 gladTex :: Blog -> FilePath -> String -> IO ()
 gladTex blog htexPath color = do
@@ -81,7 +84,7 @@ checkForGladtex = do
           exitFailure
     _ -> return ()
 
-gladtexTitle :: TitleSetting -> [Pandoc.Inline] -> [Pandoc.Inline]
+gladtexTitle :: Page -> [Pandoc.Inline] -> [Pandoc.Inline]
 gladtexTitle BlogPost ts = rewriteInline 190 <$> ts
 gladtexTitle Index ts = rewriteInline 110 <$> ts
 

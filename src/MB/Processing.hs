@@ -15,8 +15,8 @@ import MB.Types
 applyPreProcessors :: Blog -> Post -> IO Post
 applyPreProcessors b post = applyPreProcessors_ b post (processors b)
 
-applyPostProcessors :: Blog -> FilePath -> IO ()
-applyPostProcessors b path = applyPostProcessors_ b path (processors b)
+applyPostProcessors :: Blog -> FilePath -> Page -> IO ()
+applyPostProcessors b path pg = applyPostProcessors_ b path pg (processors b)
 
 applyPreProcessors_ :: Blog -> Post -> [Processor] -> IO Post
 applyPreProcessors_ _ post [] = return post
@@ -26,13 +26,13 @@ applyPreProcessors_ b post (p:ps) = do
              Just f -> f b post
   applyPreProcessors_ b post' ps
 
-applyPostProcessors_ :: Blog -> FilePath -> [Processor] -> IO ()
-applyPostProcessors_ _ _ [] = return ()
-applyPostProcessors_ b pth (p:ps) = do
+applyPostProcessors_ :: Blog -> FilePath -> Page -> [Processor] -> IO ()
+applyPostProcessors_ _ _ _ [] = return ()
+applyPostProcessors_ b pth pg (p:ps) = do
   case postProcessPost p of
     Nothing -> return ()
-    Just f -> f b pth
-  applyPostProcessors_ b pth ps
+    Just f -> f b pth pg
+  applyPostProcessors_ b pth pg ps
 
 getWriterOptions :: Blog -> Pandoc.WriterOptions -> Pandoc.WriterOptions
 getWriterOptions b = foldl (.) id (catMaybes $ applyWriterOptions <$> processors b)
@@ -49,10 +49,10 @@ getInlineStr (Pandoc.Math _ s) = s
 getInlineStr Pandoc.Space = " "
 getInlineStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
-getPostTitle :: Blog -> Post -> TitleSetting -> String
+getPostTitle :: Blog -> Post -> Page -> String
 getPostTitle b p s = concat $ getInlineStr <$> f (postTitle p)
     where
       f = foldl (.) id (reverse $ fs <*> (pure s))
 
-      fs :: [TitleSetting -> [Pandoc.Inline] -> [Pandoc.Inline]]
+      fs :: [Page -> [Pandoc.Inline] -> [Pandoc.Inline]]
       fs = catMaybes $ buildPostTitle <$> processors b

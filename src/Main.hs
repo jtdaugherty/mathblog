@@ -142,7 +142,7 @@ generatePost blog post summary = do
     h <- openFile finalHtml WriteMode
     writePost blog h =<< applyPreProcessors blog post
     hClose h
-    applyPostProcessors blog finalHtml
+    applyPostProcessors blog finalHtml BlogPost
 
 generatePosts :: Blog -> ChangeSummary -> IO ()
 generatePosts blog summary = do
@@ -201,6 +201,8 @@ generatePostList blog = do
   h <- openFile (Files.listHtml blog) WriteMode
   buildPage h blog content Nothing
   hClose h
+
+  applyPostProcessors blog (Files.listHtml blog) Index
 
 rssItem :: Blog -> Post -> String
 rssItem blog p =
