@@ -58,6 +58,8 @@ gladTex blog htexPath color = do
              , baseUrl blog ++ "/generated-images/"
              , "-r"
              , "120"
+             , "-s"
+             , "5"
              , "-b"
              , "FFFFFF"
              , "-c"
