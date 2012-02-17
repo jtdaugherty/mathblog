@@ -90,5 +90,5 @@ gladtexTitle Index ts = rewriteInline 110 <$> ts
 
 rewriteInline :: Int -> Pandoc.Inline -> Pandoc.Inline
 rewriteInline dpi (Pandoc.Math v s) =
-    Pandoc.Math v $ "<EQ DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
+    Pandoc.Math v $ "<EQ ENV=\"math\" DPI=\"" ++ show dpi ++ "\">" ++ s ++ "</EQ>"
 rewriteInline _ i = i
