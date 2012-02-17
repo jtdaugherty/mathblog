@@ -100,6 +100,11 @@ div#prev-next-links {
 .eq-right {
     float: right;
 }
+.eq-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
 .displaymath {
     display: block;
     margin-top: 1em !important;
