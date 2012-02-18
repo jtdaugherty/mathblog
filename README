@@ -5,12 +5,12 @@ mathblog
 mathblog is a Haskell program targeted at people who want to write
 statically-generated, mathematically-themed weblogs.  It supports:
 
- - high-quality, scalable inline and block-level TeX math, rendered by
-   MathJax
-
- - embedded Gnuplot scripts for rendering graphs
-
  - Extended Markdown input syntax as supported by the Pandoc library
+
+ - inline and block-level TeX math rendered by MathJax or LaTeX
+
+ - Function graphing with Gnuplot or the TikZ / pgfplots LaTeX
+   packages
 
  - Integration of Javascript-based web services such as Disqus
 
@@ -67,10 +67,28 @@ mathblog takes advantage of three primary software components:
    revision control version of Pandoc.  If you do not, inline and
    block-level equations will look the same.
 
- - MathJax, a JavaScript package for scalable, cross-browser Math
-   typesetting.  You can get it from http://mathjax.com/.  See below
-   for details on setting up MathJax with mathblog.  mathblog has been
-   tested with MathJax 1.1.
+ - Math typesetting packages:
+
+   - GladTex and LaTeX for math typesetting if you choose 'gladtex'
+     for the value of the 'mathBackend' configuration setting.
+     GladTex 1.3 is required for best results.  GladTex renders LaTeX
+     snippets to images.  This is the recommended backend for math
+     typesetting.
+
+     https://sourceforge.net/projects/gladtex/
+
+   - MathJax if you choose 'mathjax' for the value of the
+     'mathBackend' configuration setting.  mathblog uses the MathJax
+     CDN for MathJax resources.
+
+ - Function graph plotting packages:
+
+   - The TikZ and pgfplots LaTeX packages if you choose 'gnuplot' for
+     the value of the 'eqBackend' configuration setting.  This is the
+     recommended backend for function graph plotting.
+
+   - GNUplot if you choose 'gnuplot' for the value of the 'eqBackend'
+     configuration setting.
 
 How to use
 ----------
@@ -100,44 +118,6 @@ with some default pages and a default first blog post:
   Post index changed; regenerating next/previous links.
   Rendering first-post
   Done.
-
-Now you have a blog; next, we need to install MathJax to get the math
-rendering working.
-
-Installing MathJax
-------------------
-
-First, download MathJax.  mathblog has been tested with MathJax 1.1.
-
-  http://mathjax.com/
-
-The default mathblog templates expect MathJax to be installed into the
-`html` subdirectory of your blog data directory; you can certainly
-change that, but these instructions will assume that configuration.
-
-The zip file you downloaded should include just a "MathJax" directory
-with all of the MathJax files contained inside.  You have two options
-for installation:
-
- - You can unzip the zip file into the HTML directory, resulting in a
-   "MathJax" subdirectory of the "html" directory.  This is the most
-   direct option, but it has the disadvantage that all of the MathJax
-   files will now be in your blog data directory; this is perhaps not
-   what you want if, for example, you are keeping your blog data files
-   under revision control.
-
-   cd html && unzip /path/to/MathJax.zip
-
- - Unzip the MathJax files elsewhere and create a "MathJax" symlink in
-   your "html" subdirectory.
-
-   unzip MathJax.zip
-   cd html && ln -s /path/to/MathJax/
-
-The default mathblog templates include a MathJax configuration which
-will override the default configuration provided in the MathJax
-distribution.  See the MathJax documentation if you want to customize
-that configuration.
 
 Viewing the Blog
 ----------------
@@ -203,8 +183,10 @@ The configuration file "blog.cfg" must have the following fields set:
 
   baseUrl
 
-    The base URL of your blog; this URL will be used to generate all
-    links in the blog's pages.
+    The base URL of your blog; this URL will be used to generate some
+    links in the blog's pages where absolute URLs matter.  Otherwise,
+    relative URLs will be used, with an assumption that your blog is
+    hosted at the root of a domain.
 
   title
 
@@ -217,6 +199,20 @@ The configuration file "blog.cfg" must have the following fields set:
   authorEmail
 
     Your e-mail address (for the RSS feed metadata).
+
+  mathBackend
+
+    The backend used to render TeX math expressions.  Can be either
+    'gladtex' or 'mathjax'.  If 'gladtex', you will need the latest
+    version of the 'gladtex' program for best results.  No special
+    configuration is necessary for MathJax, as mathblog's default
+    templates use CDN resources for MathJax.
+
+  eqBackend
+
+    The backend used to render function graphs.  Can be either 'tikz'
+    or 'gnuplot'.  See the Function Graph Embedding section below for
+    details.
 
 All of the above fields can be accessed in templates using the syntax
 described in "Customizing your blog" below.
@@ -329,11 +325,19 @@ These placeholders are supported in the page template:
 
     The content of the page to be rendered.
 
-Gnuplot Graph Embedding
------------------------
+Function Graph Embedding
+------------------------
 
-mathblog supports embedding gnuplot scripts in blog posts.  To do
-this, we overload the Pandoc code block syntax.  Here's an example:
+mathblog supports inline scripts for rendering function graphs.  Right
+now, mathblog supports Gnuplot and the TikZ / pgfplots LaTeX packages.
+Set the 'eqBackend' configuration option (see above) to choose a
+backend.
+
+Gnuplot
+=======
+
+To specify a Gnuplot function graph in a blog post, we overload the
+Pandoc code block syntax.  Here's an example of a Gnuplot graph:
 
 ~~~ {#eq-basic}
 f(x) = x
@@ -365,6 +369,34 @@ syntax to use it is:
 ~~~ {#eq-fancy}
 <your script here>
 ~~~
+
+TikZ / pgfplots
+===============
+
+To specify a TikZ / pgfplots function graph in a blog post, we
+overload the Pandoc code block syntax.  Here's an example of a TikZ
+figure:
+
+~~~ {#tikz}
+\begin{axis}[
+        minor tick num=3,
+        axis y line=center,
+        axis x line=middle,
+    ]
+
+\addplot[smooth,mark=none,blue] plot coordinates {
+    (-1,-1)
+    (2.95,2.95)
+};
+~~~
+
+This is a LaTeX fragment which will automatically be embedded in a
+`tikzpicture` environment and rendered to an image within the blog post.  For more information on the powerful TikZ / pgfplots packages, please see
+
+  https://sourceforge.net/projects/pgfplots/
+
+Styling Function Graphs with CSS
+================================
 
 Note that the pandoc syntax also allows us to assign CSS class names
 to the code block, and mathblog passes these through to the generated
