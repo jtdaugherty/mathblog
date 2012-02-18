@@ -319,6 +319,13 @@ These placeholders are supported in the post template:
 
     The body of the post itself.
 
+  $extraPageHead$
+
+    Content to be placed in the <HEAD> tag of the page, such as
+    javascript tags, stylesheets, etc.  You'll need to ensure that
+    this is somewhere in your <HEAD> tag if you want to use mathblog
+    features which may need to load extra resources.
+
 These placeholders are supported in the page template:
 
   $content$
