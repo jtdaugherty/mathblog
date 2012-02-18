@@ -299,7 +299,7 @@ placeholders are supported in each template:
     These placeholders all correspond directly to fields on the
     `blog.cfg` configuration file.
 
- - `$extraPageHead$`
+  - `$extraPageHead$`
 
     Content to be placed in the `<HEAD>` tag of the page, such as
     javascript tags, stylesheets, etc.  You'll need to ensure that
