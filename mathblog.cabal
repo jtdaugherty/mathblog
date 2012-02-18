@@ -25,7 +25,7 @@ Category:            Web
 Homepage:            http://repos.codevine.org/mathblog/
 
 Data-Files:
-  README
+  README.md
   skel/html/stylesheets/stylesheet.css
   skel/templates/postTemplate.html
   skel/templates/pageTemplate.html
