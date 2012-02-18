@@ -40,6 +40,7 @@ import MB.Startup
     , initDataDirectory
     )
 import MB.Gnuplot
+import MB.Tikz
 import MB.Mathjax
 import MB.Gladtex
 
@@ -284,6 +285,12 @@ mathBackends =
     , ("mathjax", mathjaxProcessor)
     ]
 
+eqBackends :: [(String, Processor)]
+eqBackends =
+    [ ("gnuplot", gnuplotProcessor)
+    , ("tikz", tikzProcessor)
+    ]
+
 mkBlog :: FilePath -> IO Blog
 mkBlog base = do
   let configFilePath = base </> configFilename
@@ -319,7 +326,16 @@ mkBlog base = do
                                              ++ (show $ fst <$> mathBackends)
                                   Just proc -> proc
 
-      procs = [gnuplotProcessor, mathBackend]
+      requestedEqBackend = lookup "eqBackend" cfg
+      eqBackend = case requestedEqBackend of
+                    Nothing -> gnuplotProcessor
+                    Just b -> case lookup b eqBackends of
+                                Nothing -> error $ "Unsupported equation backend " ++ show b
+                                           ++ "; valid choices are "
+                                           ++ (show $ fst <$> eqBackends)
+                                Just proc -> proc
+
+      procs = [eqBackend, mathBackend]
 
   let b = Blog { baseDir = base
                , postSourceDir = postSrcDir

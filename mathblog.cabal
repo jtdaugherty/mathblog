@@ -62,6 +62,7 @@ Executable mb
     MB.Gladtex
     MB.Gnuplot
     MB.Mathjax
+    MB.Tikz
 
   GHC-Options: -Wall
 
