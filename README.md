@@ -1,6 +1,6 @@
 
 mathblog
---------
+========
 
 mathblog is a Haskell program targeted at people who want to write
 statically-generated, mathematically-themed weblogs.  It supports:
@@ -18,7 +18,7 @@ statically-generated, mathematically-themed weblogs.  It supports:
    customization
 
 Project vision
---------------
+==============
 
 I wrote mathblog with a very specific set of requirements in mind,
 motivated by the following principles:
@@ -59,7 +59,7 @@ and get it just right using a local installation of mathblog, then
 push it up to your server to post it to your public blog.
 
 Dependencies
-------------
+============
 
 mathblog takes advantage of three primary software components:
 
@@ -87,7 +87,7 @@ mathblog takes advantage of three primary software components:
      configuration setting.
 
 Creating a blog
----------------
+===============
 
 To begin, set the following environment variable:
 
@@ -118,7 +118,7 @@ Done.
 ~~~
 
 Configuring the Blog
---------------------
+====================
 
 The default blog configuration file is called `blog.cfg`.  This file
 contains information about you which may be included in the generated
@@ -166,7 +166,7 @@ All of the above fields can be accessed in templates using the syntax
 described in "Customizing your blog" below.
 
 Serving the Blog
-----------------
+================
 
 To serve your blog files you can either make the "html" directory a
 document root for your web server or virtual host, or you can symlink
@@ -192,7 +192,7 @@ Done.
 ~~~
 
 When to run `mb`
-----------------
+================
 
 `mb` looks at the modification times of your post files in `posts/`,
 the config file, template files, and the post index (see below) when
@@ -213,7 +213,7 @@ rebuild the portions of each page affected by template changes even if
 post source files are unchanged.
 
 Post format
------------
+===========
 
 Posts are formatted in Markdown and support the extended Markdown
 syntax as implemented by Pandoc.  The only important convention to
@@ -226,8 +226,8 @@ following a percent sign, as follows:
 First paragraph starts here.
 ~~~
 
-Running mb in "listen" mode
----------------------------
+Running `mb` in "listen" mode
+=============================
 
 Ordinarily, you'll just run `mb` once in a while to update your
 content.  But if you're in the middle of authoring a new post and you
@@ -262,7 +262,7 @@ the blog config file, then one of the posts.  In each case `mb`
 detected the change and ran its typical regeneration routine.
 
 Customizing your blog
----------------------
+=====================
 
 It's likely that you'll want to customize the look and feel of your
 blog.  To this end, mathblog generates the pages of your blog by
@@ -329,7 +329,7 @@ These placeholders are supported in the page template:
     The content of the page to be rendered.
 
 Function Graph Embedding
-------------------------
+========================
 
 mathblog supports inline scripts for rendering function graphs.  Right
 now, mathblog supports Gnuplot and the TikZ / pgfplots LaTeX packages.
@@ -337,7 +337,7 @@ Set the 'eqBackend' configuration option (see above) to choose a
 backend.
 
 Gnuplot
-=======
+-------
 
 To specify a Gnuplot function graph in a blog post, we overload the
 Pandoc code block syntax.  Here's an example of a Gnuplot graph:
@@ -374,7 +374,7 @@ syntax to use it is:
     ~~~
 
 TikZ / pgfplots
-===============
+---------------
 
 To specify a TikZ / pgfplots function graph in a blog post, we
 overload the Pandoc code block syntax.  Here's an example of a TikZ
@@ -399,7 +399,7 @@ This is a LaTeX fragment which will automatically be embedded in a
   <https://sourceforge.net/projects/pgfplots/>
 
 Styling Function Graphs with CSS
-================================
+--------------------------------
 
 Note that the Pandoc syntax also allows us to assign CSS class names
 to the code block, and mathblog passes these through to the generated
@@ -421,7 +421,7 @@ For more information on the code block syntax, please see:
   <http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks>
 
 Other features
---------------
+==============
 
 Since mathblog doesn't provide many moving parts, it's up to you to
 outsource various web site features, such as comments.  I've
@@ -440,7 +440,7 @@ Disqus comment forms:
     var disqus_identifier = Blog.pageName;
 
 Controlling Post Order
-----------------------
+======================
 
 Whenever you add a new post, mb automatically updates the "post
 index", a file called `posts-index` in the post source directory.
@@ -460,7 +460,7 @@ you run it in the future.
 been removed from the post source directory.
 
 Afterword
----------
+=========
 
 I personally use this software package but I'll be pleased if others
 find it useful.  In addition, I'm open to accepting contributions on
