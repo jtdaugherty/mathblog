@@ -37,6 +37,7 @@ import MB.Startup
     ( dataDirectory
     , listenMode
     , startupConfigFromEnv
+    , forceRegeneration
     , initDataDirectory
     )
 import MB.Gnuplot
@@ -359,10 +360,10 @@ mkBlog base = do
   ensureDirs b
   return b
 
-regenerateContent :: FilePath -> IO Bool
-regenerateContent dir = do
+regenerateContent :: Bool -> FilePath -> IO Bool
+regenerateContent force dir = do
   blog <- mkBlog dir
-  summary <- summarizeChanges blog
+  summary <- summarizeChanges blog force
 
   case anyChanges summary of
     False -> return False
@@ -401,6 +402,6 @@ main = do
 
   case listenMode conf of
     False -> do
-         didWork <- regenerateContent dir
+         didWork <- regenerateContent (forceRegeneration conf) dir
          when (not didWork) $ putStrLn "No changes found!"
-    True -> scanForChanges dir regenerateContent
+    True -> scanForChanges dir (regenerateContent False)

@@ -213,8 +213,8 @@ anyChanges s = or $ predicates <*> pure s
                    , postIndexChanged
                    ]
 
-summarizeChanges :: Blog -> IO ChangeSummary
-summarizeChanges config = do
+summarizeChanges :: Blog -> Bool -> IO ChangeSummary
+summarizeChanges config forceAll = do
   -- Determine whether the configuration file changed.  Check to see
   -- if it's newer than the index.html file, or if no index.html
   -- exists then that's equivalent to "the config changed"
@@ -234,7 +234,8 @@ summarizeChanges config = do
                             return $ t > baseTime
 
   let configChanged' = configMtime > baseTime
-      modifiedPosts = filter (\p -> postModificationTime p > baseTime) $ blogPosts config
+      needsRebuild p = forceAll || (postModificationTime p > baseTime)
+      modifiedPosts = filter needsRebuild $ blogPosts config
 
   -- Determine whether any templates changed
   templateFiles <- dirFilenames (templateDir config)
@@ -242,8 +243,8 @@ summarizeChanges config = do
                             mtime <- getModificationTime f
                             return $ mtime > baseTime
 
-  return $ ChangeSummary { configChanged = configChanged'
+  return $ ChangeSummary { configChanged = configChanged' || forceAll
                          , postsChanged = map postFilename modifiedPosts
-                         , templatesChanged = or templateChanges
-                         , postIndexChanged = postIndexChanged'
+                         , templatesChanged = or (forceAll : templateChanges)
+                         , postIndexChanged = postIndexChanged' || forceAll
                          }

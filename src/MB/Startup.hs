@@ -27,10 +27,14 @@ import System.Console.GetOpt
 data StartupConfig = StartupConfig { listenMode :: Bool
                                    , dataDirectory :: FilePath
                                    , initDataDirectory :: Bool
+                                   , forceRegeneration :: Bool
                                    }
                      deriving (Show, Eq)
 
-data Flag = Listen | DataDir FilePath | InitDataDirectory
+data Flag = Listen
+          | DataDir FilePath
+          | InitDataDirectory
+          | ForceRegenerate
             deriving (Eq)
 
 getDataDirFlag :: [Flag] -> Maybe FilePath
@@ -51,6 +55,8 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                              "blog content when something changes.  This is\n" ++
                              "useful if you want to run a local web server\n" ++
                              "to view your posts as you're writing them."
+          , Option ['f'] ["force"] (NoArg ForceRegenerate)
+                       "Force a rebuild of all blog content."
           ]
 
 -- |Inspect the program environment to create a startup configuration.
@@ -83,11 +89,13 @@ startupConfig args env =
       (flags, _, []) -> do
         let lm = Listen `elem` flags
             i = InitDataDirectory `elem` flags
+            f = ForceRegenerate `elem` flags
         d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
 
         return $ StartupConfig { listenMode = lm
                                , dataDirectory = d
                                , initDataDirectory = i
+                               , forceRegeneration = f
                                }
 
 baseDirEnvName :: String
