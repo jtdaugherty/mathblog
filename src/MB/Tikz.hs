@@ -61,7 +61,6 @@ renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = 
                          ]
       postamble = unlines [ "\\end{tikzpicture}"
                           , "\\endpgfgraphicnamed"
-                          , "\\caption{Stuff}"
                           , "\\end{figure}"
                           , "\\end{document}"
                           ]
