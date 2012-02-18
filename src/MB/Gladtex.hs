@@ -53,7 +53,7 @@ processGladtex blog path page = do
 gladTex :: Blog -> FilePath -> String -> IO ()
 gladTex blog htexPath color = do
   let args = [ "-d", imageDir blog
-             , "-u", baseUrl blog ++ "/generated-images/"
+             , "-u", "/generated-images/"
              , "-r", "120"
              , "-s", "4"
              , "-b", "FFFFFF"

@@ -42,8 +42,8 @@ pageTemplatePath c = templateDir c </> "pageTemplate.html"
 postTemplatePath :: Blog -> FilePath
 postTemplatePath c = templateDir c </> "postTemplate.html"
 
-postUrl :: Blog -> Post -> String
-postUrl c p = baseUrl c ++ "/posts/" ++ postBaseName p ++ ".html"
+postUrl :: Post -> String
+postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 
 postBaseName :: Post -> String
 postBaseName = takeBaseName . postFilename

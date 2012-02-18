@@ -78,7 +78,7 @@ writePost blog h post = do
   hPutStr h $ Pandoc.writeHtmlString writerOpts (postAst post)
 
 buildLinks :: Blog -> Maybe Post -> Maybe Post -> String
-buildLinks blog prev next =
+buildLinks _blog prev next =
     "<div id=\"prev-next-links\">"
       ++ link "next-link" "older &raquo;" next
       ++ link "prev-link" "&laquo; newer" prev
@@ -87,7 +87,7 @@ buildLinks blog prev next =
           link cls name Nothing =
               "<span class=\"" ++ cls ++ "-subdued\">" ++ name ++ "</span>"
           link cls name (Just p) =
-              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl blog p ++
+              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl p ++
                                 "\">" ++ name ++ "</a>"
 
 jsInfo :: Post -> String
@@ -192,7 +192,7 @@ generatePostList blog = do
              do
                created <- postModificationString p
                return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
-                               , "<a href=\"" ++ Files.postUrl blog p ++ "\">"
+                               , "<a href=\"" ++ Files.postUrl p ++ "\">"
                                , getPostTitle blog p Index
                                , "</a></span><span class=\"post-created\">Posted "
                                , created
@@ -211,9 +211,9 @@ rssItem :: Blog -> Post -> String
 rssItem blog p =
     concat [ "<item>"
            , "<title>" ++ getRawPostTitle blog p ++ "</title>\n"
-           , "<link>" ++ Files.postUrl blog p ++ "</link>\n"
+           , "<link>" ++ baseUrl blog ++ Files.postUrl p ++ "</link>\n"
            , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
-           , "<guid>" ++ Files.postUrl blog p ++ "</guid>\n"
+           , "<guid>" ++ baseUrl blog ++ Files.postUrl p ++ "</guid>\n"
            , "</item>\n"
            ]
 
