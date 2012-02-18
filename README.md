@@ -75,7 +75,7 @@ mathblog takes advantage of three primary software components:
      snippets to images.  This is the recommended backend for math
      typesetting.
 
-     https://sourceforge.net/projects/gladtex/
+       https://sourceforge.net/projects/gladtex/
 
    - MathJax if you choose 'mathjax' for the value of the
      'mathBackend' configuration setting.  mathblog uses the MathJax
@@ -95,7 +95,7 @@ How to use
 
 To begin, set the following environment variable:
 
-  MB_BASE_DIR
+  `MB_BASE_DIR`
 
 This is the location of your blog files on the filesystem.  It must be
 an absolute path.  If you would rather use a command-line parameter,
@@ -107,17 +107,19 @@ Once you've set the environment variable, just run "mb -i".  It will
 take care of setting up a new blog data directory for you, complete
 with some default pages and a default first blog post:
 
-  $ export MB_BASE_DIR=`pwd`/myBlog
-  $ mb -i
-  Blog directory: .../myBlog
-  Setting up data directory using skeleton: /.../skel
-  Configuration file changed; regenerating all content.
-  Templates changed; regenerating accordingly.
-  Posts changed:
-    first-post.txt
-  Post index changed; regenerating next/previous links.
-  Rendering first-post
-  Done.
+~~~
+$ export MB_BASE_DIR=`pwd`/myBlog
+$ mb -i
+Blog directory: .../myBlog
+Setting up data directory using skeleton: /.../skel
+Configuration file changed; regenerating all content.
+Templates changed; regenerating accordingly.
+Posts changed:
+  first-post.txt
+Post index changed; regenerating next/previous links.
+Rendering first-post
+Done.
+~~~
 
 Viewing the Blog
 ----------------
@@ -147,13 +149,15 @@ Now you might want to edit or create a new post, or even remove one.
 Just edit the appropriate file in posts/ accordingly and re-run mb.
 Here's an example of adding a new post:
 
-  $ mb
-  mb: using base directory ".../myBlog"
-  Posts changed:
-    first-post.txt
-  Rendering 1 post(s)...
-  Rendering first-post
-  Done.
+~~~
+$ mb
+mb: using base directory ".../myBlog"
+Posts changed:
+  first-post.txt
+Rendering 1 post(s)...
+Rendering first-post
+Done.
+~~~
 
 When to run mb
 --------------
@@ -181,26 +185,26 @@ Configuration File Fields
 
 The configuration file "blog.cfg" must have the following fields set:
 
-  baseUrl
+ - `baseUrl`
 
     The base URL of your blog; this URL will be used to generate some
     links in the blog's pages where absolute URLs matter.  Otherwise,
     relative URLs will be used, with an assumption that your blog is
     hosted at the root of a domain.
 
-  title
+ - `title`
 
     The title of your blog, such as "My math blog".
 
-  authorName
+ - `authorName`
 
     Your name (for the RSS feed metadata).
 
-  authorEmail
+ - `authorEmail`
 
     Your e-mail address (for the RSS feed metadata).
 
-  mathBackend
+ - `mathBackend`
 
     The backend used to render TeX math expressions.  Can be either
     'gladtex' or 'mathjax'.  If 'gladtex', you will need the latest
@@ -208,7 +212,7 @@ The configuration file "blog.cfg" must have the following fields set:
     configuration is necessary for MathJax, as mathblog's default
     templates use CDN resources for MathJax.
 
-  eqBackend
+ - `eqBackend`
 
     The backend used to render function graphs.  Can be either 'tikz'
     or 'gnuplot'.  See the Function Graph Embedding section below for
@@ -225,9 +229,11 @@ syntax as implemented by Pandoc.  The only important convention to
 note is that the post title goes on the first line of the file
 following a percent sign, as follows:
 
-  %My First Post
+~~~
+%My First Post
 
-  First paragraph starts here.
+First paragraph starts here.
+~~~
 
 Running mb in "listen" mode
 ---------------------------
@@ -240,25 +246,27 @@ mb will run forever, peroidically scanning the filesystem for changes
 to your blog posts and other data files and regenerate them when it
 detects a change.  Running mathblog in listen mode is simple:
 
-  $ mb -l
-  Blog directory: /.../blog
-  Post index changed; regenerating next/previous links.
-  Done.
+~~~
+$ mb -l
+Blog directory: /.../blog
+Post index changed; regenerating next/previous links.
+Done.
 
-  Blog directory: /.../blog
-  Configuration file changed; regenerating all content.
-  Rendering 1 post(s)...
-  Rendering first-post
-  Done.
+Blog directory: /.../blog
+Configuration file changed; regenerating all content.
+Rendering 1 post(s)...
+Rendering first-post
+Done.
 
-  Blog directory: /Users/cygnus/blog3
-  Posts changed:
-    first-post.txt
-  Rendering 1 post(s)...
-  Rendering first-post
-  Done.
+Blog directory: /Users/cygnus/blog3
+Posts changed:
+  first-post.txt
+Rendering 1 post(s)...
+Rendering first-post
+Done.
+~~~
 
-Above I ran "mb" in listen mode and then modified the post index, then
+Above I ran `mb` in listen mode and then modified the post index, then
 the blog config file, then one of the posts.  In each case "mb"
 detected the change and ran its typical regeneration routine.
 
@@ -274,52 +282,49 @@ mathblog when it creates your blog data directory.  These files are
 stored in the "templates/" subdirectory of your blog data directory
 and are as follows:
 
-  templates/rssTemplate.xml
+ - `templates/rssTemplate.xml`
 
     This is the template used to generate your RSS feed.
 
-  templates/pageTemplate.html
+ - `templates/pageTemplate.html`
 
     This file makes up the overall structure of every page on the
     blog.
 
-  templates/postTemplate.html
+ - `templates/postTemplate.html`
 
     This file makes up the structure of the post portion of the page,
     for pages which show posts (i.e., not the post index).
 
-In addition, subdirectories of the "html/" directory contain things
+In addition, subdirectories of the `html/` directory contain things
 you might want to customize, such as a CSS stylesheet.
 
 The templates mentioned above are StringTemplate templates and are
 processed with the HStringTemplate library.  The following template
 placeholders are supported in each template:
 
-  $title$
-  $baseUrl$
-  $authorName$
-  $authorEmail$
+  - `$title$`, `$baseUrl$`, `$authorName$`, `$authorEmail$`
 
     These placeholders all correspond directly to fields on the
     blog.cfg configuration file.
 
 These placeholders are supported in the post template:
 
-  $jsInfo$
+ - `$jsInfo$`
 
     A brief javascript used to provide information about the page to
     other javascripts (see "Other features" below for usage).
 
-  $nextPrevLinks$
+ - `$nextPrevLinks$`
 
     HTML displaying the "next" and "previous" links for older/newer
     posts.
 
-  $post$
+ - `$post$`
 
     The body of the post itself.
 
-  $extraPageHead$
+ - `$extraPageHead$`
 
     Content to be placed in the <HEAD> tag of the page, such as
     javascript tags, stylesheets, etc.  You'll need to ensure that
@@ -328,7 +333,7 @@ These placeholders are supported in the post template:
 
 These placeholders are supported in the page template:
 
-  $content$
+ - `$content$`
 
     The content of the page to be rendered.
 
@@ -346,9 +351,12 @@ Gnuplot
 To specify a Gnuplot function graph in a blog post, we overload the
 Pandoc code block syntax.  Here's an example of a Gnuplot graph:
 
+
 ~~~ {#eq-basic}
+~~~
 f(x) = x
 plot [-5.0:5.0] [-5.0:5.0] f(x) lt rgb "blue"
+~~~
 ~~~
 
 This defines a single function and plots it in blue over the specified
@@ -357,7 +365,7 @@ specifies the equation preamble to use when generating the output
 image.  This string refers to this preamble file in your blog
 directory:
 
-  eq-preambles/eq-basic.txt
+  `eq-preambles/eq-basic.txt`
 
 This file contains the commands responsible for determining the output
 image size and axis configuration.  The contents of the code block
