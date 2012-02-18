@@ -67,39 +67,36 @@ renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = 
 
       latexSource = preamble ++ rawScript ++ postamble
 
-  writeFile "tmp.tex" latexSource
+  writeFile "/tmp/tmp.tex" latexSource
 
-  (s1, out1, _) <- readProcessWithExitCode "pdflatex" ["tmp.tex"] ""
+  (s1, out1, _) <- readProcessWithExitCode "pdflatex" [ "-output-directory", "/tmp"
+                                                      , "--jobname", "testfigure", "/tmp/tmp.tex"] ""
   case s1 of
     ExitFailure _ -> putStrLn out1 >> return blk
     ExitSuccess -> do
-            (s2, out2, _) <- readProcessWithExitCode "pdflatex" ["--jobname", "testfigure", "tmp.tex"] ""
-            case s2 of
-              ExitFailure _ -> putStrLn out2 >> return blk
-              ExitSuccess -> do
-                      -- Convert the temporary file to a PNG.
-                      (s3, out3, err) <- readProcessWithExitCode "convert" [ "-density", "120"
-                                                                           , "-quality", "100"
-                                                                           , "testfigure.pdf"
-                                                                           , imagePath
-                                                                           ] ""
+            -- Convert the temporary file to a PNG.
+            (s2, out2, err) <- readProcessWithExitCode "convert" [ "-density", "120"
+                                                                 , "-quality", "100"
+                                                                 , "/tmp/testfigure.pdf"
+                                                                 , imagePath
+                                                                 ] ""
 
-                      case s3 of
-                        ExitFailure _ -> do
-                                putStrLn "Could not render Tikz picture:"
-                                putStrLn "Equation was:"
-                                putStrLn latexSource
-                                putStrLn "dvipng output:"
-                                putStrLn out3
-                                putStrLn err
-                                return blk
-                        ExitSuccess ->
-                            return $ Pandoc.Para [Pandoc.RawInline "html" $
-                                                        concat [ "<img src=\"/generated-images/"
-                                                               , imageFilename
-                                                               , "\" class=\""
-                                                               , intercalate " " classes
-                                                               , "\">"
-                                                               ]
-                                                 ]
+            case s2 of
+              ExitFailure _ -> do
+                      putStrLn "Could not render Tikz picture:"
+                      putStrLn "Equation was:"
+                      putStrLn latexSource
+                      putStrLn "dvipng output:"
+                      putStrLn out2
+                      putStrLn err
+                      return blk
+              ExitSuccess ->
+                  return $ Pandoc.Para [Pandoc.RawInline "html" $
+                                              concat [ "<img src=\"/generated-images/"
+                                                     , imageFilename
+                                                     , "\" class=\""
+                                                     , intercalate " " classes
+                                                     , "\">"
+                                                     ]
+                                       ]
 renderTikzScript _ b = return b
