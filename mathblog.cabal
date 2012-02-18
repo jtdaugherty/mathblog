@@ -1,16 +1,17 @@
 Name:                mathblog
-Version:             0.4
-Synopsis:            A program for creating and managing a
-                     static, mathematically-inclined weblog
+Version:             0.3
+Synopsis:            A program for creating and managing a static
+                     weblog with LaTeX math and function graph
+                     rendering
 Description:         This package provides a program for creating and
                      managing a statically-generated, VCS-friendly,
                      mathematically-inclined weblog.  If you're
                      interested in managing a blog with few moving
-                     parts and support for embedded LaTeX math and the
-                     UNIX editor of your choice, then this is the
-                     blogging platform for you!  For detailed
-                     information and a full feature list, please see
-                     the README.
+                     parts and support for embedded LaTeX math,
+                     embedded function plotting, and the UNIX editor
+                     of your choice, then this is the blogging
+                     platform for you!  For detailed information and a
+                     full feature list, please see the README.
 
                      To see a live example of this software, you might
                      consider taking a look at my math-oriented blog
