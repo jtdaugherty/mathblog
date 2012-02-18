@@ -394,9 +394,9 @@ figure:
     ~~~
 
 This is a LaTeX fragment which will automatically be embedded in a
-`tikzpicture` environment and rendered to an image within the blog post.  For more information on the powerful TikZ / pgfplots packages, please see
-
-  <https://sourceforge.net/projects/pgfplots/>
+`tikzpicture` environment and rendered to an image within the blog
+post.  For more information on the powerful TikZ / pgfplots packages,
+please see <https://sourceforge.net/projects/pgfplots/>
 
 Styling Function Graphs with CSS
 --------------------------------
