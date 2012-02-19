@@ -11,10 +11,6 @@ Description:         This package provides a program for creating and
                      of your choice, then this is the blogging
                      platform for you!  For detailed information and a
                      full feature list, please see the README.
-
-                     To see a live example of this software, you might
-                     consider taking a look at my math-oriented blog
-                     at <http://dw.codevine.org/>.
 Author:              Jonathan Daugherty <drcygnus@gmail.com>
 Maintainer:          Jonathan Daugherty <drcygnus@gmail.com>
 Build-Type:          Simple
