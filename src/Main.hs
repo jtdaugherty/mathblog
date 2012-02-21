@@ -34,7 +34,8 @@ import Paths_mathblog
     ( getDataFileName
     )
 import MB.Startup
-    ( dataDirectory
+    ( StartupConfig(..)
+    , dataDirectory
     , listenMode
     , startupConfigFromEnv
     , forceRegeneration
@@ -292,8 +293,8 @@ eqBackends =
     , ("tikz", tikzProcessor)
     ]
 
-mkBlog :: FilePath -> IO Blog
-mkBlog base = do
+mkBlog :: FilePath -> FilePath -> IO Blog
+mkBlog base theHtmlDir = do
   let configFilePath = base </> configFilename
   e <- doesFileExist configFilePath
 
@@ -340,11 +341,11 @@ mkBlog base = do
 
   let b = Blog { baseDir = base
                , postSourceDir = postSrcDir
-               , htmlDir = base </> "html"
-               , stylesheetDir = base </> "html" </> "stylesheets"
-               , postHtmlDir = base </> "html" </> "posts"
+               , htmlDir = theHtmlDir
+               , stylesheetDir = theHtmlDir </> "stylesheets"
+               , postHtmlDir = theHtmlDir </> "posts"
                , postIntermediateDir = base </> "generated"
-               , imageDir = base </> "html" </> "generated-images"
+               , imageDir = theHtmlDir </> "generated-images"
                , templateDir = base </> "templates"
                , htmlTempDir = base </> "tmp"
                , baseUrl = cfg_baseUrl
@@ -360,9 +361,9 @@ mkBlog base = do
   ensureDirs b
   return b
 
-regenerateContent :: Bool -> FilePath -> IO Bool
-regenerateContent force dir = do
-  blog <- mkBlog dir
+regenerateContent :: Bool -> FilePath -> FilePath -> IO Bool
+regenerateContent force theHtmlDir dir = do
+  blog <- mkBlog dir theHtmlDir
   summary <- summarizeChanges blog force
 
   case anyChanges summary of
@@ -402,6 +403,8 @@ main = do
 
   case listenMode conf of
     False -> do
-         didWork <- regenerateContent (forceRegeneration conf) dir
+         didWork <- regenerateContent (forceRegeneration conf)
+                    (htmlOutputDirectory conf) dir
          when (not didWork) $ putStrLn "No changes found!"
-    True -> scanForChanges dir (regenerateContent False)
+    True -> scanForChanges dir
+            (regenerateContent False (htmlOutputDirectory conf))

@@ -22,12 +22,14 @@ import System.Environment
     ( getEnvironment
     , getArgs
     )
+import System.FilePath
 import System.Console.GetOpt
 
 data StartupConfig = StartupConfig { listenMode :: Bool
                                    , dataDirectory :: FilePath
                                    , initDataDirectory :: Bool
                                    , forceRegeneration :: Bool
+                                   , htmlOutputDirectory :: FilePath
                                    }
                      deriving (Show, Eq)
 
@@ -35,12 +37,18 @@ data Flag = Listen
           | DataDir FilePath
           | InitDataDirectory
           | ForceRegenerate
+          | HtmlOutputDir FilePath
             deriving (Eq)
 
 getDataDirFlag :: [Flag] -> Maybe FilePath
 getDataDirFlag [] = Nothing
 getDataDirFlag (DataDir p:_) = Just p
 getDataDirFlag (_:fs) = getDataDirFlag fs
+
+getHtmlOutputDirFlag :: [Flag] -> Maybe FilePath
+getHtmlOutputDirFlag [] = Nothing
+getHtmlOutputDirFlag (HtmlOutputDir p:_) = Just p
+getHtmlOutputDirFlag (_:fs) = getHtmlOutputDirFlag fs
 
 options :: [OptDescr Flag]
 options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
@@ -57,6 +65,10 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                              "to view your posts as you're writing them."
           , Option ['f'] ["force"] (NoArg ForceRegenerate)
                        "Force a rebuild of all blog content."
+          , Option ['h'] ["html-dir"] (ReqArg HtmlOutputDir "PATH")
+                       $ "Write generated HTML and images to the specified\n" ++
+                         "directory.  The default is the 'html' directory in\n" ++
+                         "the blog data directory."
           ]
 
 -- |Inspect the program environment to create a startup configuration.
@@ -91,11 +103,13 @@ startupConfig args env =
             i = InitDataDirectory `elem` flags
             f = ForceRegenerate `elem` flags
         d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
+        h <- getHtmlOutputDirFlag flags `mplus` (Just $ d </> "html")
 
         return $ StartupConfig { listenMode = lm
                                , dataDirectory = d
                                , initDataDirectory = i
                                , forceRegeneration = f
+                               , htmlOutputDirectory = h
                                }
 
 baseDirEnvName :: String
