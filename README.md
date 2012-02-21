@@ -117,6 +117,10 @@ Rendering first-post
 Done.
 ~~~
 
+By default, `mb` will generate content into `$(MB_BASE_DIR)/html`, but
+if you want the generated files to be installed somewhere else, use
+the `-h` option.
+
 Configuring the Blog
 ====================
 
