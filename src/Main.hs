@@ -8,9 +8,6 @@ import System.IO
 import System.Exit
 import System.Directory
 import System.FilePath
-import System.Posix.Files
-    ( createSymbolicLink
-    )
 import Data.Time.LocalTime
 import qualified Text.Pandoc as Pandoc
 import qualified MB.Config as Config
@@ -168,16 +165,13 @@ generatePosts blog summary = do
         buildPost h blog p (prevPost, nextPost)
         hClose h
 
-linkIndexPage :: Blog -> IO ()
-linkIndexPage blog = do
-  let dest = Files.postFinalHtml blog post
+buildIndexPage :: Blog -> IO ()
+buildIndexPage blog = do
+  let src = Files.postFinalHtml blog post
       index = Files.indexHtml blog
       post = head $ blogPosts blog
 
-  exists <- doesFileExist index
-  when exists $ removeFile index
-
-  createSymbolicLink dest index
+  copyFile src index
 
 postModificationString :: Post -> IO String
 postModificationString p = do
@@ -384,7 +378,7 @@ regenerateContent force theHtmlDir dir = do
 
       generatePosts blog summary
 
-      linkIndexPage blog
+      buildIndexPage blog
       generatePostList blog
       generateRssFeed blog
 
