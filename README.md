@@ -117,10 +117,6 @@ Rendering first-post
 Done.
 ~~~
 
-By default, `mb` will generate content into `$(MB_BASE_DIR)/html`, but
-if you want the generated files to be installed somewhere else, use
-the `-h` option.
-
 Configuring the Blog
 ====================
 
@@ -172,13 +168,17 @@ described in "Customizing your blog" below.
 Serving the Blog
 ================
 
-To serve your blog files you can either make the "html" directory a
+By default, `mb` will use `$(MB_BASE_DIR)/html` as its output
+directory, but if you want the generated files to be installed
+somewhere else, use the `-h` option.
+
+To serve your blog files you can either make the output directory a
 document root for your web server or virtual host, or you can symlink
-the `html` directory to the location of choice.  The mathblog
+the output directory to the location of choice.  The mathblog
 directory itself is not intended to be in your web server's document
 tree because it contains many files that shouldn't be served to users.
 
-Start up a web server pointing at the `html` directory and take a
+Start up a web server pointing at the output directory and take a
 look.
 
 Now you might want to edit or create a new post, or even remove one.
@@ -238,8 +238,9 @@ content.  But if you're in the middle of authoring a new post and you
 want to see what it looks like as you edit it rather than run `mb` by
 hand periodically, you can run `mb` in "listen" mode; this means that
 mb will run forever, peroidically scanning the filesystem for changes
-to your blog posts and other data files and regenerate them when it
-detects a change.  Running mathblog in listen mode is simple:
+to your blog posts and other data files and regenerate them and copy
+them to the output directory when it detects a change.  Running
+mathblog in listen mode is simple:
 
 ~~~
 $ mb -l
@@ -291,9 +292,6 @@ and are as follows:
     This file makes up the structure of the post portion of the page,
     for pages which show posts (i.e., not the post index).
 
-In addition, subdirectories of the `html/` directory contain things
-you might want to customize, such as a CSS stylesheet.
-
 The templates mentioned above are StringTemplate templates and are
 processed with the HStringTemplate library.  The following template
 placeholders are supported in each template:
@@ -331,6 +329,17 @@ These placeholders are supported in the page template:
  - `$content$`
 
     The content of the page to be rendered.
+
+Blog Assets
+===========
+
+The default blog directory created by `mb` also includes an `assets`
+directory.  Whenever `mb` detects changes in your blog post or asset
+files (or if you run `mb -f`), everything in `assets/` will be copied
+recursively into the output directory.  This way, if you have custom
+stylesheets or other files which need to be available, they can be
+kept in your data directory and published with the rest of the
+generated content.
 
 Function Graph Embedding
 ========================

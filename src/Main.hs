@@ -251,7 +251,7 @@ ensureDirs :: Blog -> IO ()
 ensureDirs blog = do
   let dirs = [ postSourceDir
              , htmlDir
-             , stylesheetDir
+             , assetDir
              , postHtmlDir
              , postIntermediateDir
              , imageDir
@@ -336,7 +336,7 @@ mkBlog base theHtmlDir = do
   let b = Blog { baseDir = base
                , postSourceDir = postSrcDir
                , htmlDir = theHtmlDir
-               , stylesheetDir = theHtmlDir </> "stylesheets"
+               , assetDir = base </> "assets"
                , postHtmlDir = theHtmlDir </> "posts"
                , postIntermediateDir = base </> "generated"
                , imageDir = theHtmlDir </> "generated-images"
@@ -354,6 +354,20 @@ mkBlog base theHtmlDir = do
 
   ensureDirs b
   return b
+
+installAssets :: Blog -> IO ()
+installAssets blog = do
+  let ad = assetDir blog
+
+  -- For each file and directory in assets/, copy it to the output
+  -- directory.
+  entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents ad
+
+  dirs <- filterM doesDirectoryExist $ map (ad </>) entries
+  files <- filterM doesFileExist $ map (ad </>) entries
+
+  forM_ dirs $ \d -> copyTree d (htmlDir blog </> (takeBaseName d))
+  forM_ files $ \f -> copyFile f (htmlDir blog)
 
 regenerateContent :: Bool -> FilePath -> FilePath -> IO Bool
 regenerateContent force theHtmlDir dir = do
@@ -375,6 +389,11 @@ regenerateContent force theHtmlDir dir = do
              forM_ (postsChanged summary) $ \n -> putStrLn $ "  " ++ n
       when (postIndexChanged summary) $
            putStrLn "Post index changed; regenerating next/previous links."
+
+      when (assetsChanged summary) $
+           do
+             putStrLn "Assets changed; reinstalling."
+             installAssets blog
 
       generatePosts blog summary
 

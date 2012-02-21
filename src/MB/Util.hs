@@ -96,6 +96,7 @@ copyTree srcPath dstPath = do
     exitFailure
 
   when (not dstDExists) $ createDirectory dstPath
+
   copyTree' srcPath dstPath
 
   where
@@ -114,7 +115,8 @@ copyTree srcPath dstPath = do
             let dstDir = dst </> dirName
                 dirName = takeFileName dir
 
-            createDirectory dstDir
+            e <- doesDirectoryExist dstDir
+            when (not e) $ createDirectory dstDir
             copyTree' (src </> dirName) dstDir
 
 toUtcTime :: EpochTime -> UTCTime
@@ -149,6 +151,15 @@ dirFilenames dir = do
   return [ dir </> f | f <- allFiles
          , not $ "." `isPrefixOf` f
          ]
+
+dirFilenamesRecursive :: FilePath -> IO [FilePath]
+dirFilenamesRecursive dir = do
+  entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents dir
+  dirs <- filterM doesDirectoryExist $ map (dir </>) entries
+  files <- filterM doesFileExist $ map (dir </>) entries
+
+  rest <- concat <$> forM dirs dirFilenamesRecursive
+  return $ files ++ rest
 
 allPostFilenames :: FilePath -> IO [FilePath]
 allPostFilenames postSrcDir = do
@@ -211,6 +222,7 @@ anyChanges s = or $ predicates <*> pure s
                    , not . null . postsChanged
                    , templatesChanged
                    , postIndexChanged
+                   , assetsChanged
                    ]
 
 summarizeChanges :: Blog -> Bool -> IO ChangeSummary
@@ -243,8 +255,15 @@ summarizeChanges config forceAll = do
                             mtime <- getModificationTime f
                             return $ mtime > baseTime
 
+  -- Determine whether any assets changed
+  assetFiles <- dirFilenamesRecursive (assetDir config)
+  assetChanges <- forM assetFiles $ \f -> do
+                            mtime <- getModificationTime f
+                            return $ mtime > baseTime
+
   return $ ChangeSummary { configChanged = configChanged' || forceAll
                          , postsChanged = map postFilename modifiedPosts
                          , templatesChanged = or (forceAll : templateChanges)
                          , postIndexChanged = postIndexChanged' || forceAll
+                         , assetsChanged = or (forceAll : assetChanges)
                          }

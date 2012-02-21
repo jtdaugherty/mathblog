@@ -54,6 +54,3 @@ postIntermediateHtml config post =
 
 postFinalHtml :: Blog -> Post -> FilePath
 postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
-
-stylesheet :: Blog -> FilePath
-stylesheet c = stylesheetDir c </> "stylesheet.css"

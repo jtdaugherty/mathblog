@@ -21,7 +21,7 @@ Category:            Web
 
 Data-Files:
   README.md
-  skel/html/stylesheets/stylesheet.css
+  skel/assets/stylesheets/stylesheet.css
   skel/templates/postTemplate.html
   skel/templates/pageTemplate.html
   skel/templates/rssTemplate.xml

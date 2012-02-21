@@ -21,7 +21,7 @@ type Template = StringTemplate String
 data Blog = Blog { baseDir :: FilePath
                  , postSourceDir :: FilePath
                  , htmlDir :: FilePath
-                 , stylesheetDir :: FilePath
+                 , assetDir :: FilePath
                  , postHtmlDir :: FilePath
                  , postIntermediateDir :: FilePath
                  , imageDir :: FilePath
@@ -69,5 +69,6 @@ data ChangeSummary =
                   , configChanged :: Bool
                   , templatesChanged :: Bool
                   , postIndexChanged :: Bool
+                  , assetsChanged :: Bool
                   }
     deriving (Show)
