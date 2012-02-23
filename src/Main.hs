@@ -265,12 +265,12 @@ ensureDirs blog = do
         exists <- doesDirectoryExist d
         when (not exists) $ createDirectory d
 
-scanForChanges :: FilePath -> (FilePath -> IO Bool) -> IO ()
-scanForChanges dir act = do
+scanForChanges :: IO Bool -> IO ()
+scanForChanges act = do
   scan
       where
         scan = do
-          didWork <- act dir
+          didWork <- act
           when didWork $ putStrLn ""
           threadDelay $ 1 * 1000 * 1000
           scan
@@ -287,9 +287,10 @@ eqBackends =
     , ("tikz", tikzProcessor)
     ]
 
-mkBlog :: FilePath -> FilePath -> IO Blog
-mkBlog base theHtmlDir = do
-  let configFilePath = base </> configFilename
+mkBlog :: StartupConfig -> IO Blog
+mkBlog conf = do
+  let base = dataDirectory conf
+      configFilePath = base </> configFilename
   e <- doesFileExist configFilePath
 
   when (not e) $ do
@@ -333,13 +334,14 @@ mkBlog base theHtmlDir = do
 
       procs = [eqBackend, mathBackend]
 
-  let b = Blog { baseDir = base
+  let html = htmlOutputDirectory conf
+      b = Blog { baseDir = base
                , postSourceDir = postSrcDir
-               , htmlDir = theHtmlDir
+               , htmlDir = html
                , assetDir = base </> "assets"
-               , postHtmlDir = theHtmlDir </> "posts"
+               , postHtmlDir = html </> "posts"
                , postIntermediateDir = base </> "generated"
-               , imageDir = theHtmlDir </> "generated-images"
+               , imageDir = html </> "generated-images"
                , templateDir = base </> "templates"
                , htmlTempDir = base </> "tmp"
                , baseUrl = cfg_baseUrl
@@ -369,10 +371,10 @@ installAssets blog = do
   forM_ dirs $ \d -> copyTree d (htmlDir blog </> (takeBaseName d))
   forM_ files $ \f -> copyFile f (htmlDir blog)
 
-regenerateContent :: Bool -> FilePath -> FilePath -> IO Bool
-regenerateContent force theHtmlDir dir = do
-  blog <- mkBlog dir theHtmlDir
-  summary <- summarizeChanges blog force
+regenerateContent :: StartupConfig -> IO Bool
+regenerateContent conf = do
+  blog <- mkBlog conf
+  summary <- summarizeChanges blog (forceRegeneration conf)
 
   case anyChanges summary of
     False -> return False
@@ -416,8 +418,7 @@ main = do
 
   case listenMode conf of
     False -> do
-         didWork <- regenerateContent (forceRegeneration conf)
-                    (htmlOutputDirectory conf) dir
+         didWork <- regenerateContent conf
          when (not didWork) $ putStrLn "No changes found!"
-    True -> scanForChanges dir
-            (regenerateContent False (htmlOutputDirectory conf))
+    True -> scanForChanges
+            (regenerateContent $ conf { forceRegeneration = False })
