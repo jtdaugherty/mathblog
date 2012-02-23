@@ -30,6 +30,7 @@ data StartupConfig = StartupConfig { listenMode :: Bool
                                    , initDataDirectory :: Bool
                                    , forceRegeneration :: Bool
                                    , htmlOutputDirectory :: FilePath
+                                   , configFilePath :: FilePath
                                    }
                      deriving (Show, Eq)
 
@@ -38,6 +39,7 @@ data Flag = Listen
           | InitDataDirectory
           | ForceRegenerate
           | HtmlOutputDir FilePath
+          | ConfigFile FilePath
             deriving (Eq)
 
 getDataDirFlag :: [Flag] -> Maybe FilePath
@@ -49,6 +51,11 @@ getHtmlOutputDirFlag :: [Flag] -> Maybe FilePath
 getHtmlOutputDirFlag [] = Nothing
 getHtmlOutputDirFlag (HtmlOutputDir p:_) = Just p
 getHtmlOutputDirFlag (_:fs) = getHtmlOutputDirFlag fs
+
+getConfigFilePath :: [Flag] -> Maybe FilePath
+getConfigFilePath [] = Nothing
+getConfigFilePath (ConfigFile p:_) = Just p
+getConfigFilePath (_:fs) = getConfigFilePath fs
 
 options :: [OptDescr Flag]
 options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
@@ -69,6 +76,10 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                        $ "Write generated HTML and images to the specified\n" ++
                          "directory.  The default is the 'html' directory in\n" ++
                          "the blog data directory."
+          , Option ['c'] ["config-file"] (ReqArg ConfigFile "FILENAME")
+                       $ "Use the specified config file instead of 'blog.cfg'\n" ++
+                         "in the data directory.  This path must be relative\n" ++
+                         "to the data directory."
           ]
 
 -- |Inspect the program environment to create a startup configuration.
@@ -104,12 +115,14 @@ startupConfig args env =
             f = ForceRegenerate `elem` flags
         d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
         h <- getHtmlOutputDirFlag flags `mplus` (Just $ d </> "html")
+        c <- getConfigFilePath flags `mplus` (Just $ d </> "blog.cfg")
 
         return $ StartupConfig { listenMode = lm
                                , dataDirectory = d
                                , initDataDirectory = i
                                , forceRegeneration = f
                                , htmlOutputDirectory = h
+                               , configFilePath = c
                                }
 
 baseDirEnvName :: String

@@ -43,11 +43,11 @@ import MB.Tikz
 import MB.Mathjax
 import MB.Gladtex
 
+defaultConfigFilename :: String
+defaultConfigFilename = "blog.cfg"
+
 skelDir :: IO FilePath
 skelDir = getDataFileName "skel"
-
-configFilename :: String
-configFilename = "blog.cfg"
 
 commonTemplateAttrs :: Blog -> [(String, String)]
 commonTemplateAttrs blog =
@@ -234,7 +234,7 @@ generateRssFeed blog = do
 initializeDataDir :: FilePath -> IO ()
 initializeDataDir dir = do
   existsBase <- doesDirectoryExist dir
-  existsConfig <- doesFileExist $ dir </> configFilename
+  existsConfig <- doesFileExist $ dir </> defaultConfigFilename
 
   dataDir <- skelDir
 
@@ -245,7 +245,7 @@ initializeDataDir dir = do
 
   when existsConfig $
        putStrLn $ "Data directory already initialized; found " ++
-                    (dir </> configFilename)
+                    (dir </> defaultConfigFilename)
 
 ensureDirs :: Blog -> IO ()
 ensureDirs blog = do
@@ -290,11 +290,11 @@ eqBackends =
 mkBlog :: StartupConfig -> IO Blog
 mkBlog conf = do
   let base = dataDirectory conf
-      configFilePath = base </> configFilename
-  e <- doesFileExist configFilePath
+      configFile = base </> (configFilePath conf)
+  e <- doesFileExist configFile
 
   when (not e) $ do
-                  putStrLn $ "Configuration file " ++ configFilePath ++ " not found"
+                  putStrLn $ "Configuration file " ++ configFile ++ " not found"
                   exitFailure
 
   let requiredValues = [ "baseUrl"
@@ -303,7 +303,7 @@ mkBlog conf = do
                        , "authorEmail"
                        ]
 
-  cfg <- Config.readConfig configFilePath requiredValues
+  cfg <- Config.readConfig configFile requiredValues
 
   let Just cfg_baseUrl = lookup "baseUrl" cfg
       Just cfg_title = lookup "title" cfg
@@ -349,7 +349,7 @@ mkBlog conf = do
                , authorName = cfg_authorName
                , authorEmail = cfg_authorEmail
                , eqPreamblesDir = base </> "eq-preambles"
-               , configPath = configFilePath
+               , configPath = configFile
                , blogPosts = allPosts
                , processors = procs
                }
@@ -380,6 +380,7 @@ regenerateContent conf = do
     False -> return False
     True -> do
       putStrLn $ "Blog directory: " ++ baseDir blog
+      putStrLn $ "Config file: " ++ configFilePath conf
 
       when (configChanged summary) $
            putStrLn "Configuration file changed; regenerating all content."
@@ -420,5 +421,7 @@ main = do
     False -> do
          didWork <- regenerateContent conf
          when (not didWork) $ putStrLn "No changes found!"
-    True -> scanForChanges
+    True -> do
+         putStrLn $ "Waiting for changes in " ++ (dataDirectory conf) ++ " ..."
+         scanForChanges
             (regenerateContent $ conf { forceRegeneration = False })

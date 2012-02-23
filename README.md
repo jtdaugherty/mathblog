@@ -107,6 +107,7 @@ with some default pages and a default first blog post:
 $ export MB_BASE_DIR=`pwd`/myBlog
 $ mb -i
 Blog directory: .../myBlog
+Config file: .../myBlog/blog.cfg
 Setting up data directory using skeleton: /.../skel
 Configuration file changed; regenerating all content.
 Templates changed; regenerating accordingly.
@@ -244,17 +245,21 @@ mathblog in listen mode is simple:
 
 ~~~
 $ mb -l
-Blog directory: /.../blog
+Waiting for changes in .../blog ...
+Blog directory: .../blog
+Config file: .../blog/blog.cfg
 Post index changed; regenerating next/previous links.
 Done.
 
 Blog directory: /.../blog
+Config file: .../blog/blog.cfg
 Configuration file changed; regenerating all content.
 Rendering 1 post(s)...
 Rendering first-post
 Done.
 
 Blog directory: /Users/cygnus/blog3
+Config file: .../blog/blog.cfg
 Posts changed:
   first-post.txt
 Rendering 1 post(s)...
