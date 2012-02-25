@@ -1,5 +1,5 @@
 Name:                mathblog
-Version:             0.4
+Version:             0.5
 Synopsis:            A program for creating and managing a static
                      weblog with LaTeX math and function graphs
 Description:         This package provides a program for creating and
@@ -11,8 +11,8 @@ Description:         This package provides a program for creating and
                      of your choice, then this is the blogging
                      platform for you!  For detailed information and a
                      full feature list, please see the README.
-Author:              Jonathan Daugherty <drcygnus@gmail.com>
-Maintainer:          Jonathan Daugherty <drcygnus@gmail.com>
+Author:              Jonathan Daugherty <cygnus@foobox.com>
+Maintainer:          Jonathan Daugherty <cygnus@foobox.com>
 Build-Type:          Simple
 Cabal-version:       >= 1.6
 License:             BSD3
