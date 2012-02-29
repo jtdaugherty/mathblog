@@ -79,12 +79,12 @@ mathblog takes advantage of three primary software components:
 
  - Function graph plotting packages:
 
-   - The TikZ and pgfplots LaTeX packages if you choose `tikz` for
-     the value of the 'eqBackend' configuration setting.  This is the
-     recommended backend for function graph plotting.
+   - The TikZ and pgfplots LaTeX packages if you set `tikz = yes` in
+     your config.  This is the recommended backend for function graph
+     plotting.
 
-   - GNUplot if you choose `gnuplot` for the value of the 'eqBackend'
-     configuration setting.
+   - GNUplot if you set `gnuplot = yes` in your configuration.  See
+     below for more details on using GNUplot.
 
 Creating a blog
 ===============
@@ -153,15 +153,23 @@ fields set:
     configuration is necessary for MathJax, as mathblog's default
     templates use CDN resources for MathJax.
 
- - `eqBackend`
+ - `tikz`
 
-    The backend used to render function graphs.  Can be either `tikz`
-    or `gnuplot`.  See the Function Graph Embedding section below for
-    details.
+    Whether to use the Tikz / Pgftplots approach to rendering equation
+    graphs.  Set to 'yes', 'on', or '1' to enable.
+
+ - `gnuplot`
+
+    Whether to use GNUplot to render equation graphs.  Set to 'yes',
+    'on', or '1' to enable.
 
 Note that if you pick a math or function graphing backend which isn't
 supported by your system, `mb` will emit errors when processing your
 posts.
+
+Also note that it is legal to have both `tikz` and `gnuplot` enabled;
+just don't expect GNUplot to try processing code blocks for a "tikz"
+GNUplot preamble, since TikZ processing happens first.
 
 All of the above fields can be accessed in templates using the syntax
 described in "Customizing your blog" below.
@@ -351,7 +359,7 @@ Function Graph Embedding
 
 mathblog supports inline scripts for rendering function graphs.  Right
 now, mathblog supports Gnuplot and the TikZ / pgfplots LaTeX packages.
-Set the 'eqBackend' configuration option (see above) to choose a
+Set the appropriate configuration option (see above) to enable a
 backend.
 
 Gnuplot

@@ -10,6 +10,7 @@ module MB.Util
     , anyChanges
     , summarizeChanges
     , serializePostIndex
+    , affirmative
     )
 where
 import Control.Applicative
@@ -43,6 +44,9 @@ import System.Posix.Files
     )
 import System.Posix.Types
     ( EpochTime
+    )
+import Data.Char
+    ( toLower
     )
 import Data.List
     ( isSuffixOf
@@ -278,3 +282,11 @@ summarizeChanges config forceAll = do
 
   -- Combine all changes
   return $ mconcat $ baselineChanges : processorChanges
+
+affirmative :: String -> Bool
+affirmative s = aff $ toLower <$> s
+    where
+      aff "yes" = True
+      aff "on" = True
+      aff "1" = True
+      aff _ = False

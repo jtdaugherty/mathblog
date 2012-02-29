@@ -17,14 +17,6 @@ import MB.Templates
     )
 import MB.Processing
 import MB.Util
-    ( copyTree
-    , toLocalTime
-    , rssModificationTime
-    , loadPostIndex
-    , anyChanges
-    , serializePostIndex
-    , summarizeChanges
-    )
 import MB.Types
 import qualified MB.Files as Files
 import Paths_mathblog
@@ -281,10 +273,15 @@ mathBackends =
     , ("mathjax", mathjaxProcessor)
     ]
 
+-- Note that the order here matters, because the processors will be
+-- applied in the order listed.  So if the user has both turned on
+-- then gnuplot will try to render a post with the "tikz" preamble,
+-- which we don't really want.  So let tikz go first, rewrite the AST,
+-- and then let gnuplot handle the rest.
 eqBackends :: [(String, Processor)]
 eqBackends =
-    [ ("gnuplot", gnuplotProcessor)
-    , ("tikz", tikzProcessor)
+    [ ("tikz", tikzProcessor)
+    , ("gnuplot", gnuplotProcessor)
     ]
 
 mkBlog :: StartupConfig -> IO Blog
@@ -323,16 +320,14 @@ mkBlog conf = do
                                              ++ (show $ fst <$> mathBackends)
                                   Just proc -> proc
 
-      requestedEqBackend = lookup "eqBackend" cfg
-      eqBackend = case requestedEqBackend of
-                    Nothing -> gnuplotProcessor
-                    Just b -> case lookup b eqBackends of
-                                Nothing -> error $ "Unsupported equation backend " ++ show b
-                                           ++ "; valid choices are "
-                                           ++ (show $ fst <$> eqBackends)
-                                Just proc -> proc
+      eqBackendConfig = catMaybes $ isBackendRequested <$> eqBackends
+      isBackendRequested (nam, p) =
+          let Just opt = lookup nam cfg <|> Just "no"
+          in if affirmative opt
+             then Just p
+             else Nothing
 
-      procs = [eqBackend, mathBackend]
+      procs = eqBackendConfig ++ [mathBackend]
 
   let html = htmlOutputDirectory conf
       b = Blog { baseDir = base

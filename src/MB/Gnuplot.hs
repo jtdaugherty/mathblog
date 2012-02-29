@@ -15,6 +15,7 @@ import Data.List
     )
 import Data.Maybe
     ( catMaybes
+    , fromJust
     )
 import Data.Digest.Pure.SHA
     ( showDigest
@@ -115,8 +116,9 @@ isCodeBlock (Pandoc.CodeBlock _ _) = True
 isCodeBlock _ = False
 
 processCodeBlock :: Blog -> Pandoc.Block -> IO Pandoc.Block
-processCodeBlock config (Pandoc.CodeBlock (preambleName, classes, _) s) =
-    renderGnuPlotScript config preambleName s classes
+processCodeBlock config b@(Pandoc.CodeBlock (preambleName, classes, _) s) = do
+  result <- renderGnuPlotScript config preambleName s classes
+  return $ fromJust $ result <|> Just b
 processCodeBlock _ b = return b
 
 loadPreamble :: Blog -> String -> IO (Maybe String)
@@ -134,16 +136,14 @@ renderGnuPlotScript :: Blog
                     -> String
                     -> String
                     -> [String]
-                    -> IO Pandoc.Block
+                    -> IO (Maybe Pandoc.Block)
 renderGnuPlotScript config preambleName rawScript classes = do
   putStrLn $ "Rendering equation graph, type=" ++ preambleName
 
   mPreamble <- loadPreamble config preambleName
 
   case mPreamble of
-    Nothing -> do
-      putStrLn $ "Error: no such gnuplot preamble: " ++ preambleName
-      return $ Pandoc.Para [Pandoc.Str "[[COULD NOT DRAW EQUATION]]"]
+    Nothing -> return Nothing
     Just preamble -> do
 
       let scriptLines = lines rawScript
@@ -175,10 +175,12 @@ renderGnuPlotScript config preambleName rawScript classes = do
                        putStrLn out
                        putStrLn err
 
-      return $ Pandoc.Para [Pandoc.RawInline "html" $ concat [ "<img src=\"/generated-images/"
-                                                       , imageFilename
-                                                       , "\" class=\""
-                                                       , intercalate " " classes
-                                                       , "\">"
-                                                       ]
-                           ]
+      return $ Just $
+             Pandoc.Para [Pandoc.RawInline "html" $
+                                concat [ "<img src=\"/generated-images/"
+                                       , imageFilename
+                                       , "\" class=\""
+                                       , intercalate " " classes
+                                       , "\">"
+                                       ]
+                         ]
