@@ -6,11 +6,14 @@ module MB.Types
     , Page(..)
     , Processor(..)
     , nullProcessor
+    , noChanges
     )
 where
 import Data.Time.Clock
     ( UTCTime
     )
+import Data.Monoid
+import Data.List (nub)
 import qualified Text.Pandoc as Pandoc
 import Text.StringTemplate
     ( StringTemplate
@@ -43,6 +46,7 @@ data Post = Post { postTitle :: [Pandoc.Inline]
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
                  }
+            deriving (Eq)
 
 data Page = BlogPost
           | Index
@@ -54,11 +58,12 @@ data Processor =
               , pageHead :: Maybe String
               , buildPostTitle :: Maybe (Page -> [Pandoc.Inline] -> [Pandoc.Inline])
               , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
+              , getChangeSummary :: Maybe (Blog -> UTCTime -> IO ChangeSummary)
               }
 
 nullProcessor :: Processor
 nullProcessor =
-    Processor Nothing Nothing Nothing Nothing Nothing Nothing
+    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary
@@ -72,3 +77,16 @@ data ChangeSummary =
                   , assetsChanged :: Bool
                   }
     deriving (Show)
+
+noChanges :: ChangeSummary
+noChanges = ChangeSummary [] False False False False
+
+instance Monoid ChangeSummary where
+    mempty = noChanges
+    a `mappend` b =
+        ChangeSummary { postsChanged = nub $ postsChanged a ++ postsChanged b
+                      , configChanged = configChanged a || configChanged b
+                      , templatesChanged = templatesChanged a || templatesChanged b
+                      , postIndexChanged = postIndexChanged a || postIndexChanged b
+                      , assetsChanged = assetsChanged a || assetsChanged b
+                      }

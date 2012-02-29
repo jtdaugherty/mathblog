@@ -48,6 +48,7 @@ import Data.List
     ( isSuffixOf
     , isPrefixOf
     )
+import Data.Monoid
 import Data.Time.Clock
     ( UTCTime(utctDay)
     , getCurrentTime
@@ -261,9 +262,19 @@ summarizeChanges config forceAll = do
                             mtime <- getModificationTime f
                             return $ mtime > baseTime
 
-  return $ ChangeSummary { configChanged = configChanged' || forceAll
-                         , postsChanged = map postFilename modifiedPosts
-                         , templatesChanged = or (forceAll : templateChanges)
-                         , postIndexChanged = postIndexChanged' || forceAll
-                         , assetsChanged = or (forceAll : assetChanges)
-                         }
+  let baselineChanges =
+          ChangeSummary { configChanged = configChanged' || forceAll
+                        , postsChanged = map postFilename modifiedPosts
+                        , templatesChanged = or (forceAll : templateChanges)
+                        , postIndexChanged = postIndexChanged' || forceAll
+                        , assetsChanged = or (forceAll : assetChanges)
+                        }
+
+  -- Query document processors to get other changes
+  processorChanges <- forM (processors config) $ \p ->
+                      case getChangeSummary p of
+                        Nothing -> return noChanges
+                        Just f -> f config baseTime
+
+  -- Combine all changes
+  return $ mconcat $ baselineChanges : processorChanges

@@ -47,7 +47,8 @@ Executable mb
     SHA >= 1.4 && < 1.6,
     bytestring >= 0.9 && < 1.0,
     HStringTemplate >= 0.6 && < 0.7,
-    ConfigFile >= 1.1 && < 1.2
+    ConfigFile >= 1.1 && < 1.2,
+    containers >= 0.3
 
   Other-modules:
     Paths_mathblog
