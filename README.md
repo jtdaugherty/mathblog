@@ -156,12 +156,13 @@ fields set:
  - `tikz`
 
     Whether to use the Tikz / Pgftplots approach to rendering equation
-    graphs.  Set to 'yes', 'on', or '1' to enable.
+    graphs.  Set to 'yes', 'on', or '1' to enable.  Disabled by
+    default.
 
  - `gnuplot`
 
     Whether to use GNUplot to render equation graphs.  Set to 'yes',
-    'on', or '1' to enable.
+    'on', or '1' to enable.  Disabled by default.
 
 Note that if you pick a math or function graphing backend which isn't
 supported by your system, `mb` will emit errors when processing your
