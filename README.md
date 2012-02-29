@@ -79,7 +79,7 @@ mathblog takes advantage of three primary software components:
 
  - Function graph plotting packages:
 
-   - The TikZ and pgfplots LaTeX packages if you choose `gnuplot` for
+   - The TikZ and pgfplots LaTeX packages if you choose `tikz` for
      the value of the 'eqBackend' configuration setting.  This is the
      recommended backend for function graph plotting.
 
@@ -409,6 +409,7 @@ figure:
         (-1,-1)
         (2.95,2.95)
     };
+    \end{axis}
     ~~~
 
 This is a LaTeX fragment which will automatically be embedded in a
