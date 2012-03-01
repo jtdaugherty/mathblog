@@ -495,4 +495,4 @@ find it useful.  In addition, I'm open to accepting contributions on
 the project if they're consistent with what I've outlined above.
 Happy blogging!
 
-Jonathan Daugherty (<drcygnus@gmail.com>)
+Jonathan Daugherty (<cygnus@foobox.com>)
