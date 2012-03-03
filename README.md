@@ -68,13 +68,13 @@ mathblog takes advantage of three primary software components:
  - Math typesetting packages:
 
    - GladTex and LaTeX for math typesetting if you choose `gladtex`
-     for the value of the 'mathBackend' configuration setting.
+     for the value of the `mathBackend` configuration setting.
      GladTex 1.3 is required for best results.  GladTex renders LaTeX
      snippets to images.  This is the recommended backend for math
      typesetting.  See <https://sourceforge.net/projects/gladtex/>
 
    - MathJax if you choose `mathjax` for the value of the
-     'mathBackend' configuration setting.  mathblog uses the MathJax
+     `mathBackend` configuration setting.  mathblog uses the MathJax
      CDN for MathJax resources.
 
  - Function graph plotting packages:
