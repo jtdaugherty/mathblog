@@ -25,9 +25,9 @@ Data-Files:
   skel/templates/postTemplate.html
   skel/templates/pageTemplate.html
   skel/templates/rssTemplate.xml
-  skel/eq-templates/eq-basic.txt
   skel/posts/first-post.txt
   skel/blog.cfg
+  gnuplot-templates/eq-basic.txt
 
 Source-Repository head
   type:     git

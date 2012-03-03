@@ -225,19 +225,23 @@ generateRssFeed blog = do
 
 initializeDataDir :: FilePath -> IO ()
 initializeDataDir dir = do
-  existsBase <- doesDirectoryExist dir
-  existsConfig <- doesFileExist $ dir </> defaultConfigFilename
+  existsDir <- doesDirectoryExist dir
 
-  dataDir <- skelDir
+  case existsDir of
+    False -> do
+      dataDir <- skelDir
+      putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
+      createDirectory dir
+      copyTree dataDir dir
 
-  when (not existsBase || not existsConfig) $ do
-          putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
-          when (not existsBase) $ createDirectory dir
-          copyTree dataDir dir
-
-  when existsConfig $
-       putStrLn $ "Data directory already initialized; found " ++
-                    (dir </> defaultConfigFilename)
+    True -> do
+      existsConfig <- doesFileExist $ dir </> defaultConfigFilename
+      case existsConfig of
+        True -> putStrLn $ "Data directory already initialized; found " ++
+                (dir </> defaultConfigFilename)
+        False -> do
+              putStrLn $ "Directory " ++ show dir ++ " already exists"
+              putStrLn $ "but it does not contain a blog config file (" ++ defaultConfigFilename ++ ")"
 
 ensureDirs :: Blog -> IO ()
 ensureDirs blog = do
@@ -249,7 +253,6 @@ ensureDirs blog = do
              , imageDir
              , templateDir
              , htmlTempDir
-             , eqPreamblesDir
              ]
 
   forM_ (dirs <*> pure blog) $ \d ->
@@ -343,7 +346,6 @@ mkBlog conf = do
                , title = cfg_title
                , authorName = cfg_authorName
                , authorEmail = cfg_authorEmail
-               , eqPreamblesDir = base </> "eq-preambles"
                , configPath = configFile
                , blogPosts = allPosts
                , processors = procs
@@ -366,9 +368,18 @@ installAssets blog = do
   forM_ dirs $ \d -> copyTree d (htmlDir blog </> (takeBaseName d))
   forM_ files $ \f -> copyFile f (htmlDir blog)
 
+-- For each configured document processor, run its check routine in
+-- case it needs to install data files or do validation.
+runProcessorChecks :: Blog -> IO ()
+runProcessorChecks blog =
+    let checks = catMaybes $ checkDataDir <$> processors blog
+    in sequence_ $ checks <*> pure blog
+
 regenerateContent :: StartupConfig -> IO Bool
 regenerateContent conf = do
   blog <- mkBlog conf
+  runProcessorChecks blog
+
   summary <- summarizeChanges blog (forceRegeneration conf)
 
   case anyChanges summary of

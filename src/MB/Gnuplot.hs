@@ -26,15 +26,20 @@ import Data.ByteString.Lazy.Char8
     )
 import System.Directory
     ( doesFileExist
+    , doesDirectoryExist
     )
 import System.FilePath
     ( takeBaseName
+    , (</>)
     )
 import System.Process
     ( readProcessWithExitCode
     )
 import System.Exit
     ( ExitCode(..)
+    )
+import Paths_mathblog
+    ( getDataFileName
     )
 import Data.Time.Clock (UTCTime)
 import qualified Data.Set as Set
@@ -47,6 +52,7 @@ gnuplotProcessor :: Processor
 gnuplotProcessor =
     nullProcessor { preProcessPost = Just renderGnuPlot
                   , getChangeSummary = Just checkPreambles
+                  , checkDataDir = Just setupGnuplot
                   }
 
 allPreambles :: FilePath -> IO [FilePath]
@@ -55,6 +61,20 @@ allPreambles preambleDir = do
   return [ f | f <- allFiles
          , ".txt" `isSuffixOf` f
          ]
+
+setupGnuplot :: Blog -> IO ()
+setupGnuplot blog = do
+  srcDir <- getDataFileName "gnuplot-templates"
+  let dest = baseDir blog </> "eq-preambles"
+
+  destExists <- doesDirectoryExist dest
+  when (not destExists) $ copyTree srcDir dest
+
+eqPreamblesDir :: Blog -> FilePath
+eqPreamblesDir b = baseDir b </> "eq-preambles"
+
+eqPreambleFile :: Blog -> String -> FilePath
+eqPreambleFile config n = eqPreamblesDir config </> n
 
 checkPreambles :: Blog -> UTCTime -> IO ChangeSummary
 checkPreambles blog baseTime = do
@@ -123,7 +143,7 @@ processCodeBlock _ b = return b
 
 loadPreamble :: Blog -> String -> IO (Maybe String)
 loadPreamble config preambleName = do
-  let filename = Files.eqPreambleFile config $ preambleName ++ ".txt"
+  let filename = eqPreambleFile config $ preambleName ++ ".txt"
   e <- doesFileExist filename
   case e of
     False -> return Nothing

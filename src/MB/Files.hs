@@ -18,9 +18,6 @@ imageFilename c fn = imageDir c </> fn
 rssXml :: Blog -> FilePath
 rssXml c = htmlDir c </> "feed.xml"
 
-eqPreambleFile :: Blog -> String -> FilePath
-eqPreambleFile config n = eqPreamblesDir config </> n
-
 rssTemplatePath :: Blog -> FilePath
 rssTemplatePath c = templateDir c </> "rssTemplate.xml"
 

@@ -31,7 +31,6 @@ data Blog = Blog { baseDir :: FilePath
                  , templateDir :: FilePath
                  , htmlTempDir :: FilePath
                  , baseUrl :: String
-                 , eqPreamblesDir :: FilePath
                  , title :: String
                  , authorName :: String
                  , authorEmail :: String
@@ -59,11 +58,12 @@ data Processor =
               , buildPostTitle :: Maybe (Page -> [Pandoc.Inline] -> [Pandoc.Inline])
               , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
               , getChangeSummary :: Maybe (Blog -> UTCTime -> IO ChangeSummary)
+              , checkDataDir :: Maybe (Blog -> IO ())
               }
 
 nullProcessor :: Processor
 nullProcessor =
-    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary
