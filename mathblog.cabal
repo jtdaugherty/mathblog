@@ -54,6 +54,7 @@ Executable mb
     Paths_mathblog
     MB.Base
     MB.Initialize
+    MB.Generate
     MB.RSS
     MB.Config
     MB.Templates

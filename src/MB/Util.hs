@@ -1,7 +1,6 @@
 module MB.Util
     ( copyTree
     , toUtcTime
-    , toLocalTime
     , loadPostIndex
     , getModificationTime
     , allPostFilenames
@@ -57,11 +56,6 @@ import Data.Time.Calendar
     )
 import Data.Time.Format
     ( parseTime
-    )
-import Data.Time.LocalTime
-    ( LocalTime
-    , getCurrentTimeZone
-    , utcToLocalTime
     )
 import System.Locale
     ( defaultTimeLocale
@@ -119,11 +113,6 @@ copyTree srcPath dstPath = do
 
 toUtcTime :: EpochTime -> UTCTime
 toUtcTime t = fromJust $ parseTime defaultTimeLocale "%s" $ show t
-
-toLocalTime :: UTCTime -> IO LocalTime
-toLocalTime u = do
-  tz <- getCurrentTimeZone
-  return $ utcToLocalTime tz u
 
 loadPost :: FilePath -> IO Post
 loadPost fullPath = do
