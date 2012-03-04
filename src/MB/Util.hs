@@ -10,7 +10,6 @@ module MB.Util
     , anyChanges
     , summarizeChanges
     , serializePostIndex
-    , affirmative
     )
 where
 import Control.Applicative
@@ -282,11 +281,3 @@ summarizeChanges config forceAll = do
 
   -- Combine all changes
   return $ mconcat $ baselineChanges : processorChanges
-
-affirmative :: String -> Bool
-affirmative s = aff $ toLower <$> s
-    where
-      aff "yes" = True
-      aff "on" = True
-      aff "1" = True
-      aff _ = False

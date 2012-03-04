@@ -1,5 +1,6 @@
 module MB.Config
     ( readConfig
+    , affirmative
     )
 where
 
@@ -41,3 +42,11 @@ readConfig path requiredArgs = do
                    exitFailure
 
           return pairs
+
+affirmative :: String -> Bool
+affirmative s = aff $ toLower <$> s
+    where
+      aff "yes" = True
+      aff "on" = True
+      aff "1" = True
+      aff _ = False
