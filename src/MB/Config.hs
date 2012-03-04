@@ -4,6 +4,8 @@ module MB.Config
     )
 where
 
+import Control.Applicative
+import Data.Char (toLower)
 import Data.ConfigFile.Parser
     ( parse_file
     )

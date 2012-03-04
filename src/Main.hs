@@ -12,9 +12,6 @@ import Data.Time.LocalTime
 import qualified Text.Pandoc as Pandoc
 import qualified MB.Config as Config
 import MB.Templates
-    ( loadTemplate
-    , renderTemplate
-    )
 import MB.Processing
 import MB.Util
 import MB.Types
@@ -34,31 +31,14 @@ import MB.Gnuplot
 import MB.Tikz
 import MB.Mathjax
 import MB.Gladtex
+import MB.Base
+import MB.RSS
 
 defaultConfigFilename :: String
 defaultConfigFilename = "blog.cfg"
 
 skelDir :: IO FilePath
 skelDir = getDataFileName "skel"
-
-commonTemplateAttrs :: Blog -> [(String, String)]
-commonTemplateAttrs blog =
-    [ ( "baseUrl", baseUrl blog )
-    , ( "title", title blog )
-    , ( "authorName", authorName blog )
-    , ( "authorEmail", authorEmail blog )
-    , ( "extraPageHead", extraPageHead blog )
-    ]
-
-extraPageHead :: Blog -> String
-extraPageHead b = concat $ catMaybes $ pageHead <$> processors b
-
-fillTemplate :: Blog -> Template -> [(String, String)] -> String
-fillTemplate blog t attrs = renderTemplate attrs' t
-    where attrs' = commonTemplateAttrs blog ++ attrs
-
-writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> IO ()
-writeTemplate blog h t attrs = hPutStr h $ fillTemplate blog t attrs
 
 writePost :: Blog -> Handle -> Post -> IO ()
 writePost blog h post = do
@@ -195,34 +175,6 @@ generatePostList blog = do
 
   applyPostProcessors blog (Files.listHtml blog) Index
 
-rssItem :: Blog -> Post -> String
-rssItem blog p =
-    concat [ "<item>"
-           , "<title>" ++ getRawPostTitle blog p ++ "</title>\n"
-           , "<link>" ++ baseUrl blog ++ Files.postUrl p ++ "</link>\n"
-           , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
-           , "<guid>" ++ baseUrl blog ++ Files.postUrl p ++ "</guid>\n"
-           , "</item>\n"
-           ]
-
-generateRssFeed :: Blog -> IO ()
-generateRssFeed blog = do
-  h <- openFile (Files.rssXml blog) WriteMode
-
-  eTmpl <- loadTemplate $ Files.rssTemplatePath blog
-
-  case eTmpl of
-    Left msg -> putStrLn msg >> exitFailure
-    Right tmpl ->
-        do
-          let items = map (rssItem blog) $ blogPosts blog
-              itemStr = concat items
-              attrs = [ ("items", itemStr)
-                      ]
-
-          writeTemplate blog h tmpl attrs
-          hClose h
-
 initializeDataDir :: FilePath -> IO ()
 initializeDataDir dir = do
   existsDir <- doesDirectoryExist dir
@@ -326,11 +278,11 @@ mkBlog conf = do
       eqBackendConfig = catMaybes $ isBackendRequested <$> eqBackends
       isBackendRequested (nam, p) =
           let Just opt = lookup nam cfg <|> Just "no"
-          in if affirmative opt
+          in if Config.affirmative opt
              then Just p
              else Nothing
 
-      procs = eqBackendConfig ++ [mathBackend]
+      procs = baseProcessor : eqBackendConfig ++ [mathBackend]
 
   let html = htmlOutputDirectory conf
       b = Blog { baseDir = base
@@ -354,26 +306,17 @@ mkBlog conf = do
   ensureDirs b
   return b
 
-installAssets :: Blog -> IO ()
-installAssets blog = do
-  let ad = assetDir blog
-
-  -- For each file and directory in assets/, copy it to the output
-  -- directory.
-  entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents ad
-
-  dirs <- filterM doesDirectoryExist $ map (ad </>) entries
-  files <- filterM doesFileExist $ map (ad </>) entries
-
-  forM_ dirs $ \d -> copyTree d (htmlDir blog </> (takeBaseName d))
-  forM_ files $ \f -> copyFile f (htmlDir blog)
-
 -- For each configured document processor, run its check routine in
 -- case it needs to install data files or do validation.
 runProcessorChecks :: Blog -> IO ()
 runProcessorChecks blog =
     let checks = catMaybes $ checkDataDir <$> processors blog
     in sequence_ $ checks <*> pure blog
+
+doInstallAssets :: Blog -> IO ()
+doInstallAssets blog =
+    let fs = catMaybes $ installAssets <$> processors blog
+    in sequence_ $ fs <*> pure blog
 
 regenerateContent :: StartupConfig -> IO Bool
 regenerateContent conf = do
@@ -402,7 +345,7 @@ regenerateContent conf = do
       when (assetsChanged summary) $
            do
              putStrLn "Assets changed; reinstalling."
-             installAssets blog
+             doInstallAssets blog
 
       generatePosts blog summary
 

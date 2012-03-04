@@ -2,7 +2,6 @@ module MB.Util
     ( copyTree
     , toUtcTime
     , toLocalTime
-    , rssModificationTime
     , loadPostIndex
     , getModificationTime
     , allPostFilenames
@@ -44,9 +43,6 @@ import System.Posix.Files
 import System.Posix.Types
     ( EpochTime
     )
-import Data.Char
-    ( toLower
-    )
 import Data.List
     ( isSuffixOf
     , isPrefixOf
@@ -61,7 +57,6 @@ import Data.Time.Calendar
     )
 import Data.Time.Format
     ( parseTime
-    , formatTime
     )
 import Data.Time.LocalTime
     ( LocalTime
@@ -70,7 +65,6 @@ import Data.Time.LocalTime
     )
 import System.Locale
     ( defaultTimeLocale
-    , rfc822DateFormat
     )
 import System.IO
     ( IOMode(ReadMode)
@@ -130,10 +124,6 @@ toLocalTime :: UTCTime -> IO LocalTime
 toLocalTime u = do
   tz <- getCurrentTimeZone
   return $ utcToLocalTime tz u
-
-rssModificationTime :: Post -> String
-rssModificationTime =
-    formatTime defaultTimeLocale rfc822DateFormat . postModificationTime
 
 loadPost :: FilePath -> IO Post
 loadPost fullPath = do

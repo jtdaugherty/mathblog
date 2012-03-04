@@ -52,6 +52,8 @@ Executable mb
 
   Other-modules:
     Paths_mathblog
+    MB.Base
+    MB.RSS
     MB.Config
     MB.Templates
     MB.Files

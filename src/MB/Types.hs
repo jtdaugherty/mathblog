@@ -59,11 +59,12 @@ data Processor =
               , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
               , getChangeSummary :: Maybe (Blog -> UTCTime -> IO ChangeSummary)
               , checkDataDir :: Maybe (Blog -> IO ())
+              , installAssets :: Maybe (Blog -> IO ())
               }
 
 nullProcessor :: Processor
 nullProcessor =
-    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary
