@@ -7,18 +7,12 @@ import Data.Maybe
 import System.Exit
 import System.Directory
 import System.FilePath
+
 import qualified MB.Config as Config
+import qualified MB.Files as Files
 import MB.Util
 import MB.Types
-import qualified MB.Files as Files
 import MB.Startup
-    ( StartupConfig(..)
-    , dataDirectory
-    , listenMode
-    , startupConfigFromEnv
-    , forceRegeneration
-    , initDataDirectory
-    )
 import MB.Gnuplot
 import MB.Tikz
 import MB.Mathjax
