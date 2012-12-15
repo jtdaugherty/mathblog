@@ -36,18 +36,18 @@ Source-Repository head
 Executable mb
   Build-depends:
     base >= 3 && < 5,
-    directory >= 1.0 && < 1.1.0.2,
+    directory >= 1.0,
     filepath >= 1.1,
     pandoc >= 1.8,
     pandoc-types >= 1.8,
-    unix >= 2.3 && < 2.5,
+    unix >= 2.3,
     process >= 1.0,
     time >= 1.1,
     old-locale >= 1.0,
-    SHA >= 1.4 && < 1.6,
-    bytestring >= 0.9 && < 1.0,
-    HStringTemplate >= 0.6 && < 0.7,
-    ConfigFile >= 1.1 && < 1.2,
+    SHA >= 1.4,
+    bytestring >= 0.9,
+    HStringTemplate >= 0.6,
+    ConfigFile >= 1.1,
     containers >= 0.3
 
   Other-modules:
@@ -76,21 +76,21 @@ Executable mb
 Executable mb-tests
   Build-depends:
     base >= 3 && < 5,
-    directory >= 1.0 && < 1.2,
+    directory >= 1.0,
     filepath >= 1.1,
     pandoc >= 1.8,
     pandoc-types >= 1.8,
-    unix >= 2.3 && < 2.5,
-    process >= 1.0 && < 1.1,
+    unix >= 2.3,
+    process >= 1.0,
     time >= 1.1,
-    old-locale >= 1.0 && < 1.1,
+    old-locale >= 1.0,
     SHA >= 1.4 && < 1.6,
-    bytestring >= 0.9 && < 1.0,
-    HStringTemplate >= 0.6 && < 0.7,
-    ConfigFile >= 1.1 && < 1.2,
-    HUnit >= 1.2.2 && < 1.2.5,
-    test-framework >= 0.3.3 && < 0.6,
-    test-framework-hunit >= 0.2.6 && < 0.3
+    bytestring >= 0.9,
+    HStringTemplate >= 0.6,
+    ConfigFile >= 1.1,
+    HUnit >= 1.2.2,
+    test-framework >= 0.3.3,
+    test-framework-hunit >= 0.2.6
 
   GHC-Options: -Wall
   Cpp-Options: -DTESTING
