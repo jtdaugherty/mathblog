@@ -1,4 +1,4 @@
-module MB.Gnuplot
+module MB.Processors.Gnuplot
     ( gnuplotProcessor
     )
 where

@@ -13,14 +13,15 @@ import qualified MB.Files as Files
 import MB.Util
 import MB.Types
 import MB.Startup
-import MB.Gnuplot
-import MB.Tikz
-import MB.Mathjax
-import MB.Gladtex
-import MB.Base
 import MB.RSS
 import MB.Initialize
 import MB.Generate
+
+import MB.Processors.Gnuplot
+import MB.Processors.Tikz
+import MB.Processors.Mathjax
+import MB.Processors.Gladtex
+import MB.Processors.Base
 
 ensureDirs :: Blog -> IO ()
 ensureDirs blog = do

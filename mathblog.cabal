@@ -52,7 +52,6 @@ Executable mb
 
   Other-modules:
     Paths_mathblog
-    MB.Base
     MB.Initialize
     MB.Generate
     MB.RSS
@@ -63,10 +62,11 @@ Executable mb
     MB.Util
     MB.Processing
     MB.Startup
-    MB.Gladtex
-    MB.Gnuplot
-    MB.Mathjax
-    MB.Tikz
+    MB.Processors.Base
+    MB.Processors.Gladtex
+    MB.Processors.Gnuplot
+    MB.Processors.Mathjax
+    MB.Processors.Tikz
 
   GHC-Options: -Wall
 

@@ -1,4 +1,4 @@
-module MB.Gladtex
+module MB.Processors.Gladtex
     ( gladtexProcessor
     , checkForGladtex
     )

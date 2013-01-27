@@ -1,4 +1,4 @@
-module MB.Tikz
+module MB.Processors.Tikz
     ( tikzProcessor
     )
 where

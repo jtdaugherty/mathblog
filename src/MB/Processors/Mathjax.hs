@@ -1,4 +1,4 @@
-module MB.Mathjax
+module MB.Processors.Mathjax
     ( mathjaxProcessor
     )
 where

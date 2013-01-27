@@ -1,4 +1,4 @@
-module MB.Base
+module MB.Processors.Base
     ( baseProcessor
     )
 where
