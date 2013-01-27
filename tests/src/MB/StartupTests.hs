@@ -43,7 +43,14 @@ tests = testGroup "Startup configuration tests" [
                          , [(baseDirEnvName, "bar"), (htmlOutputDirEnvName, "pth2")]
                          , "pth1")
                        ]
-        , testCase "No base directory" $ Nothing @=? startupConfig [] []
+        , testGroup "No base directory specified" $
+                        [ testCase "HTML output dir in environment" $ Nothing @=? startupConfig [] [(htmlOutputDirEnvName, "foo")]
+                        , testCase "HTML output dir in args" $ Nothing @=? startupConfig ["--" ++ htmlDirParamName, "foo"] []
+                        ]
+        , testGroup "No html output directory specified" $
+                    [ testCase "Data dir in environment" $ Nothing @=? startupConfig [] [(baseDirEnvName, "foo")]
+                    , testCase "Data dir in args" $ Nothing @=? startupConfig ["--" ++ baseDirParamName, "foo"] []
+                    ]
         ]
 
 testBaseDir :: (Show a, Eq a) => (StartupConfig -> a) -> (String, [String], [(String, String)], a) -> Test
