@@ -38,8 +38,6 @@ renderTikzScript :: Blog
                  -> Pandoc.Block
                  -> IO Pandoc.Block
 renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
-  putStrLn "Rendering equation graph (tikz)"
-
   let digestInput = rawScript
 
       -- Generate an image name in the images/ directory of the blog
