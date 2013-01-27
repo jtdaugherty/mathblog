@@ -59,9 +59,9 @@ getConfigFilePath (_:fs) = getConfigFilePath fs
 
 options :: [OptDescr Flag]
 options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
-                       $ "Path where blog files will be stored.  If this is\n" ++
-                             "not specified, " ++ baseDirEnvName ++ " must be set in the\n" ++
-                             "environment."
+                       $ "Path where blog input data files (configuration, posts,\n" ++
+                         "etc.) are located.  If this is not specified,\n" ++
+                         baseDirEnvName ++ " must be set in the environment."
 
           , Option ['i'] ["init"] (NoArg InitDataDirectory)
                        $ "Initialize the blog data directory."
@@ -73,9 +73,8 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
           , Option ['f'] ["force"] (NoArg ForceRegenerate)
                        "Force a rebuild of all blog content."
           , Option ['h'] ["html-dir"] (ReqArg HtmlOutputDir "PATH")
-                       $ "Write generated HTML and images to the specified\n" ++
-                         "directory.  The default is the 'html' directory in\n" ++
-                         "the blog data directory."
+                       $ "The directory where HTML and image output should be\n" ++
+                       "written."
           , Option ['c'] ["config-file"] (ReqArg ConfigFile "FILENAME")
                        $ "Use the specified config file instead of 'blog.cfg'\n" ++
                          "in the data directory.  This path must be relative\n" ++
@@ -114,7 +113,7 @@ startupConfig args env =
             i = InitDataDirectory `elem` flags
             f = ForceRegenerate `elem` flags
         d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
-        h <- getHtmlOutputDirFlag flags `mplus` (Just $ d </> "html")
+        h <- getHtmlOutputDirFlag flags
         c <- getConfigFilePath flags `mplus` (Just $ d </> "blog.cfg")
 
         return $ StartupConfig { listenMode = lm
@@ -126,10 +125,10 @@ startupConfig args env =
                                }
 
 baseDirEnvName :: String
-baseDirEnvName = "MB_BASE_DIR"
+baseDirEnvName = "MB_DATA_DIR"
 
 baseDirParamName :: String
-baseDirParamName = "baseDir"
+baseDirParamName = "data-dir"
 
 usage :: IO ()
 usage = do
