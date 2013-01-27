@@ -35,10 +35,7 @@ ensureDirs blog = do
              , htmlTempDir
              ]
 
-  forM_ (dirs <*> pure blog) $ \d ->
-      do
-        exists <- doesDirectoryExist d
-        when (not exists) $ createDirectory d
+  forM_ (dirs <*> pure blog) ensureDir
 
 scanForChanges :: IO Bool -> IO ()
 scanForChanges act = do

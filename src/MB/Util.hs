@@ -8,6 +8,7 @@ module MB.Util
     , anyChanges
     , summarizeChanges
     , serializePostIndex
+    , ensureDir
     )
 where
 import Control.Applicative
@@ -260,3 +261,8 @@ summarizeChanges config forceAll = do
 
   -- Combine all changes
   return $ mconcat $ baselineChanges : processorChanges
+
+ensureDir :: FilePath -> IO ()
+ensureDir d = do
+  exists <- doesDirectoryExist d
+  when (not exists) $ createDirectory d
