@@ -6,6 +6,8 @@ module MB.Startup
     , startupConfig
     , baseDirEnvName
     , baseDirParamName
+    , htmlOutputDirEnvName
+    , htmlDirParamName
     , getDataDirFlag
 #endif
     )
@@ -72,9 +74,10 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                              "to view your posts as you're writing them."
           , Option ['f'] ["force"] (NoArg ForceRegenerate)
                        "Force a rebuild of all blog content."
-          , Option ['h'] ["html-dir"] (ReqArg HtmlOutputDir "PATH")
+          , Option ['h'] [htmlDirParamName] (ReqArg HtmlOutputDir "PATH")
                        $ "The directory where HTML and image output should be\n" ++
-                       "written."
+                       "written.  If this is not specified, " ++ htmlOutputDirEnvName ++
+                       "\nmust be set in the environment."
           , Option ['c'] ["config-file"] (ReqArg ConfigFile "FILENAME")
                        $ "Use the specified config file instead of 'blog.cfg'\n" ++
                          "in the data directory.  This path must be relative\n" ++
@@ -113,7 +116,7 @@ startupConfig args env =
             i = InitDataDirectory `elem` flags
             f = ForceRegenerate `elem` flags
         d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
-        h <- getHtmlOutputDirFlag flags
+        h <- getHtmlOutputDirFlag flags `mplus` (lookup htmlOutputDirEnvName env)
         c <- getConfigFilePath flags `mplus` (Just $ d </> "blog.cfg")
 
         return $ StartupConfig { listenMode = lm
@@ -130,9 +133,16 @@ baseDirEnvName = "MB_DATA_DIR"
 baseDirParamName :: String
 baseDirParamName = "data-dir"
 
+htmlOutputDirEnvName :: String
+htmlOutputDirEnvName = "MB_OUTPUT_DIR"
+
+htmlDirParamName :: String
+htmlDirParamName = "html-dir"
+
 usage :: IO ()
 usage = do
-  let h = concat [ "Usage: mb [args]\n\n"
+  let h = concat [ "Usage: mb [args] (or set " ++ baseDirEnvName ++
+                   " and " ++ htmlOutputDirEnvName ++ " in the environment)\n\n"
                  , "mb is a tool for creating and managing a mathematically-inclined\n"
                  , "weblog.\n"
                  ]
