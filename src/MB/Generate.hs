@@ -87,8 +87,6 @@ generatePost blog post summary = do
                  || configChanged summary
 
   when generate $ do
-    putStrLn $ "Rendering " ++ Files.postBaseName post
-
     newPost <- applyPreProcessors blog post
 
     h <- openFile finalHtml WriteMode
@@ -101,12 +99,17 @@ generatePosts blog summary = do
   let numRegenerated = if configChanged summary
                        then length $ blogPosts blog
                        else length $ postsChanged summary
-  when (numRegenerated > 0) $ putStrLn $ "Rendering " ++ (show numRegenerated) ++ " post(s)..."
+
+  when (numRegenerated > 0) $ putStrLn $ "Rendering " ++ (show numRegenerated) ++ " post" ++
+       (if numRegenerated == 1 then "" else "s") ++ ":"
 
   let n = length posts
       posts = blogPosts blog
   forM_ (zip posts [0..]) $ \(p, i) ->
       do
+        putStrLn $ "Rendering post " ++ (show $ i + 1) ++ "/" ++
+                     (show numRegenerated) ++ ": " ++ Files.postBaseName p
+
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
 
