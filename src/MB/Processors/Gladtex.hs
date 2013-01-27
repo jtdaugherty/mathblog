@@ -1,6 +1,5 @@
 module MB.Processors.Gladtex
     ( gladtexProcessor
-    , checkForGladtex
     )
 where
 
@@ -26,6 +25,7 @@ gladtexProcessor =
     nullProcessor { applyWriterOptions = Just gladtexWriterOptions
                   , postProcessPost = Just processGladtex
                   , buildPostTitle = Just gladtexTitle
+                  , checkDataDir = Just $ const checkForGladtex
                   }
 
 gladtexWriterOptions :: Pandoc.WriterOptions -> Pandoc.WriterOptions
