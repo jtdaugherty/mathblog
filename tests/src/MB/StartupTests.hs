@@ -60,5 +60,3 @@ testBaseDir f (desc, args, env, result) =
               assert = case mConfig of
                          Nothing -> assertFailure "could not construct configuration"
                          Just cfg -> result @=? f cfg
-
-
