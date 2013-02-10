@@ -19,11 +19,11 @@ tests = testGroup "Startup configuration tests" [
                                ]
                          , "foo")
                        , ("base dir on command line only"
-                         , ["--" ++ baseDirParamName, "foo"]
+                         , [DataDir "foo"]
                          , [(htmlOutputDirEnvName, "pth")]
                          , "foo")
                        , ("base dir in both places, command line takes precedence"
-                         , ["--" ++ baseDirParamName, "foo"]
+                         , [DataDir "foo"]
                          , [(baseDirEnvName, "bar"), (htmlOutputDirEnvName, "pth")]
                          , "foo")
                        ]
@@ -35,25 +35,25 @@ tests = testGroup "Startup configuration tests" [
                                ]
                          , "pth")
                        , ("html dir on command line only"
-                         , ["--" ++ htmlDirParamName, "pth"]
+                         , [HtmlOutputDir "pth"]
                          , [(baseDirEnvName, "foo")]
                          , "pth")
                        , ("html dir in both places, command line takes precedence"
-                         , ["--" ++ htmlDirParamName, "pth1"]
+                         , [HtmlOutputDir "pth1"]
                          , [(baseDirEnvName, "bar"), (htmlOutputDirEnvName, "pth2")]
                          , "pth1")
                        ]
         , testGroup "No base directory specified" $
                         [ testCase "HTML output dir in environment" $ Nothing @=? startupConfig [] [(htmlOutputDirEnvName, "foo")]
-                        , testCase "HTML output dir in args" $ Nothing @=? startupConfig ["--" ++ htmlDirParamName, "foo"] []
+                        , testCase "HTML output dir in args" $ Nothing @=? startupConfig [HtmlOutputDir "foo"] []
                         ]
         , testGroup "No html output directory specified" $
                     [ testCase "Data dir in environment" $ Nothing @=? startupConfig [] [(baseDirEnvName, "foo")]
-                    , testCase "Data dir in args" $ Nothing @=? startupConfig ["--" ++ baseDirParamName, "foo"] []
+                    , testCase "Data dir in args" $ Nothing @=? startupConfig [DataDir "foo"] []
                     ]
         ]
 
-testBaseDir :: (Show a, Eq a) => (StartupConfig -> a) -> (String, [String], [(String, String)], a) -> Test
+testBaseDir :: (Show a, Eq a) => (StartupConfig -> a) -> (String, [Flag], [(String, String)], a) -> Test
 testBaseDir f (desc, args, env, result) =
     testCase desc assert
         where mConfig = startupConfig args env

@@ -2,7 +2,9 @@
 module MB.Startup
     ( StartupConfig(..)
     , startupConfigFromEnv
+    , versionString
 #ifdef TESTING
+    , Flag(..)
     , startupConfig
     , baseDirEnvName
     , baseDirParamName
@@ -42,6 +44,8 @@ data Flag = Listen
           | ForceRegenerate
           | HtmlOutputDir FilePath
           | ConfigFile FilePath
+          | Version
+          | Help
             deriving (Eq)
 
 getDataDirFlag :: [Flag] -> Maybe FilePath
@@ -74,7 +78,7 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                              "to view your posts as you're writing them."
           , Option ['f'] ["force"] (NoArg ForceRegenerate)
                        "Force a rebuild of all blog content."
-          , Option ['h'] [htmlDirParamName] (ReqArg HtmlOutputDir "PATH")
+          , Option ['o'] [htmlDirParamName] (ReqArg HtmlOutputDir "PATH")
                        $ "The directory where HTML and image output should be\n" ++
                        "written.  If this is not specified, " ++ htmlOutputDirEnvName ++
                        "\nmust be set in the environment."
@@ -82,7 +86,14 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
                        $ "Use the specified config file instead of 'blog.cfg'\n" ++
                          "in the data directory.  This path must be relative\n" ++
                          "to the data directory."
+          , Option ['v'] ["version"] (NoArg Version)
+                       "The version of this mathblog installation."
+          , Option ['h'] ["help"] (NoArg Help)
+                       "This help output."
           ]
+
+versionString :: String
+versionString = "mathblog version 0.5"
 
 -- |Inspect the program environment to create a startup configuration.
 -- If the configuration information is invalid or absent, this will
@@ -92,7 +103,15 @@ startupConfigFromEnv = do
   env  <- getEnvironment
   args <- getArgs
 
-  case startupConfig args env of
+  let (flags, _, _) = getOpt Permute options args
+
+  when (Version `elem` flags) $
+           (putStrLn versionString >> exitFailure)
+
+  when (Help `elem` flags) $
+           (usage >> exitFailure)
+
+  case startupConfig flags env of
     Nothing -> usage >> exitFailure
     Just conf -> do
       when (head (dataDirectory conf) /= '/') $
@@ -107,25 +126,23 @@ startupConfigFromEnv = do
 -- |Create a startup configuration from the specified arguments list
 -- and environment variable list.  Returns Nothing if the required
 -- information was absent.
-startupConfig :: [String] -> [(String, String)] -> Maybe StartupConfig
-startupConfig args env =
-    case getOpt Permute options args of
-      (_, _, (_:_)) -> Nothing
-      (flags, _, []) -> do
-        let lm = Listen `elem` flags
-            i = InitDataDirectory `elem` flags
-            f = ForceRegenerate `elem` flags
-        d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
-        h <- getHtmlOutputDirFlag flags `mplus` (lookup htmlOutputDirEnvName env)
-        c <- getConfigFilePath flags `mplus` (Just $ d </> "blog.cfg")
+startupConfig :: [Flag] -> [(String, String)] -> Maybe StartupConfig
+startupConfig flags env = do
+  let lm = Listen `elem` flags
+      i = InitDataDirectory `elem` flags
+      f = ForceRegenerate `elem` flags
 
-        return $ StartupConfig { listenMode = lm
-                               , dataDirectory = d
-                               , initDataDirectory = i
-                               , forceRegeneration = f
-                               , htmlOutputDirectory = h
-                               , configFilePath = c
-                               }
+  d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
+  o <- getHtmlOutputDirFlag flags `mplus` (lookup htmlOutputDirEnvName env)
+  c <- getConfigFilePath flags `mplus` (Just $ d </> "blog.cfg")
+
+  return $ StartupConfig { listenMode = lm
+                         , dataDirectory = d
+                         , initDataDirectory = i
+                         , forceRegeneration = f
+                         , htmlOutputDirectory = o
+                         , configFilePath = c
+                         }
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_DATA_DIR"
@@ -137,7 +154,7 @@ htmlOutputDirEnvName :: String
 htmlOutputDirEnvName = "MB_OUTPUT_DIR"
 
 htmlDirParamName :: String
-htmlDirParamName = "html-dir"
+htmlDirParamName = "output-dir"
 
 usage :: IO ()
 usage = do
