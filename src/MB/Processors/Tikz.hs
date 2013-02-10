@@ -68,10 +68,15 @@ renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = 
 
   writeFile "/tmp/tmp.tex" latexSource
 
-  (s1, out1, _) <- readProcessWithExitCode "pdflatex" [ "-output-directory", "/tmp"
+  (s1, out1, _) <- readProcessWithExitCode "pdflatex" [ "-halt-on-error", "-output-directory", "/tmp"
                                                       , "--jobname", "testfigure", "/tmp/tmp.tex"] ""
   case s1 of
-    ExitFailure _ -> putStrLn out1 >> return blk
+    ExitFailure _ -> do
+            putStrLn out1
+            putStrLn ">>>>>>> Input source >>>>>>>"
+            putStrLn latexSource
+            putStrLn ">>>>> End input source >>>>>"
+            return blk
     ExitSuccess -> do
             -- Convert the temporary file to a PNG.
             (s2, out2, err) <- readProcessWithExitCode "convert" [ "-density", "120"
