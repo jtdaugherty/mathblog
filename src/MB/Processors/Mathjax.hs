@@ -38,6 +38,7 @@ mathjaxPageHead =
     \         ignoreClass: \"tex2jax_ignore|dno\"\n\
     \       },\n\
     \       TeX: {\n\
+    \         extensions: [\"AMSmath.js\",\"AMSsymbols.js\"],\n\
     \         equationNumbers: { autoNumber: \"AMS\" },\n\
     \         noUndefined: { attributes: {\n\
     \                          mathcolor: \"red\",\n\

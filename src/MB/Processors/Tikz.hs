@@ -49,8 +49,9 @@ renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = 
       imagePath = Files.imageFilename config imageFilename
       preamble = unlines [ "\\documentclass{article}"
                          , "\\usepackage{tikz}"
-                         , "\\usetikzlibrary{calc}"
+                         , "\\usetikzlibrary{intersections,backgrounds,fit,calc,positioning}"
                          , "\\usepackage{pgfplots}"
+                         , "\\usepackage{amsmath}"
                          , "\\pgfrealjobname{tmp}"
 
                          , "\\begin{document}"
