@@ -138,8 +138,6 @@ loadPost fullPath = do
              [] -> Nothing
              d -> Just $ fromInlines d
 
-  print m
-
   return $ Post { postTitle = Pandoc.docTitle m
                 , postPath = fullPath
                 , postFilename = takeFileName fullPath
