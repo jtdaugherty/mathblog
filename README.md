@@ -334,24 +334,18 @@ These placeholders are supported in the post template:
     HTML displaying the "next" and "previous" links for older/newer
     posts.
 
- - `$post$`
+ - `$post_html$`
 
-    The body of the post itself.
+    The rendered body of the post itself.
 
- - `$post_title$`
+ - `$post.title$`
 
     The title of the post as found in the Pandoc header.
 
- - `$post_date$`
+ - `$post.date$`
 
     The publication date string of the post as found in the Pandoc
     header.
-
- - `$tex_macros$`
-
-    The combined TeX macros string as found in all of the #tex-macros
-    code blocks in the document.  See the section on TeX macros for
-    how to use this properly.
 
   - `$post_authors$`
 
@@ -359,6 +353,12 @@ These placeholders are supported in the post template:
     can be rendered as follows:
 
     Posted by $post_authors; separator=", "$
+
+ - `$tex_macros$`
+
+    The combined TeX macros string as found in all of the #tex-macros
+    code blocks in the document.  See the section on TeX macros for
+    how to use this properly.
 
 These placeholders are supported in the page template:
 

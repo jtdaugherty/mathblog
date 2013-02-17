@@ -8,6 +8,7 @@ where
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
+import qualified Data.Map as M
 import Data.Time.LocalTime
 import Data.Time.Clock
 import System.Directory
@@ -71,21 +72,29 @@ buildPost h blog post prevNext = do
     Left msg -> putStrLn msg >> exitFailure
     Right tmpl ->
         do
-          let tmplWithAuthors = setManyAttrib [("post_authors", postAuthors post)] tmpl
+          pAttrs <- postTemplateAttrs blog post
+          let tmplWithPostAttrs =
+                  setManyAttrib [("post_authors", postAuthors post)] $
+                  setManyAttrib [("post", pAttrs)] tmpl
 
           html <- readFile $ Files.postIntermediateHtml blog post
-          created <- postModificationString post
-          let datestr = postDate post <|> Just created
-              attrs = [ ("post", html)
+          let attrs = [ ("post_html", html)
                       , ("nextPrevLinks", uncurry (buildLinks blog) prevNext)
                       , ("jsInfo", jsInfo post)
-                      , ("post_title", getPostTitle blog post BlogPost)
-                      , ("post_date", fromJust datestr)
                       , ("tex_macros", postTeXMacros post)
                       ]
 
-          let out = (fillTemplate blog tmplWithAuthors attrs)
+          let out = (fillTemplate blog tmplWithPostAttrs attrs)
           buildPage h blog out $ Just $ getRawPostTitle blog post
+
+postTemplateAttrs :: Blog -> Post -> IO (M.Map String String)
+postTemplateAttrs blog post = do
+  created <- postModificationString post
+  let datestr = postDate post <|> Just created
+  return $ M.fromList [ ("title", getPostTitle blog post BlogPost)
+                      , ("date", fromJust datestr)
+                      , ("url", Files.postUrl post)
+                      ]
 
 generatePost :: Blog -> Post -> ChangeSummary -> IO ()
 generatePost blog post summary = do
@@ -151,24 +160,19 @@ toLocalTime u = do
 
 generatePostList :: Blog -> IO ()
 generatePostList blog = do
-  -- For each post in the order they were given, extract the
-  -- unrendered title and construct an htex document.  Then render it
-  -- to the listing location.
-  entries <- forM (blogPosts blog) $ \p ->
-             do
-               created <- postModificationString p
-               return $ concat [ "<div class=\"listing-entry\"><span class=\"post-title\">"
-                               , "<a href=\"" ++ Files.postUrl p ++ "\">"
-                               , getPostTitle blog p Index
-                               , "</a></span><span class=\"post-created\">Posted "
-                               , created
-                               , "</span></div>\n"
-                               ]
+  eTmpl <- loadTemplate $ Files.listTemplatePath blog
 
-  let content = "<div id=\"all-posts\">" ++ concat entries ++ "</div>"
+  case eTmpl of
+    Left msg -> putStrLn msg >> exitFailure
+    Right tmpl ->
+        do
+          postData <- mapM (postTemplateAttrs blog) (blogPosts blog)
 
-  h <- openFile (Files.listHtml blog) WriteMode
-  buildPage h blog content Nothing
-  hClose h
+          let tmpl' = setManyAttrib [("posts", postData)] tmpl
+              out = fillTemplate blog tmpl' []
 
-  applyPostProcessors blog (Files.listHtml blog) Index
+          h <- openFile (Files.listHtml blog) WriteMode
+          buildPage h blog out Nothing
+          hClose h
+
+          applyPostProcessors blog (Files.listHtml blog) Index

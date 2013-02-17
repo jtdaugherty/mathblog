@@ -36,6 +36,9 @@ firstPost c = postSourceDir c </> "first-post.txt"
 pageTemplatePath :: Blog -> FilePath
 pageTemplatePath c = templateDir c </> "pageTemplate.html"
 
+listTemplatePath :: Blog -> FilePath
+listTemplatePath c = templateDir c </> "listTemplate.html"
+
 postTemplatePath :: Blog -> FilePath
 postTemplatePath c = templateDir c </> "postTemplate.html"
 
