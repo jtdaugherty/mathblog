@@ -13,6 +13,8 @@ import Data.Time.Clock
 import System.Directory
 import System.IO
 import System.Exit
+import Text.StringTemplate
+    ( setManyAttrib )
 
 import qualified Text.Pandoc as Pandoc
 import MB.Processing
@@ -69,6 +71,8 @@ buildPost h blog post prevNext = do
     Left msg -> putStrLn msg >> exitFailure
     Right tmpl ->
         do
+          let tmplWithAuthors = setManyAttrib [("post_authors", postAuthors post)] tmpl
+
           html <- readFile $ Files.postIntermediateHtml blog post
           created <- postModificationString post
           let datestr = postDate post <|> Just created
@@ -80,7 +84,7 @@ buildPost h blog post prevNext = do
                       , ("tex_macros", postTeXMacros post)
                       ]
 
-          let out = (fillTemplate blog tmpl attrs)
+          let out = (fillTemplate blog tmplWithAuthors attrs)
           buildPage h blog out $ Just $ getRawPostTitle blog post
 
 generatePost :: Blog -> Post -> ChangeSummary -> IO ()

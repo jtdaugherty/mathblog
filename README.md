@@ -353,6 +353,13 @@ These placeholders are supported in the post template:
     code blocks in the document.  See the section on TeX macros for
     how to use this properly.
 
+  - `$post_authors$`
+
+    The list of post author names as found in the Pandoc header.  This
+    can be rendered as follows:
+
+    Posted by $post_authors; separator=", "$
+
 These placeholders are supported in the page template:
 
  - `$content$`
