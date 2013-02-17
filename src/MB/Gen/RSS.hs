@@ -1,4 +1,4 @@
-module MB.RSS
+module MB.Gen.RSS
     ( generateRssFeed
     )
 where

@@ -14,9 +14,12 @@ import MB.Util
 import MB.Changes
 import MB.Types
 import MB.Startup
-import MB.RSS
 import MB.Initialize
-import MB.PageGeneration
+
+import MB.Gen.Post
+import MB.Gen.PostList
+import MB.Gen.Index
+import MB.Gen.RSS
 
 import MB.Processors.Gnuplot
 import MB.Processors.Tikz

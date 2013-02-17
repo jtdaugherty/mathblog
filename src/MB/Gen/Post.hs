@@ -1,7 +1,6 @@
-module MB.PageGeneration
-    ( buildIndexPage
-    , generatePostList
-    , generatePosts
+module MB.Gen.Post
+    ( generatePosts
+    , postTemplateAttrs
     )
 where
 
@@ -11,7 +10,6 @@ import Data.Maybe
 import qualified Data.Map as M
 import Data.Time.LocalTime
 import Data.Time.Clock
-import System.Directory
 import System.IO
 import System.Exit
 import Text.StringTemplate
@@ -23,24 +21,12 @@ import MB.Types
 import MB.Templates
 import qualified MB.Files as Files
 
+import MB.Gen.Base
+
 writePost :: Blog -> Handle -> Post -> IO ()
 writePost blog h post = do
   let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
   hPutStr h $ Pandoc.writeHtmlString writerOpts (postAst post)
-
-buildPage :: Handle -> Blog -> String -> Maybe String -> IO ()
-buildPage h blog content extraTitle = do
-  eTmpl <- loadTemplate $ Files.pageTemplatePath blog
-
-  case eTmpl of
-    Left msg -> putStrLn msg >> exitFailure
-    Right tmpl ->
-        do
-          let attrs = [ ("content", content)
-                      ] ++ maybe [] (\t -> [("extraTitle", t)]) extraTitle
-
-          writeTemplate blog h tmpl attrs
-          hClose h
 
 buildPost :: Handle -> Blog -> Post -> (Maybe Post, Maybe Post) -> IO ()
 buildPost h blog post prevNext = do
@@ -117,17 +103,6 @@ generatePosts blog summary = do
         buildPost h blog p (prevPost, nextPost)
         hClose h
 
-buildIndexPage :: Blog -> IO ()
-buildIndexPage blog = do
-  when (null $ blogPosts blog) $
-       error "No blog posts; please create a first post in posts/."
-
-  let src = Files.postFinalHtml blog post
-      index = Files.indexHtml blog
-      post = head $ blogPosts blog
-
-  copyFile src index
-
 postModificationString :: Post -> IO String
 postModificationString p = do
   tz <- getCurrentTimeZone
@@ -138,22 +113,3 @@ toLocalTime :: UTCTime -> IO LocalTime
 toLocalTime u = do
   tz <- getCurrentTimeZone
   return $ utcToLocalTime tz u
-
-generatePostList :: Blog -> IO ()
-generatePostList blog = do
-  eTmpl <- loadTemplate $ Files.listTemplatePath blog
-
-  case eTmpl of
-    Left msg -> putStrLn msg >> exitFailure
-    Right tmpl ->
-        do
-          postData <- mapM (postTemplateAttrs blog) (blogPosts blog)
-
-          let tmpl' = setManyAttrib [("posts", postData)] tmpl
-              out = fillTemplate blog tmpl' []
-
-          h <- openFile (Files.listHtml blog) WriteMode
-          buildPage h blog out Nothing
-          hClose h
-
-          applyPostProcessors blog (Files.listHtml blog) Index
