@@ -11,6 +11,7 @@ import System.FilePath
 import qualified MB.Config as Config
 import qualified MB.Files as Files
 import MB.Util
+import MB.Changes
 import MB.Types
 import MB.Startup
 import MB.RSS

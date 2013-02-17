@@ -60,6 +60,7 @@ Executable mb
     MB.Files
     MB.Types
     MB.Util
+    MB.Changes
     MB.Processing
     MB.Startup
     MB.TeXMacros
