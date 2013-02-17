@@ -80,7 +80,6 @@ buildPost h blog post prevNext = do
           html <- readFile $ Files.postIntermediateHtml blog post
           let attrs = [ ("post_html", html)
                       , ("nextPrevLinks", uncurry (buildLinks blog) prevNext)
-                      , ("jsInfo", jsInfo post)
                       , ("tex_macros", postTeXMacros post)
                       ]
 
@@ -94,6 +93,7 @@ postTemplateAttrs blog post = do
   return $ M.fromList [ ("title", getPostTitle blog post BlogPost)
                       , ("date", fromJust datestr)
                       , ("url", Files.postUrl post)
+                      , ("jsInfo", jsInfo post)
                       ]
 
 generatePost :: Blog -> Post -> ChangeSummary -> IO ()

@@ -324,11 +324,6 @@ placeholders are supported in each template:
 
 These placeholders are supported in the post template:
 
- - `$jsInfo$`
-
-    A brief javascript used to provide information about the page to
-    other javascripts (see "Other features" below for usage).
-
  - `$nextPrevLinks$`
 
     HTML displaying the "next" and "previous" links for older/newer
@@ -337,6 +332,11 @@ These placeholders are supported in the post template:
  - `$post_html$`
 
     The rendered body of the post itself.
+
+ - `$post.jsInfo$`
+
+    A brief javascript used to provide information about the page to
+    other javascripts (see "Other features" below for usage).
 
  - `$post.title$`
 
