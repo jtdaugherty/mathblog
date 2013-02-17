@@ -1,4 +1,4 @@
-module MB.Generate
+module MB.PageGeneration
     ( buildIndexPage
     , generatePostList
     , generatePosts

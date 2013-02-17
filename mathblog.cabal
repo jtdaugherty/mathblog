@@ -53,7 +53,7 @@ Executable mb
   Other-modules:
     Paths_mathblog
     MB.Initialize
-    MB.Generate
+    MB.PageGeneration
     MB.RSS
     MB.Config
     MB.Templates

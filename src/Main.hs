@@ -16,7 +16,7 @@ import MB.Types
 import MB.Startup
 import MB.RSS
 import MB.Initialize
-import MB.Generate
+import MB.PageGeneration
 
 import MB.Processors.Gnuplot
 import MB.Processors.Tikz
