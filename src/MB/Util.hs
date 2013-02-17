@@ -9,6 +9,8 @@ module MB.Util
     , summarizeChanges
     , serializePostIndex
     , ensureDir
+    , getInlineStr
+    , fromInlines
     )
 where
 import Control.Applicative
@@ -128,12 +130,24 @@ loadPost fullPath = do
       -- examples.)
       (newBlocks, macros) = extractTeXMacros blocks
 
+      pas = case Pandoc.docAuthors m of
+              [] -> []
+              as -> fromInlines <$> as
+
+      pd = case Pandoc.docDate m of
+             [] -> Nothing
+             d -> Just $ fromInlines d
+
+  print m
+
   return $ Post { postTitle = Pandoc.docTitle m
                 , postPath = fullPath
                 , postFilename = takeFileName fullPath
                 , postModificationTime = t
                 , postAst = Pandoc.Pandoc m newBlocks
                 , postTeXMacros = macros
+                , postAuthors = pas
+                , postDate = pd
                 }
 
 dirFilenames :: FilePath -> IO [FilePath]
@@ -273,3 +287,12 @@ ensureDir :: FilePath -> IO ()
 ensureDir d = do
   exists <- doesDirectoryExist d
   when (not exists) $ createDirectory d
+
+getInlineStr :: Pandoc.Inline -> String
+getInlineStr (Pandoc.Str s) = s
+getInlineStr (Pandoc.Math _ s) = s
+getInlineStr Pandoc.Space = " "
+getInlineStr i = error $ "Unexpected inline in document title, got " ++ (show i)
+
+fromInlines :: [Pandoc.Inline] -> String
+fromInlines = concat . (getInlineStr <$>)

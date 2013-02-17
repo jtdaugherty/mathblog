@@ -338,6 +338,21 @@ These placeholders are supported in the post template:
 
     The body of the post itself.
 
+ - `$post_title$`
+
+    The title of the post as found in the Pandoc header.
+
+ - `$post_date$`
+
+    The publication date string of the post as found in the Pandoc
+    header.
+
+ - `$tex_macros$`
+
+    The combined TeX macros string as found in all of the #tex-macros
+    code blocks in the document.  See the section on TeX macros for
+    how to use this properly.
+
 These placeholders are supported in the page template:
 
  - `$content$`
@@ -366,12 +381,20 @@ macros inside a "tex-macros" block as follows:
     \newcommand{\stuff}{...}
     ~~~
 
-The block will be removed from the document, but the macros will be
-re-embedded in the final output HTML (for Mathjax) and will be
-included in generated TeX source when TikZ/PGF processing is
-performed.  This way, you can write macros and use them everywhere in
-the document without having to redefine them inside picture
-environments.
+The block will be removed from the document, but the macros must be
+re-embedded in the final output HTML for Mathjax by updating your post
+template to include this *before* the post body:
+
+  <div style="display: none;">
+  \\(
+  $tex_macros$
+  \\)
+  </div>
+
+The TeX macros will automatically be included in generated TeX source
+when TikZ/PGF processing is performed.  This way, you can write macros
+and use them everywhere in the document without having to redefine
+them inside picture environments.
 
 Function Graph Embedding
 ========================

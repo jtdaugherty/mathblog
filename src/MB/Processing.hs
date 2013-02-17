@@ -11,6 +11,7 @@ import Control.Applicative ((<$>), (<*>), pure)
 import Data.Maybe (catMaybes)
 import qualified Text.Pandoc as Pandoc
 import MB.Types
+import MB.Util
 
 applyPreProcessors :: Blog -> Post -> IO Post
 applyPreProcessors b post = applyPreProcessors_ b post (processors b)
@@ -42,12 +43,6 @@ getRawPostTitle b p = head (fs ++ [fallback]) $ postTitle p
     where
       fallback = concat . (getInlineStr <$>)
       fs = catMaybes $ rawPostTitle <$> processors b
-
-getInlineStr :: Pandoc.Inline -> String
-getInlineStr (Pandoc.Str s) = s
-getInlineStr (Pandoc.Math _ s) = s
-getInlineStr Pandoc.Space = " "
-getInlineStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
 getPostTitle :: Blog -> Post -> Page -> String
 getPostTitle b p s = concat $ getInlineStr <$> f (postTitle p)

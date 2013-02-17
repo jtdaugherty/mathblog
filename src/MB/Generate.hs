@@ -5,7 +5,9 @@ module MB.Generate
     )
 where
 
+import Control.Applicative
 import Control.Monad
+import Data.Maybe
 import Data.Time.LocalTime
 import Data.Time.Clock
 import System.Directory
@@ -21,9 +23,6 @@ import qualified MB.Files as Files
 writePost :: Blog -> Handle -> Post -> IO ()
 writePost blog h post = do
   let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
-  created <- postModificationString post
-  hPutStr h $ "<h1>" ++ getPostTitle blog post BlogPost ++ "</h1>"
-  hPutStr h $ "<span class=\"post-created\">Posted " ++ created ++ "</span>"
   hPutStr h $ Pandoc.writeHtmlString writerOpts (postAst post)
 
 buildLinks :: Blog -> Maybe Post -> Maybe Post -> String
@@ -71,10 +70,14 @@ buildPost h blog post prevNext = do
     Right tmpl ->
         do
           html <- readFile $ Files.postIntermediateHtml blog post
-
-          let attrs = [ ("post", html)
+          created <- postModificationString post
+          let datestr = postDate post <|> Just created
+              attrs = [ ("post", html)
                       , ("nextPrevLinks", uncurry (buildLinks blog) prevNext)
                       , ("jsInfo", jsInfo post)
+                      , ("post_title", getPostTitle blog post BlogPost)
+                      , ("post_date", fromJust datestr)
+                      , ("tex_macros", postTeXMacros post)
                       ]
 
           let out = (fillTemplate blog tmpl attrs)
