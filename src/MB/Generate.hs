@@ -104,7 +104,8 @@ generatePosts blog summary = do
        (if numRegenerated == 1 then "" else "s") ++ ":"
 
   let n = length posts
-      posts = blogPosts blog
+      posts = [p | p <- blogPosts blog, postFilename p `elem` postsChanged summary]
+
   forM_ (zip posts [0..]) $ \(p, i) ->
       do
         putStrLn $ "Rendering post " ++ (show $ i + 1) ++ "/" ++
