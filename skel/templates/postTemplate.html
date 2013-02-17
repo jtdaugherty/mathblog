@@ -1,10 +1,16 @@
-<script type="text/javascript">
-Blog = {
-  pageName: $post.basename$
-};
-</script>
+<div id="prev-next-links">
+  $if(prev_post_url)$
+    <a class="prev-link" href="$prev_post_url$">older &raquo;</a>
+  $else$
+    <a class="prev-link-subdued">older &raquo;</a>
+  $endif$
+  $if(next_post_url)$
+    <a class="next-link" href="$next_post_url$">&laquo; newer</a>
+  $else$
+    <a class="next-link-subdued">&laquo; newer</a>
+  $endif$
+</div>
 
-$nextPrevLinks$
 <div style="display: none;">
 \\(
 $post.tex_macros$

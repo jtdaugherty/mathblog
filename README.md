@@ -324,10 +324,10 @@ placeholders are supported in each template:
 
 These placeholders are supported in the post template:
 
- - `$nextPrevLinks$`
+ - `$next_post_url$`, `$prev_post_url$`
 
-    HTML displaying the "next" and "previous" links for older/newer
-    posts.
+    URLs to the next (newer) and previous (older) posts relative to
+    the current post.
 
  - `$post_html$`
 

@@ -28,19 +28,6 @@ writePost blog h post = do
   let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
   hPutStr h $ Pandoc.writeHtmlString writerOpts (postAst post)
 
-buildLinks :: Blog -> Maybe Post -> Maybe Post -> String
-buildLinks _blog prev next =
-    "<div id=\"prev-next-links\">"
-      ++ link "next-link" "older &raquo;" next
-      ++ link "prev-link" "&laquo; newer" prev
-      ++ "</div>"
-        where
-          link cls name Nothing =
-              "<span class=\"" ++ cls ++ "-subdued\">" ++ name ++ "</span>"
-          link cls name (Just p) =
-              "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl p ++
-                                "\">" ++ name ++ "</a>"
-
 buildPage :: Handle -> Blog -> String -> Maybe String -> IO ()
 buildPage h blog content extraTitle = do
   eTmpl <- loadTemplate $ Files.pageTemplatePath blog
@@ -66,11 +53,14 @@ buildPost h blog post prevNext = do
           pAttrs <- postTemplateAttrs blog post
           let tmplWithPostAttrs =
                   setManyAttrib [("post_authors", postAuthors post)] $
-                  setManyAttrib [("post", pAttrs)] tmpl
+                  setManyAttrib [("post", pAttrs)] $
+                  setManyAttrib [ ("next_post_url", Files.postUrl <$> (fst prevNext))
+                                , ("prev_post_url", Files.postUrl <$> (snd prevNext))
+                                ]
+                  tmpl
 
           html <- readFile $ Files.postIntermediateHtml blog post
           let attrs = [ ("post_html", html)
-                      , ("nextPrevLinks", uncurry (buildLinks blog) prevNext)
                       ]
 
           let out = (fillTemplate blog tmplWithPostAttrs attrs)

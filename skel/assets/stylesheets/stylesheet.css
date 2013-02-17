@@ -65,19 +65,20 @@ div#prev-next-links {
   margin-top: 1em;
 }
 .prev-link {
+  float: right;
   color: blue;
   text-decoration: none;
 }
 .prev-link-subdued {
   color: #aaa;
+  float: right;
 }
 .next-link {
-  float: right;
   color: blue;
+  text-decoration: none;
 }
 .next-link-subdued {
   color: #aaa;
-  float: right;
 }
 #footer {
   border-top: 1px solid #ddd;
