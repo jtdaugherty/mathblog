@@ -52,20 +52,23 @@ Executable mb
 
   Other-modules:
     Paths_mathblog
+
     MB.Initialize
-    MB.Gen.Post
-    MB.Gen.PostList
-    MB.Gen.RSS
-    MB.Gen.Index
     MB.Config
     MB.Templates
     MB.Files
     MB.Types
     MB.Util
-    MB.Changes
-    MB.Processing
     MB.Startup
     MB.TeXMacros
+    MB.Changes
+
+    MB.Gen.Post
+    MB.Gen.PostList
+    MB.Gen.RSS
+    MB.Gen.Index
+
+    MB.Processing
     MB.Processors.Base
     MB.Processors.Gladtex
     MB.Processors.Gnuplot
