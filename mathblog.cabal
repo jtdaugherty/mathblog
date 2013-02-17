@@ -62,6 +62,7 @@ Executable mb
     MB.Util
     MB.Processing
     MB.Startup
+    MB.TeXMacros
     MB.Processors.Base
     MB.Processors.Gladtex
     MB.Processors.Gnuplot

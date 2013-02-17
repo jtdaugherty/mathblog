@@ -355,6 +355,24 @@ stylesheets or other files which need to be available, they can be
 kept in your data directory and published with the rest of the
 generated content.
 
+TeX Macros
+==========
+
+You can define post-wide TeX macros and then reference them in both
+Mathjax expressions and TikZ/PGF pictures.  To do this, define TeX
+macros inside a "tex-macros" block as follows:
+
+    ~~~ {#tex-macros}
+    \newcommand{\stuff}{...}
+    ~~~
+
+The block will be removed from the document, but the macros will be
+re-embedded in the final output HTML (for Mathjax) and will be
+included in generated TeX source when TikZ/PGF processing is
+performed.  This way, you can write macros and use them everywhere in
+the document without having to redefine them inside picture
+environments.
+
 Function Graph Embedding
 ========================
 

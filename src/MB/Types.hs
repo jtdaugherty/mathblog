@@ -44,6 +44,7 @@ data Post = Post { postTitle :: [Pandoc.Inline]
                  , postFilename :: String
                  , postModificationTime :: UTCTime
                  , postAst :: Pandoc.Pandoc
+                 , postTeXMacros :: String
                  }
             deriving (Eq)
 

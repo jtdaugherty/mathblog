@@ -31,13 +31,14 @@ tikzProcessor =
 renderTikz :: Blog -> Post -> IO Post
 renderTikz config post = do
   let Pandoc.Pandoc m blocks = postAst post
-  newBlocks <- mapM (renderTikzScript config) blocks
+  newBlocks <- mapM (renderTikzScript config post) blocks
   return $ post { postAst = Pandoc.Pandoc m newBlocks }
 
 renderTikzScript :: Blog
+                 -> Post
                  -> Pandoc.Block
                  -> IO Pandoc.Block
-renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
+renderTikzScript config post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
   let digestInput = rawScript
 
       -- Generate an image name in the images/ directory of the blog
@@ -53,6 +54,11 @@ renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = 
                          , "\\usepackage{pgfplots}"
                          , "\\usepackage{amsmath}"
                          , "\\pgfrealjobname{tmp}"
+
+                         -- Include any TeX macro content in the
+                         -- document preamble so it can be used in the
+                         -- TikZ markup.
+                         , postTeXMacros post
 
                          , "\\begin{document}"
                          , "\\begin{figure}"
@@ -104,4 +110,4 @@ renderTikzScript config blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = 
                                                      , "\">"
                                                      ]
                                        ]
-renderTikzScript _ b = return b
+renderTikzScript _ _ b = return b

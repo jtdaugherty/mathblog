@@ -77,6 +77,7 @@ import Data.Maybe
 import qualified Text.Pandoc as Pandoc
 import qualified MB.Files as Files
 import MB.Types
+import MB.TeXMacros
 
 copyTree :: FilePath -> FilePath -> IO ()
 copyTree srcPath dstPath = do
@@ -120,13 +121,19 @@ loadPost fullPath = do
   fileContent <- readFile fullPath
   t <- getModificationTime fullPath
   let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
-      Pandoc.Pandoc m _ = doc
+      Pandoc.Pandoc m blocks = doc
+      -- Extract defined TeX macros in the post and store them in the
+      -- post data structure to make them available to other parts of
+      -- the page generation process (see Mathjax and TikZ for
+      -- examples.)
+      (newBlocks, macros) = extractTeXMacros blocks
 
   return $ Post { postTitle = Pandoc.docTitle m
                 , postPath = fullPath
                 , postFilename = takeFileName fullPath
                 , postModificationTime = t
-                , postAst = doc
+                , postAst = Pandoc.Pandoc m newBlocks
+                , postTeXMacros = macros
                 }
 
 dirFilenames :: FilePath -> IO [FilePath]

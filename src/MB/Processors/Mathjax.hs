@@ -10,6 +10,7 @@ mathjaxProcessor :: Processor
 mathjaxProcessor =
     nullProcessor { applyWriterOptions = Just mathjaxOpts
                   , pageHead = Just mathjaxPageHead
+                  , preProcessPost = Just insertMacros
                   }
 
 mathjaxOpts :: Pandoc.WriterOptions -> Pandoc.WriterOptions
@@ -58,3 +59,17 @@ mathjaxPageHead =
     \  //     document.getElementById(\"page\").style.visibility = \"visible\";\n\
     \  // });\n\
     \</script>\n"
+
+-- |Take any TeX macros defined in the post and include a display math
+-- block so Mathjax can process them and make them available to the
+-- rest of the page.
+insertMacros :: Blog -> Post -> IO Post
+insertMacros _ post = do
+  case null (postTeXMacros post) of
+    True -> return post
+    False -> do
+      let Pandoc.Pandoc m blocks = postAst post
+          macros = Pandoc.Plain [inline]
+          inline = Pandoc.Math Pandoc.DisplayMath (postTeXMacros post)
+      return $ post { postAst = Pandoc.Pandoc m (macros:blocks)
+                    }
