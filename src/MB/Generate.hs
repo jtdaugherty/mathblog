@@ -109,7 +109,8 @@ generatePosts blog summary = do
   forM_ (zip posts [0..]) $ \(p, i) ->
       do
         putStrLn $ "Rendering post " ++ (show $ i + 1) ++ "/" ++
-                     (show numRegenerated) ++ ": " ++ Files.postBaseName p
+                     (show numRegenerated) ++ ": " ++ (getPostTitle blog p Index) ++
+                     " (" ++ (postFilename p) ++ ")"
 
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
