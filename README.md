@@ -231,14 +231,19 @@ Post format
 
 Posts are formatted in Markdown and support the extended Markdown
 syntax as implemented by Pandoc.  The only important convention to
-note is that the post title goes on the first line of the file
-following a percent sign, as follows:
+note is that the post title, author, and date values go on the first
+three lines of the file as follows:
 
 ~~~
-%My First Post
+% My First Post
+% Joe Author
+% August 4, 1976
 
 First paragraph starts here.
 ~~~
+
+If the date is formatted as "<MONTH> <DAY>, <YEAR>", it will be parsed
+and used to generate the RSS feed publication date.
 
 Running `mb` in "listen" mode
 =============================

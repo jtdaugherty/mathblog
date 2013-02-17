@@ -4,8 +4,10 @@ module MB.RSS
 where
 
 import System.IO
+import Control.Applicative ((<|>))
 import Data.Time.Format
     ( formatTime
+    , parseTime
     )
 import System.Exit
 import System.Locale
@@ -46,5 +48,7 @@ generateRssFeed blog = do
           hClose h
 
 rssModificationTime :: Post -> String
-rssModificationTime =
-    formatTime defaultTimeLocale rfc822DateFormat . postModificationTime
+rssModificationTime p =
+    let Just t = parsed <|> (Just $ postModificationTime p)
+        parsed = parseTime defaultTimeLocale "%B %e, %Y" =<< postDate p
+    in formatTime defaultTimeLocale rfc822DateFormat t
