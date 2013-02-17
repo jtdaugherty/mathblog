@@ -333,10 +333,10 @@ These placeholders are supported in the post template:
 
     The rendered body of the post itself.
 
- - `$post.jsInfo$`
+ - `$post.basename$`
 
-    A brief javascript used to provide information about the page to
-    other javascripts (see "Other features" below for usage).
+    The base name of the post for use in Javascript (see "Other
+    features" below for usage).
 
  - `$post.title$`
 
@@ -354,11 +354,11 @@ These placeholders are supported in the post template:
 
     Posted by $post_authors; separator=", "$
 
- - `$tex_macros$`
+ - `$post.tex_macros$`
 
     The combined TeX macros string as found in all of the #tex-macros
-    code blocks in the document.  See the section on TeX macros for
-    how to use this properly.
+    code blocks in the post.  See the section on TeX macros for how to
+    use this properly.
 
 These placeholders are supported in the page template:
 
@@ -505,15 +505,10 @@ successfully integrated mathblog with the Disqus comments service.  To
 do this, some javascript needs to be embedded in the blog pages.
 Disqus works best when you supply it with a page identifier so it can
 guarantee that comments are post-specific rather than URL-specific.
-The way mathblog makes this possible is by exposing a JavaScript
-variable to other scripts in your page:
+The way mathblog makes this possible is by exposing a page basename
+string so you can configure Disqus properly:
 
-    Blog.pageName = "foobar-baz";
-
-This variable name can be used by scripts you embed, such as with
-Disqus comment forms:
-
-    var disqus_identifier = Blog.pageName;
+    var disqus_identifier = "$post.basename$";
 
 Controlling Post Order
 ======================

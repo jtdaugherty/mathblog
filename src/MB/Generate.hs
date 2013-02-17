@@ -41,15 +41,6 @@ buildLinks _blog prev next =
               "<a class=\"" ++ cls ++ "\" href=\"" ++ Files.postUrl p ++
                                 "\">" ++ name ++ "</a>"
 
-jsInfo :: Post -> String
-jsInfo post =
-    "<script type=\"text/javascript\">\n" ++
-    "Blog = {\n" ++
-    "  pageName: " ++ show (Files.postBaseName post) ++
-    "\n" ++
-    "};\n" ++
-    "</script>\n"
-
 buildPage :: Handle -> Blog -> String -> Maybe String -> IO ()
 buildPage h blog content extraTitle = do
   eTmpl <- loadTemplate $ Files.pageTemplatePath blog
@@ -80,7 +71,6 @@ buildPost h blog post prevNext = do
           html <- readFile $ Files.postIntermediateHtml blog post
           let attrs = [ ("post_html", html)
                       , ("nextPrevLinks", uncurry (buildLinks blog) prevNext)
-                      , ("tex_macros", postTeXMacros post)
                       ]
 
           let out = (fillTemplate blog tmplWithPostAttrs attrs)
@@ -93,7 +83,8 @@ postTemplateAttrs blog post = do
   return $ M.fromList [ ("title", getPostTitle blog post BlogPost)
                       , ("date", fromJust datestr)
                       , ("url", Files.postUrl post)
-                      , ("jsInfo", jsInfo post)
+                      , ("basename", Files.postBaseName post)
+                      , ("tex_macros", postTeXMacros post)
                       ]
 
 generatePost :: Blog -> Post -> ChangeSummary -> IO ()
