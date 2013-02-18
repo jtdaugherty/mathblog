@@ -311,6 +311,12 @@ and are as follows:
     This file makes up the structure of the post portion of the page,
     for pages which show posts (i.e., not the post index).
 
+ - `templates/listTemplate.html`
+
+    This file is the template used to generate the "all posts" page.
+    Once generated, the all-posts listing is then embedded in the page
+    template.
+
 The templates mentioned above are StringTemplate templates and are
 processed with the HStringTemplate library.  The following template
 placeholders are supported in each template:
@@ -326,6 +332,14 @@ placeholders are supported in each template:
     javascript tags, stylesheets, etc.  You'll need to ensure that
     this is somewhere in your `<HEAD>` tag if you want to use mathblog
     features which may need to load extra resources.
+
+These placeholders are provided in the list template:
+
+ - `$posts$`
+
+    The list of all posts in the blog, starting with the most recent.
+    Each has the same structure as a post in the post template
+    (i.e. post.title, post.date, post.url).
 
 These placeholders are supported in the post template:
 
