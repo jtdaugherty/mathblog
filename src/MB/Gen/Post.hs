@@ -55,7 +55,8 @@ generateChangedPosts blog summary = do
 
   let n = length posts
       posts = [ p | p <- blogPosts blog
-              , postFilename p `elem` postsChanged summary
+              , postFilename p `elem` postsChanged summary ||
+                             postIndexChanged summary
               ]
 
   forM_ (zip posts [0..]) $ \(post, i) ->
