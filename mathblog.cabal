@@ -71,7 +71,6 @@ Executable mb
 
     MB.Processing
     MB.Processors.Base
-    MB.Processors.Gladtex
     MB.Processors.Gnuplot
     MB.Processors.Mathjax
     MB.Processors.Tikz

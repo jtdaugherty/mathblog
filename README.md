@@ -67,12 +67,6 @@ mathblog takes advantage of three primary software components:
 
  - Math typesetting packages:
 
-   - GladTex and LaTeX for math typesetting if you choose `gladtex`
-     for the value of the `mathBackend` configuration setting.
-     GladTex 1.3 is required for best results.  GladTex renders LaTeX
-     snippets to images.  This is the recommended backend for math
-     typesetting.  See <https://sourceforge.net/projects/gladtex/>
-
    - MathJax if you choose `mathjax` for the value of the
      `mathBackend` configuration setting.  mathblog uses the MathJax
      CDN for MathJax resources.
@@ -147,11 +141,10 @@ fields set:
 
  - `mathBackend`
 
-    The backend used to render TeX math expressions.  Can be either
-    `gladtex` or `mathjax`.  If `gladtex`, you will need the latest
-    version of the `gladtex` program for best results.  No special
-    configuration is necessary for MathJax, as mathblog's default
-    templates use CDN resources for MathJax.
+    The backend used to render TeX math expressions.  Right now the
+    only possible value is `mathjax`.  No special configuration is
+    necessary for MathJax, as mathblog's default templates use CDN
+    resources for MathJax.
 
  - `tikz`
 

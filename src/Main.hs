@@ -25,7 +25,6 @@ import MB.Gen.RSS
 import MB.Processors.Gnuplot
 import MB.Processors.Tikz
 import MB.Processors.Mathjax
-import MB.Processors.Gladtex
 import MB.Processors.Base
 
 ensureDirs :: Blog -> IO ()
@@ -53,8 +52,7 @@ scanForChanges act = do
 
 mathBackends :: [(String, Processor)]
 mathBackends =
-    [ ("gladtex", gladtexProcessor)
-    , ("mathjax", mathjaxProcessor)
+    [ ("mathjax", mathjaxProcessor)
     ]
 
 -- Note that the order here matters, because the processors will be
