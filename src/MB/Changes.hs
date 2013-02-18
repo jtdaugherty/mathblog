@@ -7,6 +7,7 @@ where
 import Control.Applicative
 import Control.Monad
 import Data.Monoid
+import Data.Maybe
 import System.Directory (doesFileExist)
 import Data.Time.Calendar
 import Data.Time.Clock
@@ -20,9 +21,9 @@ anyChanges s = or $ predicates <*> pure s
     where
       predicates = [ configChanged
                    , not . null . postsChanged
-                   , templatesChanged
+                   , not . null . templatesChanged
                    , postIndexChanged
-                   , assetsChanged
+                   , not . null . assetsChanged
                    ]
 
 summarizeChanges :: Blog -> Bool -> IO ChangeSummary
@@ -51,22 +52,28 @@ summarizeChanges config forceAll = do
 
   -- Determine whether any templates changed
   templateFiles <- dirFilenames (templateDir config)
-  templateChanges <- forM templateFiles $ \f -> do
-                            mtime <- getModificationTime f
-                            return $ mtime > baseTime
+  templateChanges <- forM templateFiles $ \f ->
+                         do
+                           mtime <- getModificationTime f
+                           if mtime > baseTime then
+                               return (Just f) else
+                               return Nothing
 
   -- Determine whether any assets changed
   assetFiles <- dirFilenamesRecursive (assetDir config)
-  assetChanges <- forM assetFiles $ \f -> do
-                            mtime <- getModificationTime f
-                            return $ mtime > baseTime
+  assetChanges <- forM assetFiles $ \f ->
+                      do
+                        mtime <- getModificationTime f
+                        if mtime > baseTime then
+                            return (Just f) else
+                            return Nothing
 
   let baselineChanges =
           ChangeSummary { configChanged = configChanged' || forceAll
                         , postsChanged = map postFilename modifiedPosts
-                        , templatesChanged = or (forceAll : templateChanges)
+                        , templatesChanged = catMaybes templateChanges
                         , postIndexChanged = postIndexChanged' || forceAll
-                        , assetsChanged = or (forceAll : assetChanges)
+                        , assetsChanged = catMaybes assetChanges
                         }
 
   -- Query document processors to get other changes

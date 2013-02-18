@@ -157,26 +157,44 @@ regenerateContent conf = do
     False -> return False
     True -> do
       putStrLn $ "Blog directory: " ++ baseDir blog
-      putStrLn $ "Config file: " ++ configFilePath conf
+      putStrLn $ "Config file:    " ++ configFilePath conf
+
+      putStrLn "Changes found:"
 
       when (configChanged summary) $
-           putStrLn "Configuration file changed; regenerating all content."
-      when (templatesChanged summary) $
-           putStrLn "Templates changed; regenerating accordingly."
+           putStrLn "  Configuration file"
+
       when (not $ null $ postsChanged summary) $
            do
-             putStrLn "Posts changed:"
-             forM_ (postsChanged summary) $ \n -> putStrLn $ "  " ++ n
-      when (postIndexChanged summary) $
-           putStrLn "Post index changed; regenerating next/previous links."
+             putStrLn "  Posts:"
+             forM_ (postsChanged summary) $ \p ->
+                 putStrLn $ "    " ++ p
 
-      when (assetsChanged summary) $
+      when (not $ null $ templatesChanged summary) $
            do
-             putStrLn "Assets changed; reinstalling."
-             doInstallAssets blog
+             putStrLn "  Templates:"
+             forM_ (templatesChanged summary) $ \t ->
+                 putStrLn $ "    " ++ t
 
-      generateChangedPosts blog summary
+      when (postIndexChanged summary) $
+           putStrLn "  Post index"
 
+      when (not $ null $ assetsChanged summary) $
+           do
+             putStrLn "  Assets:"
+             forM_ (assetsChanged summary) $ \a ->
+                 putStrLn $ "    " ++ a
+
+      let posts = [ p | p <- blogPosts blog
+                  , or [ postFilename p `elem` postsChanged summary
+                       , postIndexChanged summary
+                       , configChanged summary
+                       , forceRegeneration conf
+                       , not $ null $ templatesChanged summary
+                       ]
+                  ]
+
+      generatePosts blog posts
       buildIndexPage blog
       generatePostList blog
 
@@ -185,6 +203,9 @@ regenerateContent conf = do
 
       writeFile (Files.postIndex blog) $
                 serializePostIndex $ blogPosts blog
+
+      when (not $ null $ assetsChanged summary) $
+           doInstallAssets blog
 
       putStrLn "Done."
       return True

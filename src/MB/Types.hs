@@ -76,21 +76,21 @@ nullProcessor =
 data ChangeSummary =
     ChangeSummary { postsChanged :: [String]
                   , configChanged :: Bool
-                  , templatesChanged :: Bool
+                  , templatesChanged :: [FilePath]
                   , postIndexChanged :: Bool
-                  , assetsChanged :: Bool
+                  , assetsChanged :: [FilePath]
                   }
     deriving (Show)
 
 noChanges :: ChangeSummary
-noChanges = ChangeSummary [] False False False False
+noChanges = ChangeSummary [] False [] False []
 
 instance Monoid ChangeSummary where
     mempty = noChanges
     a `mappend` b =
         ChangeSummary { postsChanged = nub $ postsChanged a ++ postsChanged b
                       , configChanged = configChanged a || configChanged b
-                      , templatesChanged = templatesChanged a || templatesChanged b
+                      , templatesChanged = templatesChanged a `mappend` templatesChanged b
                       , postIndexChanged = postIndexChanged a || postIndexChanged b
-                      , assetsChanged = assetsChanged a || assetsChanged b
+                      , assetsChanged = assetsChanged a `mappend` assetsChanged b
                       }

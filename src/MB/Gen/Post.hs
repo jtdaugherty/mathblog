@@ -1,5 +1,5 @@
 module MB.Gen.Post
-    ( generateChangedPosts
+    ( generatePosts
     , postTemplateAttrs
     )
 where
@@ -44,23 +44,18 @@ postTemplateAttrs blog post =
                   , ("tex_macros", postTeXMacros post)
                   ]
 
-generateChangedPosts :: Blog -> ChangeSummary -> IO ()
-generateChangedPosts blog summary = do
+generatePosts :: Blog -> [Post] -> IO ()
+generatePosts blog posts = do
   let n = length posts
-      posts = [ p | p <- blogPosts blog
-              , postFilename p `elem` postsChanged summary ||
-                             postIndexChanged summary
-              ]
 
   when (n > 0) $
-       putStrLn $ "Rendering " ++ (show n) ++ " post" ++
-       (if n == 1 then "" else "s") ++ ":"
+       putStrLn "Rendering post(s):"
 
   forM_ (zip posts [0..]) $ \(post, i) ->
       do
-        putStrLn $ "Rendering post " ++ (show $ i + 1) ++ "/" ++
-                     (show n) ++ ": " ++ (getPostTitle blog post Index) ++
-                     " (" ++ (postFilename post) ++ ")"
+        putStrLn $ "  (" ++ (show $ i + 1) ++ "/" ++
+                     (show n) ++ ") " ++ (postFilename post)
+        putStrLn $ "    title: \"" ++ (getPostTitle blog post Index) ++ "\""
 
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
