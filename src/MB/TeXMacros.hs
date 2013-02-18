@@ -9,9 +9,10 @@ import qualified Text.Pandoc as Pandoc
 
 -- |Extract "#tex-macros" blocks from the page and store their
 -- contents in the postTeXMacros field.  This removes the tex-macros
--- nodes from the Pandoc AST; see the Mathjax and Tikz processors to
--- see how they eventually make it back into the right spots in the
--- output.
+-- nodes from the Pandoc AST; see the Tikz processor to see how they
+-- eventually make it back into the right spot in the output.  The
+-- post generation process exposes the macros to the post template via
+-- the 'tex_macros' template variable.
 extractTeXMacros :: [Pandoc.Block]
                  -> ([Pandoc.Block], String)
 extractTeXMacros blocks =
