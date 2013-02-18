@@ -24,8 +24,8 @@ doInstallAssets blog = do
   -- directory.
   entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents ad
 
-  dirs <- filterM doesDirectoryExist $ map (ad </>) entries
   files <- filterM doesFileExist $ map (ad </>) entries
+  forM_ files $ \f -> copyFile f (htmlDir blog </> (takeFileName f))
 
+  dirs <- filterM doesDirectoryExist $ map (ad </>) entries
   forM_ dirs $ \d -> copyTree d (htmlDir blog </> (takeBaseName d))
-  forM_ files $ \f -> copyFile f (htmlDir blog)
