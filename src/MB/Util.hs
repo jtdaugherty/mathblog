@@ -44,6 +44,7 @@ import Data.List
     ( isSuffixOf
     , isPrefixOf
     )
+import Data.Time.LocalTime
 import Data.Time.Clock
 import Data.Time.Format
     ( parseTime
@@ -125,6 +126,10 @@ loadPost fullPath = do
              [] -> Nothing
              d -> Just $ fromInlines d
 
+  tz <- getCurrentTimeZone
+  localTime <- toLocalTime t
+  let modStr = show localTime ++ "  " ++ timeZoneName tz
+
   return $ Post { postTitle = Pandoc.docTitle m
                 , postPath = fullPath
                 , postFilename = takeFileName fullPath
@@ -133,6 +138,7 @@ loadPost fullPath = do
                 , postTeXMacros = macros
                 , postAuthors = pas
                 , postDate = pd
+                , postModificationString = modStr
                 }
 
 dirFilenames :: FilePath -> IO [FilePath]
@@ -218,3 +224,9 @@ getInlineStr i = error $ "Unexpected inline in document title, got " ++ (show i)
 
 fromInlines :: [Pandoc.Inline] -> String
 fromInlines = concat . (getInlineStr <$>)
+
+
+toLocalTime :: UTCTime -> IO LocalTime
+toLocalTime u = do
+  tz <- getCurrentTimeZone
+  return $ utcToLocalTime tz u

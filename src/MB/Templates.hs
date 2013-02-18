@@ -1,14 +1,15 @@
 module MB.Templates
     ( renderTemplate
-    , loadTemplate
     , fillTemplate
     , writeTemplate
+    , withTemplate
     )
 where
 
 import Control.Applicative
 import Data.Maybe
 import System.IO
+import System.Exit
 import Text.StringTemplate
     ( newSTMP
     , render
@@ -16,6 +17,15 @@ import Text.StringTemplate
     , checkTemplate
     )
 import MB.Types
+
+withTemplate :: FilePath -> (Template -> IO a) -> IO a
+withTemplate path f = do
+  tmpl <- loadTemplate path
+  case tmpl of
+    Left msg -> do
+              putStrLn $ "Could not load template " ++ show path ++ ": " ++ msg
+              exitFailure
+    Right t -> f t
 
 loadTemplate :: FilePath -> IO (Either String Template)
 loadTemplate path = do

@@ -3,13 +3,11 @@ module MB.Gen.RSS
     )
 where
 
-import System.IO
 import Control.Applicative ((<|>))
 import Data.Time.Format
     ( formatTime
     , parseTime
     )
-import System.Exit
 import System.Locale
     ( rfc822DateFormat
     , defaultTimeLocale
@@ -29,23 +27,13 @@ rssItem blog p =
            , "</item>\n"
            ]
 
-generateRssFeed :: Blog -> IO ()
-generateRssFeed blog = do
-  h <- openFile (Files.rssXml blog) WriteMode
-
-  eTmpl <- loadTemplate $ Files.rssTemplatePath blog
-
-  case eTmpl of
-    Left msg -> putStrLn msg >> exitFailure
-    Right tmpl ->
-        do
-          let items = map (rssItem blog) $ blogPosts blog
-              itemStr = concat items
-              attrs = [ ("items", itemStr)
-                      ]
-
-          writeTemplate blog h tmpl attrs
-          hClose h
+generateRssFeed :: Blog -> Template -> String
+generateRssFeed blog tmpl =
+    let items = map (rssItem blog) $ blogPosts blog
+        itemStr = concat items
+        attrs = [ ("items", itemStr)
+                ]
+    in fillTemplate blog tmpl attrs
 
 rssModificationTime :: Post -> String
 rssModificationTime p =

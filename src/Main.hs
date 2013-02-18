@@ -15,6 +15,7 @@ import MB.Changes
 import MB.Types
 import MB.Startup
 import MB.Initialize
+import MB.Templates
 
 import MB.Gen.Post
 import MB.Gen.PostList
@@ -176,11 +177,13 @@ regenerateContent conf = do
              putStrLn "Assets changed; reinstalling."
              doInstallAssets blog
 
-      generatePosts blog summary
+      generateChangedPosts blog summary
 
       buildIndexPage blog
       generatePostList blog
-      generateRssFeed blog
+
+      withTemplate (Files.rssTemplatePath blog) $ \t ->
+          writeFile (Files.rssXml blog) $ generateRssFeed blog t
 
       writeFile (Files.postIndex blog) $
                 serializePostIndex $ blogPosts blog

@@ -43,6 +43,7 @@ data Post = Post { postTitle :: [Pandoc.Inline]
                  , postPath :: String
                  , postFilename :: String
                  , postModificationTime :: UTCTime
+                 , postModificationString :: String
                  , postAst :: Pandoc.Pandoc
                  , postTeXMacros :: String
                  , postAuthors :: [String]
