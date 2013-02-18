@@ -1,4 +1,6 @@
-%A first post $p = 0$
+% A first post $p = 0$
+% Your name here
+% January 1, 1970
 
 You've successfully set up your shiny new math blog!
 

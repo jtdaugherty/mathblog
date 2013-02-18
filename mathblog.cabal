@@ -25,6 +25,7 @@ Data-Files:
   skel/templates/postTemplate.html
   skel/templates/pageTemplate.html
   skel/templates/rssTemplate.xml
+  skel/templates/listTemplate.html
   skel/posts/first-post.txt
   skel/blog.cfg
   gnuplot-templates/eq-basic.txt
