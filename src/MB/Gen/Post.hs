@@ -46,23 +46,21 @@ postTemplateAttrs blog post =
 
 generateChangedPosts :: Blog -> ChangeSummary -> IO ()
 generateChangedPosts blog summary = do
-  let numRegenerated = if configChanged summary
-                       then length $ blogPosts blog
-                       else length $ postsChanged summary
-
-  when (numRegenerated > 0) $ putStrLn $ "Rendering " ++ (show numRegenerated) ++ " post" ++
-       (if numRegenerated == 1 then "" else "s") ++ ":"
-
   let n = length posts
       posts = [ p | p <- blogPosts blog
               , postFilename p `elem` postsChanged summary ||
                              postIndexChanged summary
               ]
 
+  when (n > 0) $
+       putStrLn $ "Rendering " ++ (show n) ++ " post" ++
+       (if n == 1 then "" else "s") ++ ":"
+
+
   forM_ (zip posts [0..]) $ \(post, i) ->
       do
         putStrLn $ "Rendering post " ++ (show $ i + 1) ++ "/" ++
-                     (show numRegenerated) ++ ": " ++ (getPostTitle blog post Index) ++
+                     (show n) ++ ": " ++ (getPostTitle blog post Index) ++
                      " (" ++ (postFilename post) ++ ")"
 
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
