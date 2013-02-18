@@ -26,7 +26,6 @@ data Blog = Blog { baseDir :: FilePath
                  , htmlDir :: FilePath
                  , assetDir :: FilePath
                  , postHtmlDir :: FilePath
-                 , postIntermediateDir :: FilePath
                  , imageDir :: FilePath
                  , templateDir :: FilePath
                  , htmlTempDir :: FilePath

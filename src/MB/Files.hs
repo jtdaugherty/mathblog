@@ -48,9 +48,5 @@ postUrl p = "/posts/" ++ postBaseName p ++ ".html"
 postBaseName :: Post -> String
 postBaseName = takeBaseName . postFilename
 
-postIntermediateHtml :: Blog -> Post -> FilePath
-postIntermediateHtml config post =
-    postIntermediateDir config </> postBaseName post ++ ".html"
-
 postFinalHtml :: Blog -> Post -> FilePath
 postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"

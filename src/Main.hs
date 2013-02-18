@@ -34,7 +34,6 @@ ensureDirs blog = do
              , htmlDir
              , assetDir
              , postHtmlDir
-             , postIntermediateDir
              , imageDir
              , templateDir
              , htmlTempDir
@@ -120,7 +119,6 @@ mkBlog conf = do
                , htmlDir = html
                , assetDir = base </> "assets"
                , postHtmlDir = html </> "posts"
-               , postIntermediateDir = html </> "generated"
                , imageDir = html </> "generated-images"
                , templateDir = base </> "templates"
                , htmlTempDir = base </> "tmp"
