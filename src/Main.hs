@@ -164,6 +164,9 @@ regenerateContent conf = do
       when (configChanged summary) $
            putStrLn "  Configuration file"
 
+      when (postIndexChanged summary) $
+           putStrLn "  Post index"
+
       when (not $ null $ postsChanged summary) $
            do
              putStrLn "  Posts:"
@@ -175,9 +178,6 @@ regenerateContent conf = do
              putStrLn "  Templates:"
              forM_ (templatesChanged summary) $ \t ->
                  putStrLn $ "    " ++ t
-
-      when (postIndexChanged summary) $
-           putStrLn "  Post index"
 
       when (not $ null $ assetsChanged summary) $
            do
