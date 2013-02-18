@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module MB.Gen.Post
     ( generatePosts
     , postTemplateAttrs
@@ -20,13 +21,13 @@ import qualified MB.Files as Files
 import MB.Gen.Base
 
 renderPostTemplate :: Blog -> Post -> (Maybe Post, Maybe Post) -> Template -> String -> String
-renderPostTemplate blog post prevNext postTemplate postHtml =
+renderPostTemplate blog post nextPrev postTemplate postHtml =
     let pAttrs = postTemplateAttrs blog post
         tmplWithPostAttrs =
             setManyAttrib [("post_authors", postAuthors post)] $
             setManyAttrib [("post", pAttrs)] $
-            setManyAttrib [ ("next_post_url", Files.postUrl <$> (fst prevNext))
-                          , ("prev_post_url", Files.postUrl <$> (snd prevNext))
+            setManyAttrib [ ("next_post_url", Files.postUrl <$> (fst nextPrev))
+                          , ("prev_post_url", Files.postUrl <$> (snd nextPrev))
                           ]
             postTemplate
 
@@ -51,14 +52,24 @@ generatePosts blog posts = do
   when (n > 0) $
        putStrLn "Rendering post(s):"
 
-  forM_ (zip posts [0..]) $ \(post, i) ->
+  let allPosts = zip (blogPosts blog) [0..]
+      toRender = [ (p, pos) | (p, pos) <- allPosts
+                 , postFilename p `elem` (postFilename <$> posts)
+                 ]
+
+  forM_ (zip toRender [1..]) $ \((post, pos), i::Int) ->
       do
-        putStrLn $ "  [" ++ (show $ i + 1) ++ "/" ++
+        putStrLn $ "  [" ++ (show i) ++ "/" ++
                      (show n) ++ "] " ++ (postFilename post)
         putStrLn $ "        title: \"" ++ (getPostTitle blog post Index) ++ "\""
 
-        let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
-            nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
+        let nextPost = if pos == 0
+                       then Nothing
+                       else Just (blogPosts blog !! (pos - 1))
+
+            prevPost = if pos == (length $ blogPosts blog) - 1
+                       then Nothing
+                       else Just (blogPosts blog !! (pos + 1))
 
         -- Steps:
 
@@ -73,7 +84,7 @@ generatePosts blog posts = do
             withTemplate (Files.postTemplatePath blog) $ \postTmpl ->
                 do
                   -- Embed the converted Pandoc HTML into the postTemplate;
-                  let postPageHtml = renderPostTemplate blog post (prevPost, nextPost) postTmpl postBodyHtml
+                  let postPageHtml = renderPostTemplate blog post (nextPost, prevPost) postTmpl postBodyHtml
                       -- Embed the postTemplate result in the pageTemplate.
                       finalPageHtml = buildPage blog postPageHtml (Just $ getRawPostTitle blog post) pageTmpl
 
