@@ -27,12 +27,6 @@ listHtml c = postHtmlDir c </> "index.html"
 postIndex :: Blog -> FilePath
 postIndex c = postSourceDir c </> "posts-index"
 
-listTmpHtml :: Blog -> FilePath
-listTmpHtml c = htmlTempDir c </> "list.html"
-
-firstPost :: Blog -> FilePath
-firstPost c = postSourceDir c </> "first-post.txt"
-
 pageTemplatePath :: Blog -> FilePath
 pageTemplatePath c = templateDir c </> "pageTemplate.html"
 
