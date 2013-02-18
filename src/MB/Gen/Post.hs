@@ -53,9 +53,9 @@ generatePosts blog posts = do
 
   forM_ (zip posts [0..]) $ \(post, i) ->
       do
-        putStrLn $ "  (" ++ (show $ i + 1) ++ "/" ++
-                     (show n) ++ ") " ++ (postFilename post)
-        putStrLn $ "    title: \"" ++ (getPostTitle blog post Index) ++ "\""
+        putStrLn $ "  [" ++ (show $ i + 1) ++ "/" ++
+                     (show n) ++ "] " ++ (postFilename post)
+        putStrLn $ "        title: \"" ++ (getPostTitle blog post Index) ++ "\""
 
         let prevPost = if i == 0 then Nothing else Just (posts !! (i - 1))
             nextPost = if i == n - 1 then Nothing else Just (posts !! (i + 1))
