@@ -56,7 +56,6 @@ generateChangedPosts blog summary = do
        putStrLn $ "Rendering " ++ (show n) ++ " post" ++
        (if n == 1 then "" else "s") ++ ":"
 
-
   forM_ (zip posts [0..]) $ \(post, i) ->
       do
         putStrLn $ "Rendering post " ++ (show $ i + 1) ++ "/" ++
@@ -68,19 +67,25 @@ generateChangedPosts blog summary = do
 
         -- Steps:
 
-        -- Process AST
+        -- Transform AST with preprocessors;
         newPost <- applyPreProcessors blog post
 
-        -- Render that AST as HTML using Pandoc
+        -- Render the transformed AST as HTML using Pandoc;
         let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
             postBodyHtml = Pandoc.writeHtmlString writerOpts (postAst newPost)
 
-        -- Embed the Pandoc into the postTemplate to generate the main
-        -- page body
         withTemplate (Files.pageTemplatePath blog) $ \pageTmpl ->
             withTemplate (Files.postTemplatePath blog) $ \postTmpl ->
                 do
+                  -- Embed the converted Pandoc HTML into the postTemplate;
                   let postPageHtml = renderPostTemplate blog post (prevPost, nextPost) postTmpl postBodyHtml
+                      -- Embed the postTemplate result in the pageTemplate.
                       finalPageHtml = buildPage blog postPageHtml (Just $ getRawPostTitle blog post) pageTmpl
+
+                  -- Write the final, complete page HTML to the post
+                  -- HTML file location.
                   writeFile (Files.postFinalHtml blog post) finalPageHtml
+
+                  -- Give postprocessors a chance to transform the
+                  -- final HTML.
                   applyPostProcessors blog (Files.postFinalHtml blog post) BlogPost
