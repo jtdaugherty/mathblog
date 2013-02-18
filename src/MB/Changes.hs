@@ -11,6 +11,7 @@ import Data.Maybe
 import System.Directory (doesFileExist)
 import Data.Time.Calendar
 import Data.Time.Clock
+import Data.List
 
 import MB.Util
 import MB.Types
@@ -55,7 +56,7 @@ summarizeChanges config forceAll = do
   templateChanges <- forM templateFiles $ \f ->
                          do
                            mtime <- getModificationTime f
-                           if mtime > baseTime then
+                           if mtime > baseTime && ".html" `isSuffixOf` f then
                                return (Just f) else
                                return Nothing
 
