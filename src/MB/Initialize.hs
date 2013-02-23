@@ -24,7 +24,6 @@ initializeDataDir dir = do
   case existsDir of
     False -> do
       dataDir <- skelDir
-      putStrLn $ "Setting up data directory using skeleton: " ++ dataDir
       createDirectory dir
       copyTree dataDir dir
 

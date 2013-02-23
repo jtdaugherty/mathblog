@@ -54,7 +54,9 @@ Executable mb
     bytestring >= 0.9,
     HStringTemplate >= 0.6,
     ConfigFile >= 1.1,
-    containers >= 0.3
+    containers >= 0.3,
+    fsnotify >= 0.0.6,
+    system-filepath >= 0.3.1
 
   Other-modules:
     Paths_mathblog

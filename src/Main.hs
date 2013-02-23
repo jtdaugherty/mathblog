@@ -4,9 +4,13 @@ import Control.Applicative
 import Control.Monad
 import Control.Concurrent
 import Data.Maybe
+import Data.Monoid
 import System.Exit
 import System.Directory
 import System.FilePath
+
+import System.FSNotify
+import qualified Filesystem.Path.CurrentOS as FP
 
 import qualified MB.Config as Config
 import qualified MB.Files as Files
@@ -40,15 +44,37 @@ ensureDirs blog = do
 
   forM_ (dirs <*> pure blog) ensureDir
 
-scanForChanges :: IO Bool -> IO ()
-scanForChanges act = do
-  scan
-      where
-        scan = do
-          didWork <- act
-          when didWork $ putStrLn ""
-          threadDelay $ 1 * 1000 * 1000
-          scan
+evFilepath :: Event -> FP.FilePath
+evFilepath (Added fp _) = fp
+evFilepath (Modified fp _) = fp
+evFilepath (Removed fp _) = fp
+
+changesFromEvent :: Blog -> Event -> ChangeSummary
+changesFromEvent config ev =
+    let fp = evFilepath ev
+        fpStr = FP.encodeString fp
+        cases = [ ((== (configPath config)), const $ mempty {configChanged = True})
+                , (((postSourceDir config) `isPrefixOf`), \f -> mempty {postsChanged = []})
+                ]
+    in mconcat $ (\c -> if fst c fpStr then snd c else mempty) <$> cases
+
+scanForChanges :: StartupConfig -> IO ()
+scanForChanges conf = do
+  b <- mkBlog conf
+  ch <- newChan
+  withManager $ \m ->
+      do
+        -- watchTree :: WatchManager -> FilePath -> (Event -> Bool) -> (Event -> IO ()) -> IO ()
+        -- Event: data Event =
+        -- Added    FilePath UTCTime
+        -- Modified FilePath UTCTime
+        -- Removed  FilePath UTCTime
+        watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
+
+        forever $ do
+          ev <- readChan ch
+          _ <- regenerateContent conf $ changesFromEvent b ev
+          return ()
 
 mathBackends :: [(String, Processor)]
 mathBackends =
@@ -144,12 +170,10 @@ doInstallAssets blog =
     let fs = catMaybes $ installAssets <$> processors blog
     in sequence_ $ fs <*> pure blog
 
-regenerateContent :: StartupConfig -> IO Bool
-regenerateContent conf = do
+regenerateContent :: StartupConfig -> ChangeSummary -> IO Bool
+regenerateContent conf summary = do
   blog <- mkBlog conf
   runProcessorChecks blog
-
-  summary <- summarizeChanges blog (forceRegeneration conf)
 
   case anyChanges summary of
     False -> return False
@@ -217,9 +241,10 @@ main = do
 
   case listenMode conf of
     False -> do
-         didWork <- regenerateContent conf
+         blog <- mkBlog conf
+         changes <- summarizeChanges blog (forceRegeneration conf)
+         didWork <- regenerateContent conf changes
          when (not didWork) $ putStrLn "No changes found!"
     True -> do
          putStrLn $ "Waiting for changes in " ++ (dataDirectory conf) ++ " ..."
-         scanForChanges
-            (regenerateContent $ conf { forceRegeneration = False })
+         scanForChanges (conf { forceRegeneration = False })
