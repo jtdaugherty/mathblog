@@ -26,8 +26,8 @@ renderPostTemplate blog post nextPrev postTemplate postHtml =
         tmplWithPostAttrs =
             setManyAttrib [("post_authors", postAuthors post)] $
             setManyAttrib [("post", pAttrs)] $
-            setManyAttrib [ ("next_post_url", Files.postUrl <$> (fst nextPrev))
-                          , ("prev_post_url", Files.postUrl <$> (snd nextPrev))
+            setManyAttrib [ ("next_post_url", postUrl <$> (fst nextPrev))
+                          , ("prev_post_url", postUrl <$> (snd nextPrev))
                           ]
             postTemplate
 
@@ -40,8 +40,8 @@ postTemplateAttrs blog post =
     let datestr = postDate post <|> Just (postModificationString post)
     in M.fromList [ ("title", getPostTitle blog post BlogPost)
                   , ("date", fromJust datestr)
-                  , ("url", Files.postUrl post)
-                  , ("basename", Files.postBaseName post)
+                  , ("url", postUrl post)
+                  , ("basename", postBaseName post)
                   , ("tex_macros", postTeXMacros post)
                   ]
 

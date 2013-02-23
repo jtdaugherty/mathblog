@@ -2,7 +2,6 @@ module MB.Files where
 
 import System.FilePath
     ( (</>)
-    , takeBaseName
     )
 import MB.Types
     ( Blog(..)
@@ -36,11 +35,5 @@ listTemplatePath c = templateDir c </> "listTemplate.html"
 postTemplatePath :: Blog -> FilePath
 postTemplatePath c = templateDir c </> "postTemplate.html"
 
-postUrl :: Post -> String
-postUrl p = "/posts/" ++ postBaseName p ++ ".html"
-
-postBaseName :: Post -> String
-postBaseName = takeBaseName . postFilename
-
 postFinalHtml :: Blog -> Post -> FilePath
-postFinalHtml config p = postHtmlDir config </> postBaseName p ++ ".html"
+postFinalHtml config p = postHtmlDir config </> postHtmlFilename p

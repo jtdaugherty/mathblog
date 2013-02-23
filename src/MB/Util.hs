@@ -23,6 +23,7 @@ import System.Directory
 import System.FilePath
     ( (</>)
     , takeFileName
+    , takeBaseName
     )
 import Control.Monad
     ( when
@@ -129,6 +130,8 @@ loadPost fullPath = do
   tz <- getCurrentTimeZone
   localTime <- toLocalTime t
   let modStr = show localTime ++ "  " ++ timeZoneName tz
+      bn = takeBaseName $ takeFileName fullPath
+      htmlFilename =  bn ++ ".html"
 
   return $ Post { postTitle = Pandoc.docTitle m
                 , postPath = fullPath
@@ -139,6 +142,9 @@ loadPost fullPath = do
                 , postAuthors = pas
                 , postDate = pd
                 , postModificationString = modStr
+                , postBaseName = bn
+                , postUrl = "/posts/" ++ htmlFilename
+                , postHtmlFilename = htmlFilename
                 }
 
 dirFilenames :: FilePath -> IO [FilePath]
