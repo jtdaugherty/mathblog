@@ -1,4 +1,3 @@
-
 mathblog
 ========
 
@@ -7,7 +6,7 @@ statically-generated, mathematically-themed weblogs.  It supports:
 
  - Extended Markdown input syntax as supported by the Pandoc library
 
- - inline and block-level TeX math rendered by MathJax or LaTeX
+ - Inline and block-level TeX math rendered by MathJax or LaTeX
 
  - Function graphing with Gnuplot or the TikZ / pgfplots LaTeX
    packages
