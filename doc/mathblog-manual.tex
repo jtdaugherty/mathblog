@@ -1,0 +1,541 @@
+\documentclass[11pt, letterpaper, oneside, titlepage]{book}
+% Use Palatino fonts.
+\renewcommand{\rmdefault}{ppl}
+\renewcommand{\ttdefault}{pcr}
+
+% For smarter references.
+\usepackage{varioref}
+
+% For hyperlinks.
+\usepackage{hyperref}
+\hypersetup{colorlinks,citecolor=blue,%
+            filecolor=red,linkcolor=blue,%
+            urlcolor=blue}
+
+% Customize document dimensions.
+\addtolength{\hoffset}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\setlength{\topmargin}{0in}
+\setlength{\parskip}{0.1in}
+\setlength{\parindent}{0in}
+
+\begin{document}
+
+\include{macros}
+\include{title_page}
+\include{toc}
+
+\chapter{Introduction}
+
+\mathblog\ is a Haskell program targeted at people who want to write
+statically-generated, mathematically-themed weblogs.  It supports:
+
+\begin{itemize}
+\item{Extended Markdown input syntax as supported by the Pandoc
+  library}
+\item{Inline and block-level \TeX\ math rendered by MathJax}
+\item{Function graphing with Gnuplot or the TikZ / pgfplots
+  \LaTeX\ packages}
+\item{Integration of Javascript-based web services such as Disqus}
+\item{Template-based document rendering with support for layout and
+  style customization}
+\end{itemize}
+
+\section{Project Vision}
+
+I wrote \mathblog\ with a very specific set of requirements in mind,
+motivated by the following principles:
+
+\begin{itemize}
+\item{A blog should be easy to create, host, and update.}
+\item{A blog should be easy to maintain.}
+\item{I should be able to edit posts in my editor of choice and write
+  them in an intelligent textual markup language.}
+\item{It should be easy to embed high-quality mathematical symbols and
+  equations in the blog posts.}
+\end{itemize}
+
+As a result, \mathblog\ has the following properties:
+
+\begin{itemize}
+\item{The software is composed of a single executable which will
+  automatically take care of creating your blog and regenerating pages
+  when your blog post markup changes.}
+\item{All content is stored in plain text files and is generated
+  statically.  No database or web framework is used and no resident
+  processes are required to serve your content.}
+\item{A \mathblog\ can be hosted with a simple static fileserver such
+  as thttpd, Lighttpd, or Apache.}
+\item{Blog posts are written in the Markdown format with extensions,
+  as supported by the Pandoc document converter.}
+\item{Math is embedded with \verb|$...$| or \verb|\(...\)| for inline
+  math and \verb|$$...$$| or \verb|\[...\]| for block-level math.}
+\end{itemize}
+
+These properties have some nice advantages; your blog content is
+cacheable and can be subjected to revision control.  Posts are easy to
+edit and editing doesn't require a web browser.  The static file
+representation model means you can compose a blog post on your laptop
+and get it just right using a local installation of mathblog, then
+push it up to your server to post it to your public blog.
+
+I personally use this software package but I'll be pleased if others
+find it useful.  In addition, I'm open to accepting contributions on
+the project if they're consistent with what I've outlined above.
+Happy blogging!
+
+\section{Dependencies}
+
+\mathblog\ takes advantage of three primary software components:
+
+\begin{itemize}
+\item{Pandoc, a document-processing library.}
+\item{MathJax if you choose `mathjax` for the value of the
+  `mathBackend` configuration setting.  mathblog uses the MathJax CDN
+  for MathJax resources.}
+\item{The TikZ and pgfplots \LaTeX\ packages if you set `tikz = yes`
+  in your config.  This is the recommended backend for function graph
+  plotting.}
+\item{GNUplot if you set `gnuplot = yes` in your configuration.  See
+  below for more details on using GNUplot.}
+\end{itemize}
+
+\chapter{Working With \mathblog}
+
+The main program provided by the \mathblog\ package is the program
+\fw{mb}.  This program takes care of initializing new blog data
+directories, detecting changes in your files, and regenerating the
+right HTML output files into your output directory.
+
+\fw{mb} needs to know about two directories: the \textit{data
+  directory} where your post input files and templates will be kept,
+and the \textit{output directory} where the HTML version of your blog
+will be generated.  \fw{mb} has two ways of knowing about both of
+these directories: you can set environment variables or you can pass
+command-line flags to \fw{mb}:
+
+\begin{itemize}
+\item{Set \fw{MB\_DATA\_DIR} in the environment or pass the
+  \fw{-d/--data-dir} option to \fw{mb}.}
+\item{Set \fw{MB\_OUTPUT\_DIR} in the environment or pass the
+  \fw{-o/--output-dir} option to \fw{mb}.}
+\end{itemize}
+
+Any command line parameters given to \fw{mb} will always take
+precedence over any environment variables.
+
+\section{Creating a New \mathblog}
+
+Once you've chosen your data and output directories, run \fw{mb -i}.
+It will take care of setting up a new blog data directory for you,
+complete with some default pages and a default first blog post:
+
+\begin{verbatim}
+$ export MB_DATA_DIR=`pwd`/myBlog
+$ export MB_OUTPUT_DIR=`pwd`/html
+$ mb -i
+Blog directory: .../myBlog
+Config file: .../myBlog/blog.cfg
+Setting up data directory using skeleton: /.../skel
+Configuration file changed; regenerating all content.
+Templates changed; regenerating accordingly.
+Posts changed:
+  first-post.txt
+Post index changed; regenerating next/previous links.
+Rendering first-post
+Done.
+\end{verbatim}
+
+\section{Configuring the Blog}
+
+\mathblog\ creates a default blog configuration file in your data
+directory called \fw{blog.cfg}.  It contains information which may be
+included in the generated pages.  The configuration file \fw{blog.cfg}
+must have the following fields set:
+
+\begin{itemize}
+\item{\fw{baseUrl} - The base URL of your blog; this URL will be used
+  to generate some links in the blog's pages where absolute URLs
+  matter.  Otherwise, relative URLs will be used, with an assumption
+  that your blog is hosted at the root of a domain.}
+\item{\fw{title} - The title of your blog, such as "My math blog".}
+\item{\fw{authorName} - Your name (for the RSS feed metadata and the
+  page footer).}
+\item{\fw{authorEmail} - Your e-mail address (for the RSS feed
+  metadata only).}
+\item{\fw{mathBackend} - The backend used to render \TeX\ math
+  expressions.  Right now the only possible value is \fw{mathjax}.  No
+  special configuration is necessary for MathJax, as mathblog's
+  default templates use CDN resources for MathJax.}
+\item{\fw{tikz} - Whether to use the Tikz / Pgftplots approach to
+  rendering equation graphs.  Set to \fw{yes}, \fw{on}, or \fw{1} to
+  enable.  Disabled by default.}
+\item{\fw{gnuplot} - Whether to use GNUplot to render equation graphs.
+  Set to \fw{yes}, \fw{on}, or \fw{1} to enable.  Disabled by
+  default.}
+\end{itemize}
+
+Note that if you pick a math or function graphing backend which isn't
+supported by your system, \fw{mb} will emit errors when processing
+your posts.
+
+Also note that it is legal to have both \fw{tikz} and \fw{gnuplot}
+enabled; just don't expect GNUplot to try processing code blocks for a
+\fw{tikz} GNUplot preamble, since TikZ processing happens first.
+
+All of the above fields can be accessed in templates using the syntax
+described in Section \ref{sec:customizing} below.
+
+\section{Serving the Blog}
+
+To serve your blog files you can either make the output directory a
+document root for your web server or virtual host or you can symlink
+the output directory to the location of choice.  The
+\mathblog\ directory itself is not intended to be in your web server's
+document tree because it contains many files that shouldn't be served
+to users such as your configuration and blog post input files.
+
+Start up a web server pointing at the output directory and take a
+look.
+
+Now you might want to edit or create a new post, or even remove one.
+Just edit the appropriate file in `posts/` accordingly and re-run
+\fw{mb}.  Here's an example of adding a new post:
+
+\begin{verbatim}
+$ mb
+mb: using base directory ".../myBlog"
+Posts changed:
+  first-post.txt
+Rendering 1 post(s)...
+Rendering first-post
+Done.
+\end{verbatim}
+
+\section{When to run \fw{mb}}
+
+\fw{mb} looks at the modification times of your post files in
+\fw{posts/}, the config file, template files, and the post index (see
+Section \ref{sec:postindex} ) when determining when to regenerate
+content.  It also looks for new posts that haven't been rendered in
+the past.  The rule of thumb is: re-run \fw{mb} whenever you make any
+changes to anything in your blog data directory.
+
+Modifications a post file will cause that post to be re-rendered, but
+modifications the configuration file or templates will cause ALL posts
+to be re-rendered since those changes impact how all pages are
+generated.
+
+\section{Blog Post Format}
+
+Posts are formatted in Markdown and support the extended Markdown
+syntax as implemented by Pandoc.  The only important convention to
+note is that the post title, author, and date values go on the first
+three lines of the file as follows:
+
+\begin{verbatim}
+% My First Post
+% Joe Author
+% August 4, 1976
+
+First paragraph starts here.
+\end{verbatim}
+
+Dates in the blog post header formatted as ``\fw{<MONTH> <DAY>,
+  <YEAR>}'' will be parsed and used to generate the RSS feed
+publication date.
+
+\section{Running \fw{mb} in ``Listen'' Mode}
+
+Ordinarily, you'll just run \fw{mb} once in a while to update your
+output directory.  But if you're in the middle of authoring a new post
+and you want to see what it looks like as you edit it rather than run
+\fw{mb} by hand repeatedly, you can run \fw{mb} in ``listen'' mode;
+this means that \fw{mb} will run forever, peroidically scanning the
+filesystem for changes to your blog posts and other data files and
+will regenerate them and copy them to the output directory when it
+detects a change.  Running \mathblog\ in listen mode is simple:
+
+\begin{verbatim}
+$ mb -l
+Waiting for changes in .../blog ...
+Blog directory: .../blog
+Config file: .../blog/blog.cfg
+Post index changed; regenerating next/previous links.
+Done.
+
+Blog directory: /.../blog
+Config file: .../blog/blog.cfg
+Configuration file changed; regenerating all content.
+Rendering 1 post(s)...
+Rendering first-post
+Done.
+
+Blog directory: /Users/cygnus/blog3
+Config file: .../blog/blog.cfg
+Posts changed:
+  first-post.txt
+Rendering 1 post(s)...
+Rendering first-post
+Done.
+\end{verbatim}
+
+Above I ran \fw{mb} in listen mode and then modified the post index,
+then the blog config file, then one of the posts.  In each case
+\fw{mb} detected the change and ran its usual regeneration routine.
+
+\section{Customizing your blog}
+\label{ref:customizing}
+
+It's likely that you'll want to customize the look and feel of your
+blog.  To this end, \mathblog\ generates the pages of your blog by
+assembling various pieces of the page to create the final result.  The
+biggest piece of a generated page is the blog post itself, but the
+surrounding elements are read from various files that are created by
+\mathblog\ when it creates your blog data directory.  These files are
+stored in the \fw{templates/} subdirectory of your blog data directory
+and are as follows:
+
+\begin{itemize}
+\item{\fw{templates/rssTemplate.xml} - This is the template used to
+  generate your RSS feed.}
+\item{\fw{templates/pageTemplate.html} - This file makes up the
+  overall structure of every page on the blog.}
+\item{\fw{templates/postTemplate.html} - This file makes up the
+  structure of the post portion of the page, for pages which show
+  posts (i.e., not the post index).}
+\item{\fw{templates/listTemplate.html} - This file is the template
+  used to generate the "all posts" page.  Once generated, the
+  all-posts listing is then embedded in the page template.}
+\end{itemize}
+
+The templates mentioned above are ``StringTemplate'' templates and are
+processed with the \fw{HStringTemplate} package.  The following
+template placeholders are supported in each template:
+
+\begin{itemize}
+\item{\fw{\$title\$}, \fw{\$baseUrl\$}, \fw{\$authorName\$},
+  \fw{\$authorEmail\$} - These placeholders all correspond directly to
+  fields on the `blog.cfg` configuration file.}
+\item{\fw{\$extraPageHead\$} - Content to be placed in the \fw{<HEAD>}
+  tag of the page, such as javascript tags, stylesheets, etc.  You'll
+  need to ensure that this is somewhere in your \fw{<HEAD>} tag if you
+  want to use mathblog features which may need to load extra
+  resources.}
+\end{itemize}
+
+These placeholders are provided in the list template:
+
+\begin{itemize}
+\item{\fw{\$posts\$} - The list of all posts in the blog, starting with
+  the most recent.  Each has the same structure as a post in the post
+  template (i.e. post.title, post.date, post.url).}
+\end{itemize}
+
+These placeholders are supported in the post template:
+
+\begin{itemize}
+\item{\fw{\$next\_post\_url\$}, \fw{\$prev\_post\_url\$} - URLs to the
+  next (newer) and previous (older) posts relative to the current
+  post.  One or both may be null.}
+\item{\fw{\$post\_html\$} - The rendered body of the post itself.}
+\item{\fw{\$post.basename\$} - The base name of the post for use in
+  Javascript (see "Other features" below for usage).}
+\item{\fw{\$post.title\$} - The title of the post as found in the Pandoc
+  header.}
+\item{\fw{\$post.date\$} - The publication date string of the post as
+  found in the Pandoc header.}
+\item{\fw{\$post\_authors\$} - The list of post author names as found in
+  the Pandoc header.  This can be rendered as follows:
+\begin{verbatim}
+Posted by \$post_authors; separator=", "
+\end{verbatim}
+}
+\item{\fw{\$post.tex\_macros\$} - The combined \TeX\ macros string as
+  found in all of the \fw{\#tex-macros} code blocks in the post.  See
+  the section on \TeX\ macros for how to use this properly.}
+\end{itemize}
+
+These placeholders are supported in the page template:
+
+\begin{itemize}
+\item{\fw{\$content\$} - The content of the page to be rendered.}
+\end{itemize}
+
+\section{Blog Assets}
+
+The default blog directory created by \fw{mb} also includes an
+\fw{assets/} subdirectory.  Whenever \fw{mb} detects changes in your
+blog post or asset files (or if you run ``\fw{mb -f}''), everything in
+\fw{assets/} will be copied recursively into the output directory.
+This way, if you have custom stylesheets or other files which need to
+be available, they can be kept in your data directory and published
+with the rest of the generated content.
+
+\section{TeX Macros}
+
+You can define post-wide \TeX\ macros and then reference them in both
+Mathjax expressions and TikZ/PGF pictures.  To do this, define \TeX
+macros inside a ``\fw{tex-macros}'' block as follows:
+
+\begin{verbatim}
+~~~ {#tex-macros}
+\newcommand{\stuff}{...}
+~~~
+\end{verbatim}
+
+The block will be removed from the document during preprocessing, but
+the macros must be re-embedded in the final output HTML for Mathjax by
+updating your post template to include this *before* the post body:
+
+\begin{verbatim}
+<div style="display: none;">
+\\(
+$tex_macros$
+\\)
+</div>
+\end{verbatim}
+
+The \TeX\ macros will automatically be included in generated
+\TeX\ source when TikZ/PGF processing is performed.  This way, you can
+write macros and use them everywhere in the document without having to
+redefine them inside picture environments.
+
+\section{Function Graph Embedding}
+
+mathblog supports inline scripts for rendering function graphs.  Right
+now, mathblog supports Gnuplot and the TikZ / pgfplots
+\LaTeX\ packages.  Set the appropriate configuration option (see
+above) to enable a backend.
+
+\subsection{Gnuplot}
+
+To specify a Gnuplot function graph in a blog post, we overload the
+Pandoc code block syntax.  Here's an example of a Gnuplot graph:
+
+\begin{verbatim}
+~~~ {#eq-basic}
+f(x) = x
+plot [-5.0:5.0] [-5.0:5.0] f(x) lt rgb "blue"
+~~~
+\end{verbatim}
+
+This defines a single function and plots it in blue over the specified
+intervals.  The most important part is the ``\fw{\#eq-basic}'' bit:
+this specifies the equation preamble to use when generating the output
+image.  This string refers to this preamble file in your blog
+directory:
+
+\begin{verbatim}
+eq-preambles/eq-basic.txt
+\end{verbatim}
+
+This file contains the commands responsible for determining the output
+image size and axis configuration.  The contents of the code block
+that you write get appended to the contents of the preamble file you
+specify to result in the full gnuplot script, whose output gets
+embedded in the page.  We use these templates to make it easier to
+create many graphs that have the same general structure (e.g., axis
+configuration, image size) without having to repeat the full gnuplot
+script each time.
+
+You can create other gnuplot premables to suit your needs; just
+reference them in the code block in the same way.  For example, you
+might create \fw{eq-preambles/eq-fancy.txt}, in which case the code
+block syntax to use it is:
+
+\begin{verbatim}
+~~~ {#eq-fancy}
+<your script here>
+~~~
+\end{verbatim}
+
+\subsection{TikZ / \fw{pgfplots}}
+
+To specify a TikZ / \fw{pgfplots} function graph in a blog post, we
+overload the Pandoc code block syntax.  Here's an example of a TikZ
+figure:
+
+\begin{verbatim}
+~~~ {#tikz}
+\begin{axis}[
+    minor tick num=3,
+    axis y line=center,
+    axis x line=middle,
+    ]
+
+\addplot[smooth,mark=none,blue] plot coordinates {
+    (-1,-1)
+    (2.95,2.95)
+};
+\end{axis}
+~~~
+\end{verbatim}
+
+This is a \LaTeX\ fragment which will automatically be embedded in a
+\fw{tikzpicture} environment and rendered to an image within the blog
+post.  For more information on the powerful TikZ / \fw{pgfplots}
+packages, please see <https://sourceforge.net/projects/pgfplots/>.
+
+\subsection{Styling Function Graphs with CSS}
+
+Note that the Pandoc syntax also allows us to assign CSS class names
+to the code block, and mathblog passes these through to the generated
+image.  So if you wanted to wrap your text around the generated image,
+you could create a CSS class like this:
+
+\begin{verbatim}
+.eq-right {
+  float: right;
+}
+\end{verbatim}
+
+and then assign it to your equation graph like this:
+
+\begin{verbatim}
+~~~ {#eq-basic .eq-right}
+...
+~~~
+\end{verbatim}
+
+For more information on the code block syntax, please see:
+
+<http://johnmacfarlane.net/pandoc/README.html\#delimited-code-blocks>
+
+\section{Other features}
+
+\subsection{Disqus Integration}
+
+Since mathblog doesn't provide many moving parts, it's up to you to
+outsource various web site features, such as comments.  I've
+successfully integrated mathblog with the Disqus comments service.  To
+do this, some javascript needs to be embedded in the blog pages.
+Disqus works best when you supply it with a page identifier so it can
+guarantee that comments are post-specific rather than URL-specific.
+The way mathblog makes this possible is by exposing a page basename
+string so you can configure Disqus properly:
+
+\begin{verbatim}
+var disqus_identifier = "$post.basename$";
+\end{verbatim}
+
+\subsection{Controlling Post Order}
+
+Whenever you add a new post, \fw{mb} automatically updates the "post
+index", a file called \fw{posts-index} in the \fw{posts/}
+subdirectory.  This file lists the filenames of all posts from newest
+to oldest.  By default, new posts get added to the beginning of the
+list, as you would expect.  Any new posts added to the list are sorted
+by modification time so that the newest post on disk appears earlier
+in the index.  This feature exists to make it possible for older posts
+to be updated without changing their ordering in the overall sequence
+of posts.
+
+At any time, you can edit the index to reorder the posts as you see
+fit.  \fw{mb} will preserve ordering of posts already in the index
+when you run it in the future.
+
+\fw{mb} will also take care of removing posts from the index if
+they've been removed from the post source directory.
+
+\end{document}
