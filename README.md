@@ -1,4 +1,3 @@
-
 mathblog
 ========
 
@@ -7,7 +6,7 @@ statically-generated, mathematically-themed weblogs.  It supports:
 
  - Extended Markdown input syntax as supported by the Pandoc library
 
- - inline and block-level TeX math rendered by MathJax or LaTeX
+ - Inline and block-level TeX math rendered by MathJax or LaTeX
 
  - Function graphing with Gnuplot or the TikZ / pgfplots LaTeX
    packages
@@ -364,7 +363,7 @@ These placeholders are supported in the post template:
     The list of post author names as found in the Pandoc header.  This
     can be rendered as follows:
 
-    Posted by $post_authors; separator=", "$
+        Posted by $post_authors; separator=", "$
 
  - `$post.tex_macros$`
 
@@ -404,11 +403,11 @@ The block will be removed from the document, but the macros must be
 re-embedded in the final output HTML for Mathjax by updating your post
 template to include this *before* the post body:
 
-  <div style="display: none;">
-  \\(
-  $tex_macros$
-  \\)
-  </div>
+    <div style="display: none;">
+    \\(
+    $tex_macros$
+    \\)
+    </div>
 
 The TeX macros will automatically be included in generated TeX source
 when TikZ/PGF processing is performed.  This way, you can write macros
