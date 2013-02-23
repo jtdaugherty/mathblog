@@ -47,6 +47,9 @@ data Post = Post { postTitle :: [Pandoc.Inline]
                  , postTeXMacros :: String
                  , postAuthors :: [String]
                  , postDate :: Maybe String
+                 , postBaseName :: String
+                 , postUrl :: String
+                 , postHtmlFilename :: String
                  }
             deriving (Eq)
 

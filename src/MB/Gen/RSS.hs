@@ -15,15 +15,14 @@ import System.Locale
 import MB.Types
 import MB.Processing ( getRawPostTitle )
 import MB.Templates
-import qualified MB.Files as Files
 
 rssItem :: Blog -> Post -> String
 rssItem blog p =
     concat [ "<item>"
            , "<title>" ++ getRawPostTitle blog p ++ "</title>\n"
-           , "<link>" ++ baseUrl blog ++ Files.postUrl p ++ "</link>\n"
+           , "<link>" ++ baseUrl blog ++ postUrl p ++ "</link>\n"
            , "<pubDate>" ++ rssModificationTime p ++ "</pubDate>\n"
-           , "<guid>" ++ baseUrl blog ++ Files.postUrl p ++ "</guid>\n"
+           , "<guid>" ++ baseUrl blog ++ postUrl p ++ "</guid>\n"
            , "</item>\n"
            ]
 
