@@ -6,6 +6,9 @@
 % For smarter references.
 \usepackage{varioref}
 
+% For embedding the output of "mb" usage demo scripts.
+\usepackage{fancyvrb}
+
 % For hyperlinks.
 \usepackage{hyperref}
 \hypersetup{colorlinks,citecolor=blue,%
@@ -89,12 +92,12 @@ Happy blogging!
 
 \begin{itemize}
 \item{Pandoc, a document-processing library.}
-\item{MathJax if you choose `mathjax` for the value of the
-  `mathBackend` configuration setting.  mathblog uses the MathJax CDN
-  for MathJax resources.}
-\item{The TikZ and pgfplots \LaTeX\ packages if you set `tikz = yes`
-  in your config.  This is the recommended backend for function graph
-  plotting.}
+\item{MathJax if you choose ``\fw{mathjax}'' for the value of the
+  ``\fw{mathBackend}'' configuration setting.  \mathblog\ uses the
+  MathJax CDN for MathJax resources.}
+\item{The TikZ and pgfplots \LaTeX\ packages if you set ``\fw{tikz =
+    yes}'' in your config.  This is the recommended backend for
+  function graph plotting.}
 \end{itemize}
 
 \chapter{Working With \mathblog}
@@ -121,27 +124,13 @@ command-line flags to \fw{mb}:
 Any command line parameters given to \fw{mb} will always take
 precedence over any environment variables.
 
-\section{Creating a New \mathblog}
+\section{Getting Started}
 
 Once you've chosen your data and output directories, run \fw{mb -i}.
 It will take care of setting up a new blog data directory for you,
 complete with some default pages and a default first blog post:
 
-\begin{verbatim}
-$ export MB_DATA_DIR=`pwd`/myBlog
-$ export MB_OUTPUT_DIR=`pwd`/html
-$ mb -i
-Blog directory: .../myBlog
-Config file: .../myBlog/blog.cfg
-Setting up data directory using skeleton: /.../skel
-Configuration file changed; regenerating all content.
-Templates changed; regenerating accordingly.
-Posts changed:
-  first-post.txt
-Post index changed; regenerating next/previous links.
-Rendering first-post
-Done.
-\end{verbatim}
+\blogexample{init}
 
 \section{Configuring the Blog}
 
@@ -189,18 +178,10 @@ Start up a web server pointing at the output directory and take a
 look.
 
 Now you might want to edit or create a new post, or even remove one.
-Just edit the appropriate file in `posts/` accordingly and re-run
-\fw{mb}.  Here's an example of adding a new post:
+Just edit the appropriate file in \fw{posts/} accordingly and re-run
+\fw{mb}.  Here's an example of modifying an existing post:
 
-\begin{verbatim}
-$ mb
-mb: using base directory ".../myBlog"
-Posts changed:
-  first-post.txt
-Rendering 1 post(s)...
-Rendering first-post
-Done.
-\end{verbatim}
+\blogexample{changed-post}
 
 \section{When to run \fw{mb}}
 
@@ -246,29 +227,7 @@ filesystem for changes to your blog posts and other data files and
 will regenerate them and copy them to the output directory when it
 detects a change.  Running \mathblog\ in listen mode is simple:
 
-\begin{verbatim}
-$ mb -l
-Waiting for changes in .../blog ...
-Blog directory: .../blog
-Config file: .../blog/blog.cfg
-Post index changed; regenerating next/previous links.
-Done.
-
-Blog directory: /.../blog
-Config file: .../blog/blog.cfg
-Configuration file changed; regenerating all content.
-Rendering 1 post(s)...
-Rendering first-post
-Done.
-
-Blog directory: /Users/cygnus/blog3
-Config file: .../blog/blog.cfg
-Posts changed:
-  first-post.txt
-Rendering 1 post(s)...
-Rendering first-post
-Done.
-\end{verbatim}
+\blogexample{listen-mode}
 
 Above I ran \fw{mb} in listen mode and then modified the post index,
 then the blog config file, then one of the posts.  In each case
