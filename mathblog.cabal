@@ -78,7 +78,6 @@ Executable mb
 
     MB.Processing
     MB.Processors.Base
-    MB.Processors.Gnuplot
     MB.Processors.Mathjax
     MB.Processors.Tikz
 

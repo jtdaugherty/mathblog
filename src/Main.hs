@@ -28,7 +28,6 @@ import MB.Gen.PostList
 import MB.Gen.Index
 import MB.Gen.RSS
 
-import MB.Processors.Gnuplot
 import MB.Processors.Tikz
 import MB.Processors.Mathjax
 import MB.Processors.Base
@@ -110,15 +109,9 @@ mathBackends =
     [ ("mathjax", mathjaxProcessor)
     ]
 
--- Note that the order here matters, because the processors will be
--- applied in the order listed.  So if the user has both turned on
--- then gnuplot will try to render a post with the "tikz" preamble,
--- which we don't really want.  So let tikz go first, rewrite the AST,
--- and then let gnuplot handle the rest.
 eqBackends :: [(String, Processor)]
 eqBackends =
     [ ("tikz", tikzProcessor)
-    , ("gnuplot", gnuplotProcessor)
     ]
 
 mkBlog :: StartupConfig -> IO Blog

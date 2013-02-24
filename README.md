@@ -8,8 +8,7 @@ statically-generated, mathematically-themed weblogs.  It supports:
 
  - Inline and block-level TeX math rendered by MathJax or LaTeX
 
- - Function graphing with Gnuplot or the TikZ / pgfplots LaTeX
-   packages
+ - Function graphing with TikZ / pgfplots LaTeX packages
 
  - Integration of Javascript-based web services such as Disqus
 
@@ -75,9 +74,6 @@ mathblog takes advantage of three primary software components:
    - The TikZ and pgfplots LaTeX packages if you set `tikz = yes` in
      your config.  This is the recommended backend for function graph
      plotting.
-
-   - GNUplot if you set `gnuplot = yes` in your configuration.  See
-     below for more details on using GNUplot.
 
 Creating a blog
 ===============
@@ -151,18 +147,9 @@ fields set:
     graphs.  Set to 'yes', 'on', or '1' to enable.  Disabled by
     default.
 
- - `gnuplot`
-
-    Whether to use GNUplot to render equation graphs.  Set to 'yes',
-    'on', or '1' to enable.  Disabled by default.
-
 Note that if you pick a math or function graphing backend which isn't
 supported by your system, `mb` will emit errors when processing your
 posts.
-
-Also note that it is legal to have both `tikz` and `gnuplot` enabled;
-just don't expect GNUplot to try processing code blocks for a "tikz"
-GNUplot preamble, since TikZ processing happens first.
 
 All of the above fields can be accessed in templates using the syntax
 described in "Customizing your blog" below.
@@ -418,46 +405,8 @@ Function Graph Embedding
 ========================
 
 mathblog supports inline scripts for rendering function graphs.  Right
-now, mathblog supports Gnuplot and the TikZ / pgfplots LaTeX packages.
-Set the appropriate configuration option (see above) to enable a
-backend.
-
-Gnuplot
--------
-
-To specify a Gnuplot function graph in a blog post, we overload the
-Pandoc code block syntax.  Here's an example of a Gnuplot graph:
-
-    ~~~ {#eq-basic}
-    f(x) = x
-    plot [-5.0:5.0] [-5.0:5.0] f(x) lt rgb "blue"
-    ~~~
-
-This defines a single function and plots it in blue over the specified
-intervals.  The most important part is the "#eq-basic" bit: this
-specifies the equation preamble to use when generating the output
-image.  This string refers to this preamble file in your blog
-directory:
-
-  `eq-preambles/eq-basic.txt`
-
-This file contains the commands responsible for determining the output
-image size and axis configuration.  The contents of the code block
-that you write get appended to the contents of the preamble file you
-specify to result in the full gnuplot script, whose output gets
-embedded in the page.  We use these templates to make it easier to
-create many graphs that have the same general structure (e.g., axis
-configuration, image size) without having to repeat the full gnuplot
-script each time.
-
-You can create other gnuplot premables to suit your needs; just
-reference them in the code block in the same way.  For example, you
-might create eq-preambles/eq-fancy.txt, in which case the code block
-syntax to use it is:
-
-    ~~~ {#eq-fancy}
-    <your script here>
-    ~~~
+now, mathblog supports the TikZ / pgfplots LaTeX packages.  Set the
+appropriate configuration option (see above) to enable a backend.
 
 TikZ / pgfplots
 ---------------
