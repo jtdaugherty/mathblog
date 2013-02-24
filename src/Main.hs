@@ -172,7 +172,11 @@ mkBlog conf = do
   let html = htmlOutputDirectory conf
 
   -- Get modification times.
-  indexMod <- getModificationTime $ postSrcDir </> "posts-index"
+  indexMod <- do
+    let pth = postSrcDir </> "posts-index"
+    ex <- doesFileExist pth
+    if ex then getModificationTime pth else getCurrentTime
+
   configMod <- getModificationTime configFile
 
   -- Get the most recent page template modification time.
@@ -261,10 +265,18 @@ main = do
   conf <- startupConfigFromEnv
   let dir = dataDirectory conf
 
-  when (initDataDirectory conf) $ initializeDataDir dir
+  newConf <- case initDataDirectory conf of
+               True -> do
+                 initializeDataDir dir
+                 return $ conf { forceRegeneration = True }
+               False -> return conf
 
-  case listenMode conf of
-    False -> doGeneration conf printHandler
+  case listenMode newConf of
+    False -> doGeneration newConf printHandler
     True -> do
-         putStrLn $ "Waiting for changes in " ++ (dataDirectory conf) ++ " ..."
-         scanForChanges (conf { forceRegeneration = False }) printHandler
+         -- This will abort with an error if the blog directory isn't
+         -- configured.  Messy.
+         _ <- mkBlog newConf
+
+         putStrLn $ "Waiting for changes in " ++ (dataDirectory newConf) ++ " ..."
+         scanForChanges (newConf { forceRegeneration = False }) printHandler
