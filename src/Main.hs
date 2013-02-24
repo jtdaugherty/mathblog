@@ -45,9 +45,6 @@ ensureDirs blog = do
 
   forM_ (dirs <*> pure blog) ensureDir
 
-runBlogM :: Blog -> Chan GenEvent -> StartupConfig -> BlogM a -> IO a
-runBlogM b ch conf act = runReaderT act (GenState b ch conf)
-
 doGeneration :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
 doGeneration config handler = do
   ch <- newChan
@@ -81,10 +78,14 @@ isEventInteresting conf ev =
         isPost f = (dataDirectory conf </> "posts/") `isPrefixOf` f &&
                    ".txt" `isSuffixOf` f &&
                    not ("." `isPrefixOf` takeFileName f)
+
         isPostIndex f = (dataDirectory conf </> "posts/post-index") == f
+
         isAsset f = (dataDirectory conf </> "assets/") `isPrefixOf` f
+
         isTemplate f = (dataDirectory conf </> "templates/") `isPrefixOf` f &&
                        ".html" `isSuffixOf` f
+
         isConfig f = (dataDirectory conf </> "blog.cfg") == f
 
     in or ([ isPost
@@ -110,7 +111,7 @@ scanForChanges conf h = do
             Modified fp _ -> putStrLn $ "File modified: " ++ FP.encodeString fp
             Removed fp _ -> putStrLn $ "File removed: " ++ FP.encodeString fp
           doGeneration conf h
-          putStrLn "----"
+          putStrLn ""
           threadDelay $ 500 * 1000
 
 mathBackends :: [(String, Processor)]

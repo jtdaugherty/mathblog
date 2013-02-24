@@ -15,6 +15,7 @@ module MB.Types
     , theBlog
     , theConfig
     , notify
+    , runBlogM
     )
 where
 import Control.Concurrent.Chan
@@ -66,6 +67,9 @@ notify :: GenEvent -> BlogM ()
 notify ev = do
   ch <- asks stChan
   liftIO $ writeChan ch ev
+
+runBlogM :: Blog -> Chan GenEvent -> StartupConfig -> BlogM a -> IO a
+runBlogM b ch conf act = runReaderT act (GenState b ch conf)
 
 type Template = StringTemplate String
 
