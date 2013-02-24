@@ -175,9 +175,9 @@ getModificationTime fullPath = do
   info <- getFileStatus fullPath
   return $ toUtcTime $ modificationTime info
 
-loadPostIndex :: FilePath -> IO [Post]
-loadPostIndex postSrcDir = do
-  let indexFilename = postSrcDir </> "posts-index"
+loadPostIndex :: BlogInputFS -> IO [Post]
+loadPostIndex ifs = do
+  let indexFilename = ifsPostIndexPath ifs
   e <- doesFileExist indexFilename
 
   indexNames <- case e of
@@ -192,8 +192,7 @@ loadPostIndex postSrcDir = do
 
   -- Now that we have a postIndex to deal with, load posts from disk
   -- and insert them into the post index in the proper order
-
-  postFiles <- allPostFilenames postSrcDir
+  postFiles <- allPostFilenames $ ifsPostSourceDir ifs
   posts <- mapM loadPost postFiles
 
   -- There are two types of posts to put into the index: the ones that

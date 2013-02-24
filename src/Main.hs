@@ -70,25 +70,26 @@ doGeneration config blog handler = do
   _ <- readMVar mv
   return ()
 
-isEventInteresting :: StartupConfig -> Event -> Bool
-isEventInteresting conf ev =
+isEventInteresting :: BlogInputFS -> Event -> Bool
+isEventInteresting ifs ev =
     let fp = case ev of
                Added f _ -> f
                Modified f _ -> f
                Removed f _ -> f
 
-        isPost f = (dataDirectory conf </> "posts/") `isPrefixOf` f &&
+        isPost f = (ifsPostSourceDir ifs) `isPrefixOf` f &&
                    ".txt" `isSuffixOf` f &&
                    not ("." `isPrefixOf` takeFileName f)
 
-        isPostIndex f = (dataDirectory conf </> "posts/posts-index") == f
+        isPostIndex f = ifsPostIndexPath ifs == f
 
-        isAsset f = (dataDirectory conf </> "assets/") `isPrefixOf` f
+        isAsset f = (ifsAssetDir ifs) `isPrefixOf` f
 
-        isTemplate f = (dataDirectory conf </> "templates/") `isPrefixOf` f &&
-                       ".html" `isSuffixOf` f
+        isTemplate f = (ifsTemplateDir ifs) `isPrefixOf` f &&
+                       ((".html" `isSuffixOf` f) ||
+                        (".xml" `isSuffixOf` f))
 
-        isConfig f = (dataDirectory conf </> "blog.cfg") == f
+        isConfig f = ifsConfigPath ifs == f
 
     in or ([ isPost
            , isAsset
@@ -99,6 +100,7 @@ isEventInteresting conf ev =
 
 scanForChanges :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
 scanForChanges conf h = do
+  let ifs = blogInputFS conf
   forever $ do
     withManager $ \m ->
         do
@@ -106,7 +108,7 @@ scanForChanges conf h = do
           watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
           let nextEv = do
                 ev <- readChan ch
-                if isEventInteresting conf ev then return ev else nextEv
+                if isEventInteresting ifs ev then return ev else nextEv
           evt <- nextEv
           case evt of
             Added fp _ -> putStrLn $ "File created: " ++ FP.encodeString fp
@@ -191,7 +193,7 @@ mkBlog conf = do
       Just cfg_authorEmail = lookup "authorEmail" cfg
 
   -- Load blog posts from disk
-  allPosts <- liftIO $ loadPostIndex $ ifsPostSourceDir ifs
+  allPosts <- liftIO $ loadPostIndex ifs
 
   let requestedMathBackend = lookup "mathBackend" cfg
       isBackendRequested (nam, p) =
