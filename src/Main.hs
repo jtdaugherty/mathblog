@@ -7,6 +7,7 @@ import Control.Concurrent
 import Control.Monad.Trans.Either
 import Data.Maybe
 import Data.Time.Clock
+import Data.Time.Calendar
 import Data.List
 import System.IO
 import System.Exit
@@ -18,6 +19,7 @@ import System.FSNotify
 import qualified Filesystem.Path.CurrentOS as FP
 
 import qualified MB.Config as Config
+import MB.Server
 import MB.Util
 import MB.Types
 import MB.Startup
@@ -98,12 +100,32 @@ isEventInteresting ifs ev =
            , isPostIndex
            ] <*> pure (FP.encodeString fp))
 
-scanForChanges :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
-scanForChanges conf h = do
+scanForChanges :: StartupConfig
+               -> (GenEvent -> IO ())
+               -> (Blog -> Blog)
+               -> IO ()
+scanForChanges conf h blogTrans = do
   let ifs = blogInputFS conf
   forever $ do
     withManager $ \m ->
         do
+          let loadBlog =
+                  do
+                    result <- runEitherT (mkBlog conf)
+                    case result of
+                      Left e -> do
+                          putStrLn $ "Error reading blog configuration: " ++ e
+                          threadDelay 1000000
+                          loadBlog
+                      Right blog -> return $ blogTrans blog
+
+          blog <- loadBlog
+          doGeneration conf blog h
+
+          -- Wait for a bit so the filesystem scan doesn't pick up the
+          -- posts-index change in the source tree
+          threadDelay $ 500 * 1000
+
           ch <- newChan
           watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
           let nextEv = do
@@ -115,20 +137,7 @@ scanForChanges conf h = do
             Modified fp _ -> putStrLn $ "File modified: " ++ FP.encodeString fp
             Removed fp _ -> putStrLn $ "File removed: " ++ FP.encodeString fp
 
-          let loadBlog =
-                  do
-                    result <- runEitherT (mkBlog conf)
-                    case result of
-                      Left e -> do
-                          putStrLn $ "Error reading blog configuration: " ++ e
-                          threadDelay 1000000
-                          loadBlog
-                      Right blog -> return blog
-
-          blog <- loadBlog
-          doGeneration conf blog h
           putStrLn ""
-          threadDelay $ 500 * 1000
 
 mathBackends :: [(String, Processor)]
 mathBackends =
@@ -144,7 +153,11 @@ getIFSState :: BlogInputFS -> BlogOutputFS -> IO BlogInputFSState
 getIFSState ifs ofs =
     BlogInputFSState <$> indexMod <*> configMod <*> baseline <*> template
         where
-          fallback = getCurrentTime
+          -- As a fallback timestamp, use a time in the past to ensure
+          -- things get regenerated if they're missing.
+          fallback = previousDay <$> getCurrentTime
+          previousDay t =
+              t { utctDay = addDays (-1) (utctDay t) }
 
           indexMod = do
             let pth = ifsPostIndexPath ifs
@@ -219,7 +232,7 @@ mkBlog conf = do
   return $ Blog { inputFS = ifs
                 , outputFS = ofs
                 , inputFSState = ifsState
-                , baseUrl = cfg_baseUrl
+                , baseUrl = fromJust (overrideBaseUrl conf <|> Just cfg_baseUrl)
                 , title = cfg_title
                 , authorName = cfg_authorName
                 , authorEmail = cfg_authorEmail
@@ -300,8 +313,9 @@ main = do
             Left e -> (putStrLn $ "Error: " ++ e) >> exitFailure
             Right b -> return b
 
-  case listenMode canonicalConfig of
-    False -> doGeneration canonicalConfig blog printHandler
-    True -> do
+  case listenAddr canonicalConfig of
+    Nothing -> doGeneration canonicalConfig blog printHandler
+    Just _ -> do
          putStrLn $ "Waiting for changes in " ++ (dataDirectory canonicalConfig) ++ " ..."
-         scanForChanges (canonicalConfig { forceRegeneration = False }) printHandler
+         let conf' = canonicalConfig { forceRegeneration = False }
+         withServing conf' $ flip scanForChanges printHandler

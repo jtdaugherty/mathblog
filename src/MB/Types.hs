@@ -29,17 +29,19 @@ import Data.Time.Clock (UTCTime)
 import Data.Monoid
 import Data.List (nub)
 import System.FilePath ((</>))
+import Network.Socket (HostName, PortNumber)
 import qualified Text.Pandoc as Pandoc
 import Text.StringTemplate
     ( StringTemplate
     )
 
-data StartupConfig = StartupConfig { listenMode :: Bool
-                                   , dataDirectory :: FilePath
+data StartupConfig = StartupConfig { dataDirectory :: FilePath
                                    , initDataDirectory :: Bool
                                    , forceRegeneration :: Bool
                                    , htmlOutputDirectory :: FilePath
                                    , configFilePath :: FilePath
+                                   , listenAddr :: Maybe (HostName, PortNumber)
+                                   , overrideBaseUrl :: Maybe String
                                    }
                      deriving (Show, Eq)
 

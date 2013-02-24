@@ -29,15 +29,17 @@ import System.Environment
 import System.Directory
 import System.FilePath
 import System.Console.GetOpt
+import Network.Socket (HostName, PortNumber)
 
 import MB.Types
 
-data Flag = Listen
+data Flag = Listen (Maybe String)
           | DataDir FilePath
           | InitDataDirectory
           | ForceRegenerate
           | HtmlOutputDir FilePath
           | ConfigFile FilePath
+          | BaseUrl String
           | Version
           | Help
             deriving (Eq)
@@ -46,6 +48,16 @@ getDataDirFlag :: [Flag] -> Maybe FilePath
 getDataDirFlag [] = Nothing
 getDataDirFlag (DataDir p:_) = Just p
 getDataDirFlag (_:fs) = getDataDirFlag fs
+
+getListenFlag :: [Flag] -> Maybe (Maybe String)
+getListenFlag [] = Nothing
+getListenFlag (Listen s:_) = Just s
+getListenFlag (_:fs) = getListenFlag fs
+
+getBaseUrlFlag :: [Flag] -> Maybe String
+getBaseUrlFlag [] = Nothing
+getBaseUrlFlag (BaseUrl s:_) = Just s
+getBaseUrlFlag (_:fs) = getBaseUrlFlag fs
 
 getHtmlOutputDirFlag :: [Flag] -> Maybe FilePath
 getHtmlOutputDirFlag [] = Nothing
@@ -65,11 +77,15 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
 
           , Option ['i'] ["init"] (NoArg InitDataDirectory)
                        $ "Initialize the blog data directory."
-          , Option ['l'] ["listen"] (NoArg Listen)
+          , Option ['l'] ["listen"] (OptArg Listen "HOST:PORT")
                        $ "Make mb poll periodically and regenerate your\n" ++
                              "blog content when something changes.  This is\n" ++
                              "useful if you want to run a local web server\n" ++
-                             "to view your posts as you're writing them."
+                             "to view your posts as you're writing them.  Spawns\n" ++
+                             "an HTTP server on the specified host and port."
+          , Option ['b'] ["base-url"] (ReqArg BaseUrl "URL")
+                       $ "The base URL to use in URL generation.  Overrides the\n" ++
+                             "'baseUrl' configuration setting."
           , Option ['f'] ["force"] (NoArg ForceRegenerate)
                        "Force a rebuild of all blog content."
           , Option ['o'] [htmlDirParamName] (ReqArg HtmlOutputDir "PATH")
@@ -117,25 +133,50 @@ startupConfigFromEnv = do
 
       return conf
 
+parseListenString :: String -> Maybe (HostName, PortNumber)
+parseListenString s =
+    case break (== ':') s of
+      ([], _) -> Nothing
+      (_, []) -> Nothing
+      (h, ':':p) -> case reads p :: [(Int, String)] of
+                  [] -> Nothing
+                  ((i, []):_) -> Just (h, toEnum i)
+                  _ -> Nothing
+      _ -> Nothing
+
 -- |Create a startup configuration from the specified arguments list
 -- and environment variable list.  Returns Nothing if the required
 -- information was absent.
 startupConfig :: [Flag] -> [(String, String)] -> Maybe StartupConfig
 startupConfig flags env = do
-  let lm = Listen `elem` flags
-      i = InitDataDirectory `elem` flags
-      f = ForceRegenerate `elem` flags
+  let doInit = InitDataDirectory `elem` flags
+      force = ForceRegenerate `elem` flags
+
+  listen <- case getListenFlag flags of
+              -- If the listen flag is present, capture the value.
+              Just f -> return $ Just f
+              Nothing -> return Nothing
 
   d <- getDataDirFlag flags `mplus` (lookup baseDirEnvName env)
   o <- getHtmlOutputDirFlag flags `mplus` (lookup htmlOutputDirEnvName env)
   c <- getConfigFilePath flags `mplus` (Just $ d </> "blog.cfg")
+  let b = getBaseUrlFlag flags
 
-  return $ StartupConfig { listenMode = lm
-                         , dataDirectory = d
-                         , initDataDirectory = i
-                         , forceRegeneration = f
+  lAddr <- case listen of
+             Nothing -> return Nothing
+             -- If the listen flag was given, then it must parse
+             -- successfully.
+             Just Nothing -> return $ Just ("localhost", 8000)
+             Just (Just s) ->
+                 (return . Just) =<< parseListenString s
+
+  return $ StartupConfig { dataDirectory = d
+                         , initDataDirectory = doInit
+                         , forceRegeneration = force
                          , htmlOutputDirectory = o
                          , configFilePath = c
+                         , listenAddr = lAddr
+                         , overrideBaseUrl = b
                          }
 
 canonicalizeStartupConfig :: StartupConfig -> IO StartupConfig
