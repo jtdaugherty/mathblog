@@ -70,9 +70,6 @@ withServing conf act = do
                  `catch` handleError
                  `finally` cleanup
 
-  -- Run the action; on any exception, be sure to clean up the output
-  -- directory and stop the server
-
 requestHandler :: FilePath -> SockAddr -> URL.URL -> Request BS.ByteString -> IO (Response BS.ByteString)
 requestHandler docRoot _addr url _req = do
   -- Concatenate the url_path of the URL to the output directory.
@@ -99,6 +96,7 @@ requestHandler docRoot _addr url _req = do
         -- Header HdrContentType "text/plain"
         return $ (respond Found :: Response BS.ByteString)
                    { rspHeaders = [ Header HdrContentLength $ show $ BS.length bytes
+                                  , Header HdrCacheControl "no-cache"
                                   ]
                    , rspBody = bytes
                    }

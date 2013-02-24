@@ -157,7 +157,7 @@ getIFSState ifs ofs =
           -- things get regenerated if they're missing.
           fallback = previousDay <$> getCurrentTime
           previousDay t =
-              t { utctDay = addDays (-1) (utctDay t) }
+              t { utctDay = addDays (-1000) (utctDay t) }
 
           indexMod = do
             let pth = ifsPostIndexPath ifs
