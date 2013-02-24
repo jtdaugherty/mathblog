@@ -76,35 +76,17 @@ requestHandler docRoot _addr url _req = do
   -- Then attempt to canonicalize the result.  If it succeeds and is
   -- not contained within the output directory, return a 404.
 
-  let testPath = docRoot </> URL.url_path url
-
-      handleError :: SomeException -> IO (Response BS.ByteString)
-      handleError = const $ return resp404
-
-      resp404 :: Response BS.ByteString
-      resp404 = let msg = BSC.pack $ "Not found: " ++ URL.exportURL url
-                in (err_response NotFound :: Response BS.ByteString)
-                       { rspHeaders = [ Header HdrContentType "text/plain"
-                                      , Header HdrContentLength $ show $ BS.length msg
-                                      ]
-                       , rspBody = msg
-                       }
+  let handleError :: SomeException -> IO (Response BS.ByteString)
+      handleError = const $ return (resp404 url)
 
       mkResponse f = do
         putStrLn $ "Request: /" ++ URL.url_path url
-        bytes <- BS.readFile f
-        -- Header HdrContentType "text/plain"
-        return $ (respond Found :: Response BS.ByteString)
-                   { rspHeaders = [ Header HdrContentLength $ show $ BS.length bytes
-                                  , Header HdrCacheControl "no-cache"
-                                  ]
-                   , rspBody = bytes
-                   }
+        fileToResponse f
 
       serveFile path = do
         realPath <- canonicalizePath path
         if not (docRoot `isPrefixOf` realPath) then
-            return resp404 else
+            return (resp404 url) else
             do
               -- If the request was for a directory, rewrite it so we
               -- look for index.html instead
@@ -113,4 +95,24 @@ requestHandler docRoot _addr url _req = do
                   mkResponse realPath else
                   serveFile (path </> "index.html")
 
-  serveFile testPath `catch` handleError
+  serveFile (docRoot </> URL.url_path url) `catch` handleError
+
+resp404 :: URL.URL -> Response BS.ByteString
+resp404 url =
+    let msg = BSC.pack $ "Not found: " ++ URL.exportURL url
+    in (err_response NotFound :: Response BS.ByteString)
+           { rspHeaders = [ Header HdrContentType "text/plain"
+                          , Header HdrContentLength $ show $ BS.length msg
+                          ]
+           , rspBody = msg
+           }
+
+fileToResponse :: FilePath -> IO (Response BS.ByteString)
+fileToResponse f = do
+  bytes <- BS.readFile f
+  return $ (respond Found :: Response BS.ByteString)
+             { rspHeaders = [ Header HdrContentLength $ show $ BS.length bytes
+                            , Header HdrCacheControl "no-cache"
+                            ]
+             , rspBody = bytes
+             }
