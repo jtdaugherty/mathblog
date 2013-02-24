@@ -106,7 +106,7 @@ renderSingle post pos = do
                   -- Embed the converted Pandoc HTML into the postTemplate;
                   let postPageHtml = renderPostTemplate blog post (nextPost, prevPost) postTmpl postBodyHtml
                       -- Embed the postTemplate result in the pageTemplate.
-                      finalPageHtml = buildPage blog postPageHtml (Just $ getPostTitle blog post BlogPost) pageTmpl
+                      finalPageHtml = buildPage blog postPageHtml (Just $ getRawPostTitle blog post) pageTmpl
 
                   -- Write the final, complete page HTML to the post
                   -- HTML file location.
