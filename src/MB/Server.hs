@@ -61,6 +61,8 @@ withServing conf act = do
       handleError e =
           putStrLn $ "Error running server on " ++ url ++ ": " ++ show e
 
+  putStrLn $ "Web server listening on " ++ url
+
   -- Start the blog generation thread.
   _ <- forkIO $ (act serverConf blogTrans `catch` handleError)
 
