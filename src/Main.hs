@@ -2,11 +2,14 @@ module Main where
 
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Reader
 import Control.Concurrent
 import Data.Maybe
-import Data.Monoid
+import Data.Time.Clock
+import Data.List (sort, intercalate)
 import System.Exit
 import System.Directory
+    hiding (getModificationTime)
 import System.FilePath
 
 import System.FSNotify
@@ -15,7 +18,6 @@ import qualified Filesystem.Path.CurrentOS as FP
 import qualified MB.Config as Config
 import qualified MB.Files as Files
 import MB.Util
-import MB.Changes
 import MB.Types
 import MB.Startup
 import MB.Initialize
@@ -44,37 +46,64 @@ ensureDirs blog = do
 
   forM_ (dirs <*> pure blog) ensureDir
 
-evFilepath :: Event -> FP.FilePath
-evFilepath (Added fp _) = fp
-evFilepath (Modified fp _) = fp
-evFilepath (Removed fp _) = fp
+runBlogM :: Blog -> Chan GenEvent -> StartupConfig -> BlogM a -> IO a
+runBlogM b ch conf act = runReaderT act (GenState b ch conf)
 
-changesFromEvent :: Blog -> Event -> ChangeSummary
-changesFromEvent config ev =
-    let fp = evFilepath ev
-        fpStr = FP.encodeString fp
-        cases = [ ((== (configPath config)), const $ mempty {configChanged = True})
-                , (((postSourceDir config) `isPrefixOf`), \f -> mempty {postsChanged = []})
-                ]
-    in mconcat $ (\c -> if fst c fpStr then snd c else mempty) <$> cases
-
-scanForChanges :: StartupConfig -> IO ()
-scanForChanges conf = do
-  b <- mkBlog conf
+doGeneration :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
+doGeneration config handler = do
   ch <- newChan
-  withManager $ \m ->
-      do
-        -- watchTree :: WatchManager -> FilePath -> (Event -> Bool) -> (Event -> IO ()) -> IO ()
-        -- Event: data Event =
-        -- Added    FilePath UTCTime
-        -- Modified FilePath UTCTime
-        -- Removed  FilePath UTCTime
-        watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
+  mv <- newEmptyMVar
 
-        forever $ do
-          ev <- readChan ch
-          _ <- regenerateContent conf $ changesFromEvent b ev
-          return ()
+  let waitForEvents = do
+        ev <- readChan ch
+        handler ev
+        case ev of
+          Finished -> putMVar mv ()
+          _ -> waitForEvents
+
+  _ <- forkIO waitForEvents
+  blog <- mkBlog config
+  runBlogM blog ch config regenerateContent
+
+  -- Signal event handler to shut down
+  writeChan ch Finished
+
+  -- Wait for event handler to shut down
+  _ <- readMVar mv
+  return ()
+
+isEventInteresting :: FS.Event -> Bool
+isEventInteresting ev =
+    let fp = case ev of
+               Added f _ -> f
+               Modified f _ -> f
+               Removed f _ -> f
+    -- Interesting if it is
+    -- in the assets dir (any file)
+    -- in the templates dir (any .html or .xml file)
+    -- in the posts dir (any .txt file)
+    -- the blog config
+    -- the posts index
+    in or []
+
+scanForChanges :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
+scanForChanges conf h = do
+  forever $ do
+    withManager $ \m ->
+        do
+          ch <- newChan
+          watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
+          let nextEv = do
+                ev <- readChan ch
+                if isEventInteresting ev then return ev else nextEv
+          evt <- nextEv
+          case evt of
+            Added fp _ -> putStrLn $ "File created: " ++ FP.encodeString fp
+            Modified fp _ -> putStrLn $ "File modified: " ++ FP.encodeString fp
+            Removed fp _ -> putStrLn $ "File removed: " ++ FP.encodeString fp
+          doGeneration conf h
+          putStrLn "----"
+          threadDelay $ 500 * 1000
 
 mathBackends :: [(String, Processor)]
 mathBackends =
@@ -138,7 +167,22 @@ mkBlog conf = do
       procs = baseProcessor : eqBackendConfig ++ [mathBackend]
 
   let html = htmlOutputDirectory conf
-      b = Blog { baseDir = base
+
+  -- Get modification times.
+  indexMod <- getModificationTime $ postSrcDir </> "posts-index"
+  configMod <- getModificationTime configFile
+
+  -- Get the most recent page template modification time.
+  let templatePath p = base </> "templates" </> p
+  tmpls <- filter (not . flip elem [".", ".."]) <$> (getDirectoryContents $ base </> "templates")
+  tmplTime <- last <$> sort <$> mapM getModificationTime (templatePath <$> tmpls)
+
+  baseline <- do
+    let indexHtml = html </> "index.html"
+    ex <- doesFileExist indexHtml
+    if ex then getModificationTime indexHtml else getCurrentTime
+
+  let b = Blog { baseDir = base
                , postSourceDir = postSrcDir
                , htmlDir = html
                , assetDir = base </> "assets"
@@ -153,6 +197,10 @@ mkBlog conf = do
                , configPath = configFile
                , blogPosts = allPosts
                , processors = procs
+               , postIndexMTime = indexMod
+               , configMTime = configMod
+               , baselineMTime = baseline
+               , templateMTime = tmplTime
                }
 
   ensureDirs b
@@ -160,77 +208,50 @@ mkBlog conf = do
 
 -- For each configured document processor, run its check routine in
 -- case it needs to install data files or do validation.
-runProcessorChecks :: Blog -> IO ()
-runProcessorChecks blog =
-    let checks = catMaybes $ checkDataDir <$> processors blog
-    in sequence_ $ checks <*> pure blog
+runProcessorChecks :: BlogM ()
+runProcessorChecks = do
+  ps <- processors <$> theBlog
+  let checks = catMaybes $ checkDataDir <$> ps
+  sequence_ checks
 
-doInstallAssets :: Blog -> IO ()
-doInstallAssets blog =
-    let fs = catMaybes $ installAssets <$> processors blog
-    in sequence_ $ fs <*> pure blog
+doInstallAssets :: BlogM ()
+doInstallAssets = do
+  ps <- processors <$> theBlog
+  let fs = catMaybes $ installAssets <$> ps
+  sequence_ fs
 
-regenerateContent :: StartupConfig -> ChangeSummary -> IO Bool
-regenerateContent conf summary = do
-  blog <- mkBlog conf
-  runProcessorChecks blog
+regenerateContent :: BlogM ()
+regenerateContent = do
+  blog <- theBlog
 
-  case anyChanges summary of
-    False -> return False
-    True -> do
-      putStrLn $ "Blog directory: " ++ baseDir blog
-      putStrLn $ "Config file:    " ++ configFilePath conf
+  runProcessorChecks
 
-      putStrLn "Changes found:"
+  generatePosts
+  buildIndexPage
+  generatePostList
 
-      when (configChanged summary) $
-           putStrLn "  Configuration file"
+  withTemplate (Files.rssTemplatePath blog) $ \t ->
+      liftIO $ writeFile (Files.rssXml blog) $ generateRssFeed blog t
 
-      when (postIndexChanged summary) $
-           putStrLn "  Post index"
+  liftIO $ writeFile (Files.postIndex blog) $
+            serializePostIndex $ blogPosts blog
 
-      when (not $ null $ postsChanged summary) $
-           do
-             putStrLn "  Posts:"
-             forM_ (postsChanged summary) $ \p ->
-                 putStrLn $ "    " ++ p
+  doInstallAssets
 
-      when (not $ null $ templatesChanged summary) $
-           do
-             putStrLn "  Templates:"
-             forM_ (templatesChanged summary) $ \t ->
-                 putStrLn $ "    " ++ t
-
-      when (not $ null $ assetsChanged summary) $
-           do
-             putStrLn "  Assets:"
-             forM_ (assetsChanged summary) $ \a ->
-                 putStrLn $ "    " ++ a
-
-      let posts = [ p | p <- blogPosts blog
-                  , or [ postFilename p `elem` postsChanged summary
-                       , postIndexChanged summary
-                       , configChanged summary
-                       , forceRegeneration conf
-                       , not $ null $ templatesChanged summary
-                       ]
-                  ]
-
-      generatePosts blog posts
-      buildIndexPage blog
-      generatePostList blog
-
-      withTemplate (Files.rssTemplatePath blog) $ \t ->
-          writeFile (Files.rssXml blog) $ generateRssFeed blog t
-
-      writeFile (Files.postIndex blog) $
-                serializePostIndex $ blogPosts blog
-
-      when (not $ null $ assetsChanged summary) $
-           doInstallAssets blog
-
-      putStrLn "Done."
-      return True
+printHandler :: GenEvent -> IO ()
+printHandler (PostRender p cs) =
+    let cause Config = "config changed"
+        cause PostIndex = "post-index changed"
+        cause Template = "template changed"
+        cause PostModified = "post was modified"
+        cause Forced = "forced rebuild"
+        reasons = intercalate ", " (cause <$> cs)
+    in if cs == [PostModified]
+       then putStrLn $ "Rendering post: " ++ (show $ postBaseName p)
+       else putStrLn $ "Rendering post (" ++ reasons
+                ++ "): " ++ (show $ postBaseName p)
+printHandler Finished =
+    putStrLn "Done."
 
 main :: IO ()
 main = do
@@ -240,11 +261,7 @@ main = do
   when (initDataDirectory conf) $ initializeDataDir dir
 
   case listenMode conf of
-    False -> do
-         blog <- mkBlog conf
-         changes <- summarizeChanges blog (forceRegeneration conf)
-         didWork <- regenerateContent conf changes
-         when (not didWork) $ putStrLn "No changes found!"
+    False -> doGeneration conf printHandler
     True -> do
          putStrLn $ "Waiting for changes in " ++ (dataDirectory conf) ++ " ..."
-         scanForChanges (conf { forceRegeneration = False })
+         scanForChanges (conf { forceRegeneration = False }) printHandler

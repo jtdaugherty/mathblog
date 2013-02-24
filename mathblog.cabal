@@ -56,7 +56,8 @@ Executable mb
     ConfigFile >= 1.1,
     containers >= 0.3,
     fsnotify >= 0.0.6,
-    system-filepath >= 0.3.1
+    system-filepath >= 0.3.1,
+    mtl >= 2.0
 
   Other-modules:
     Paths_mathblog
@@ -69,7 +70,6 @@ Executable mb
     MB.Util
     MB.Startup
     MB.TeXMacros
-    MB.Changes
 
     MB.Gen.Post
     MB.Gen.PostList

@@ -1,14 +1,24 @@
 module MB.Types
     ( Blog(..)
+    , StartupConfig(..)
+    , BlogM
+    , GenEvent(..)
+    , GenState(..)
     , Post(..)
     , Template
     , ChangeSummary(..)
     , Page(..)
     , Processor(..)
+    , RenderCause(..)
     , nullProcessor
     , noChanges
+    , theBlog
+    , theConfig
+    , notify
     )
 where
+import Control.Concurrent.Chan
+import Control.Monad.Reader
 import Data.Time.Clock
     ( UTCTime
     )
@@ -18,6 +28,44 @@ import qualified Text.Pandoc as Pandoc
 import Text.StringTemplate
     ( StringTemplate
     )
+
+data StartupConfig = StartupConfig { listenMode :: Bool
+                                   , dataDirectory :: FilePath
+                                   , initDataDirectory :: Bool
+                                   , forceRegeneration :: Bool
+                                   , htmlOutputDirectory :: FilePath
+                                   , configFilePath :: FilePath
+                                   }
+                     deriving (Show, Eq)
+
+data GenState =
+    GenState { stBlog :: Blog
+             , stChan :: Chan GenEvent
+             , stConfig :: StartupConfig
+             }
+
+data GenEvent = PostRender Post [RenderCause]
+              | Finished
+
+data RenderCause = Config
+                 | PostIndex
+                 | Template
+                 | PostModified
+                 | Forced
+                   deriving (Eq, Show)
+
+type BlogM a = ReaderT GenState IO a
+
+theBlog :: BlogM Blog
+theBlog = asks stBlog
+
+theConfig :: BlogM StartupConfig
+theConfig = asks stConfig
+
+notify :: GenEvent -> BlogM ()
+notify ev = do
+  ch <- asks stChan
+  liftIO $ writeChan ch ev
 
 type Template = StringTemplate String
 
@@ -36,6 +84,10 @@ data Blog = Blog { baseDir :: FilePath
                  , configPath :: FilePath
                  , blogPosts :: [Post]
                  , processors :: [Processor]
+                 , postIndexMTime :: UTCTime
+                 , configMTime :: UTCTime
+                 , templateMTime :: UTCTime
+                 , baselineMTime :: UTCTime
                  }
 
 data Post = Post { postTitle :: [Pandoc.Inline]
@@ -58,19 +110,18 @@ data Page = BlogPost
 
 data Processor =
     Processor { applyWriterOptions :: Maybe (Pandoc.WriterOptions -> Pandoc.WriterOptions)
-              , preProcessPost :: Maybe (Blog -> Post -> IO Post)
-              , postProcessPost :: Maybe (Blog -> FilePath -> Page -> IO ())
+              , preProcessPost :: Maybe (Post -> BlogM Post)
+              , postProcessPost :: Maybe (FilePath -> Page -> BlogM ())
               , pageHead :: Maybe String
               , buildPostTitle :: Maybe (Page -> [Pandoc.Inline] -> [Pandoc.Inline])
               , rawPostTitle :: Maybe ([Pandoc.Inline] -> String)
-              , getChangeSummary :: Maybe (Blog -> UTCTime -> IO ChangeSummary)
-              , checkDataDir :: Maybe (Blog -> IO ())
-              , installAssets :: Maybe (Blog -> IO ())
+              , checkDataDir :: Maybe (BlogM ())
+              , installAssets :: Maybe (BlogM ())
               }
 
 nullProcessor :: Processor
 nullProcessor =
-    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    Processor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Summarize changes in files so we know what to do during the
 -- regeneration phase.  postsChanged and configChanged are the primary

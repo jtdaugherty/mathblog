@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 module MB.Startup
-    ( StartupConfig(..)
-    , startupConfigFromEnv
+    ( startupConfigFromEnv
     , versionString
 #ifdef TESTING
     , Flag(..)
@@ -29,14 +28,7 @@ import System.Environment
 import System.FilePath
 import System.Console.GetOpt
 
-data StartupConfig = StartupConfig { listenMode :: Bool
-                                   , dataDirectory :: FilePath
-                                   , initDataDirectory :: Bool
-                                   , forceRegeneration :: Bool
-                                   , htmlOutputDirectory :: FilePath
-                                   , configFilePath :: FilePath
-                                   }
-                     deriving (Show, Eq)
+import MB.Types
 
 data Flag = Listen
           | DataDir FilePath

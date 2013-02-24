@@ -4,6 +4,7 @@ module MB.Gen.PostList
 where
 
 import Control.Applicative
+import Control.Monad.Trans
 import Text.StringTemplate
     ( setManyAttrib )
 
@@ -14,8 +15,10 @@ import MB.Processing
 import MB.Gen.Base
 import MB.Gen.Post (postTemplateAttrs)
 
-generatePostList :: Blog -> IO ()
-generatePostList blog = do
+generatePostList :: BlogM ()
+generatePostList = do
+  blog <- theBlog
+
   withTemplate (Files.listTemplatePath blog) $ \listTmpl ->
       withTemplate (Files.pageTemplatePath blog) $ \pageTmpl ->
           do
@@ -23,5 +26,6 @@ generatePostList blog = do
                 listTmpl' = setManyAttrib [("posts", postData)] listTmpl
                 out = fillTemplate blog listTmpl' []
 
-            writeFile (Files.listHtml blog) $ buildPage blog out Nothing pageTmpl
-            applyPostProcessors blog (Files.listHtml blog) Index
+            liftIO $ writeFile (Files.listHtml blog) $
+              buildPage blog out Nothing pageTmpl
+            applyPostProcessors (Files.listHtml blog) Index

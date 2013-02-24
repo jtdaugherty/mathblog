@@ -8,6 +8,7 @@ import Test.HUnit
     ( (@=?), assertFailure )
 
 import MB.Startup
+import MB.Types
 
 tests :: Test
 tests = testGroup "Startup configuration tests" [

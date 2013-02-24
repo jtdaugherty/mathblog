@@ -4,13 +4,16 @@ module MB.Gen.Index
 where
 
 import Control.Monad
+import Control.Monad.Trans
 import System.Directory
 
 import MB.Types
 import qualified MB.Files as Files
 
-buildIndexPage :: Blog -> IO ()
-buildIndexPage blog = do
+buildIndexPage :: BlogM ()
+buildIndexPage = do
+  blog <- theBlog
+
   when (null $ blogPosts blog) $
        error "No blog posts; please create a first post in posts/."
 
@@ -18,4 +21,4 @@ buildIndexPage blog = do
       index = Files.indexHtml blog
       post = head $ blogPosts blog
 
-  copyFile src index
+  liftIO $ copyFile src index

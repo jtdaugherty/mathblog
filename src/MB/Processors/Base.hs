@@ -5,6 +5,7 @@ where
 
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Trans
 import System.FilePath
 import System.Directory
 
@@ -16,16 +17,18 @@ baseProcessor =
     nullProcessor { installAssets = Just doInstallAssets
                   }
 
-doInstallAssets :: Blog -> IO ()
-doInstallAssets blog = do
-  let ad = assetDir blog
+doInstallAssets :: BlogM ()
+doInstallAssets = do
+  ad <- assetDir <$> theBlog
+  outputDir <- htmlDir <$> theBlog
 
   -- For each file and directory in assets/, copy it to the output
   -- directory.
-  entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents ad
+  liftIO $ do
+    entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents ad
 
-  files <- filterM doesFileExist $ map (ad </>) entries
-  forM_ files $ \f -> copyFile f (htmlDir blog </> (takeFileName f))
+    files <- filterM doesFileExist $ (ad </>) <$> entries
+    forM_ files $ \f -> copyFile f (outputDir </> (takeFileName f))
 
-  dirs <- filterM doesDirectoryExist $ map (ad </>) entries
-  forM_ dirs $ \d -> copyTree d (htmlDir blog </> (takeBaseName d))
+    dirs <- filterM doesDirectoryExist $ (ad </>) <$> entries
+    forM_ dirs $ \d -> copyTree d (outputDir </> (takeBaseName d))

@@ -7,6 +7,7 @@ module MB.Templates
 where
 
 import Control.Applicative
+import Control.Monad.Trans
 import Data.Maybe
 import System.IO
 import System.Exit
@@ -18,18 +19,18 @@ import Text.StringTemplate
     )
 import MB.Types
 
-withTemplate :: FilePath -> (Template -> IO a) -> IO a
+withTemplate :: FilePath -> (Template -> BlogM a) -> BlogM a
 withTemplate path f = do
   tmpl <- loadTemplate path
   case tmpl of
     Left msg -> do
-              putStrLn $ "Could not load template " ++ show path ++ ": " ++ msg
-              exitFailure
+              liftIO $ putStrLn $ "Could not load template " ++ show path ++ ": " ++ msg
+              liftIO $ exitFailure
     Right t -> f t
 
-loadTemplate :: FilePath -> IO (Either String Template)
+loadTemplate :: FilePath -> BlogM (Either String Template)
 loadTemplate path = do
-  s <- readFile path
+  s <- liftIO $ readFile path
   s `seq` return ()
 
   let (a, _, _) = checkTemplate t
@@ -46,8 +47,8 @@ fillTemplate :: Blog -> Template -> [(String, String)] -> String
 fillTemplate blog t attrs = renderTemplate attrs' t
     where attrs' = commonTemplateAttrs blog ++ attrs
 
-writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> IO ()
-writeTemplate blog h t attrs = hPutStr h $ fillTemplate blog t attrs
+writeTemplate :: Blog -> Handle -> Template -> [(String, String)] -> BlogM ()
+writeTemplate blog h t attrs = liftIO $ hPutStr h $ fillTemplate blog t attrs
 
 commonTemplateAttrs :: Blog -> [(String, String)]
 commonTemplateAttrs blog =

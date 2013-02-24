@@ -3,23 +3,13 @@ module MB.Processors.Tikz
     )
 where
 
+import Control.Monad.Trans
 import Data.List
-    ( intercalate
-    )
 import Data.Digest.Pure.SHA
-    ( showDigest
-    , sha1
-    )
-import Data.ByteString.Lazy.Char8
-    ( pack
-    )
+import Data.ByteString.Lazy.Char8 (pack)
 import System.Process
-    ( readProcessWithExitCode
-    )
 import System.Directory
 import System.Exit
-    ( ExitCode(..)
-    )
 import qualified Text.Pandoc as Pandoc
 import MB.Types
 import qualified MB.Files as Files
@@ -29,17 +19,18 @@ tikzProcessor =
     nullProcessor { preProcessPost = Just renderTikz
                   }
 
-renderTikz :: Blog -> Post -> IO Post
-renderTikz config post = do
+renderTikz :: Post -> BlogM Post
+renderTikz post = do
   let Pandoc.Pandoc m blocks = postAst post
-  newBlocks <- mapM (renderTikzScript config post) blocks
+  newBlocks <- mapM (renderTikzScript post) blocks
   return $ post { postAst = Pandoc.Pandoc m newBlocks }
 
-renderTikzScript :: Blog
-                 -> Post
+renderTikzScript :: Post
                  -> Pandoc.Block
-                 -> IO Pandoc.Block
-renderTikzScript config post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
+                 -> BlogM Pandoc.Block
+renderTikzScript post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
+  blog <- theBlog
+
   let digestInput = postTeXMacros post ++ rawScript
 
       -- Generate an image name in the images/ directory of the blog
@@ -48,7 +39,7 @@ renderTikzScript config post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScrip
       -- already exists.
       hash = showDigest $ sha1 $ pack digestInput
       imageFilename = "tikz-" ++ hash ++ ".png"
-      imagePath = Files.imageFilename config imageFilename
+      imagePath = Files.imageFilename blog imageFilename
       preamble = unlines [ "\\documentclass{article}"
                          , "\\usepackage{tikz}"
                          , "\\usetikzlibrary{intersections,backgrounds,fit,calc,positioning}"
@@ -83,16 +74,17 @@ renderTikzScript config post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScrip
                                            ]
                              ]
 
-  e <- doesFileExist imagePath
+  e <- liftIO $ doesFileExist imagePath
   case e of
     True -> return newBlock
     False -> do
-           writeFile "/tmp/tmp.tex" latexSource
+           liftIO $ writeFile "/tmp/tmp.tex" latexSource
 
-           (s1, out1, _) <- readProcessWithExitCode "pdflatex" [ "-halt-on-error", "-output-directory", "/tmp"
-                                                                 , "--jobname", "testfigure", "/tmp/tmp.tex"] ""
+           (s1, out1, _) <- liftIO $ readProcessWithExitCode "pdflatex" [ "-halt-on-error", "-output-directory", "/tmp"
+                                                                        , "--jobname", "testfigure", "/tmp/tmp.tex"] ""
            case s1 of
-             ExitFailure _ -> do
+             ExitFailure _ ->
+                 liftIO $ do
                      putStrLn out1
                      putStrLn ">>>>>>> Input source >>>>>>>"
                      putStrLn latexSource
@@ -100,13 +92,14 @@ renderTikzScript config post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScrip
                      return blk
              ExitSuccess -> do
                      -- Convert the temporary file to a PNG.
-                     (s2, out2, err) <- readProcessWithExitCode "convert" [ "-density", "120"
-                                                                          , "-quality", "100"
-                                                                          , "/tmp/testfigure.pdf"
-                                                                          , imagePath
-                                                                          ] ""
+                     (s2, out2, err) <- liftIO $ readProcessWithExitCode "convert" [ "-density", "120"
+                                                                                   , "-quality", "100"
+                                                                                   , "/tmp/testfigure.pdf"
+                                                                                   , imagePath
+                                                                                   ] ""
                      case s2 of
-                       ExitFailure _ -> do
+                       ExitFailure _ ->
+                           liftIO $ do
                                putStrLn "Could not render Tikz picture:"
                                putStrLn "Equation was:"
                                putStrLn latexSource
@@ -116,4 +109,4 @@ renderTikzScript config post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScrip
                                return blk
                        ExitSuccess -> return newBlock
 
-renderTikzScript _ _ b = return b
+renderTikzScript _ b = return b

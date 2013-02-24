@@ -7,6 +7,7 @@ where
 
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Trans
 import Data.Maybe
 import qualified Data.Map as M
 import Text.StringTemplate
@@ -45,24 +46,41 @@ postTemplateAttrs blog post =
                   , ("tex_macros", postTeXMacros post)
                   ]
 
-generatePosts :: Blog -> [Post] -> IO ()
-generatePosts blog posts = do
-  let n = length posts
+generatePosts :: BlogM ()
+generatePosts = do
+  blog <- theBlog
 
-  when (n > 0) $
-       putStrLn "Rendering post(s):"
+  let toRender = zip (blogPosts blog) [0..]
 
-  let allPosts = zip (blogPosts blog) [0..]
-      toRender = [ (p, pos) | (p, pos) <- allPosts
-                 , postFilename p `elem` (postFilename <$> posts)
-                 ]
+  forM_ toRender $ \(post, pos) ->
+      renderSingle post pos
 
-  forM_ (zip toRender [1..]) $ \((post, pos), i::Int) ->
+renderSingle :: Post -> Int -> BlogM ()
+renderSingle post pos = do
+  blog <- theBlog
+  conf <- theConfig
+
+  let renderCauses p =
+          catMaybes $ [ if postModificationTime p > baselineMTime blog
+                        then Just PostModified
+                        else Nothing
+                      , if postIndexMTime blog > baselineMTime blog
+                        then Just PostIndex
+                        else Nothing
+                      , if configMTime blog > baselineMTime blog
+                        then Just Config
+                        else Nothing
+                      , if forceRegeneration conf
+                        then Just Forced
+                        else Nothing
+                      , if templateMTime blog > baselineMTime blog
+                        then Just Template
+                        else Nothing
+                      ]
+
+  if null (renderCauses post) then
+      return () else
       do
-        putStrLn $ "  [" ++ (show i) ++ "/" ++
-                     (show n) ++ "] " ++ (postFilename post)
-        putStrLn $ "        title: \"" ++ (getPostTitle blog post Index) ++ "\""
-
         let nextPost = if pos == 0
                        then Nothing
                        else Just (blogPosts blog !! (pos - 1))
@@ -71,10 +89,12 @@ generatePosts blog posts = do
                        then Nothing
                        else Just (blogPosts blog !! (pos + 1))
 
+        notify $ PostRender post $ renderCauses post
+
         -- Steps:
 
         -- Transform AST with preprocessors;
-        newPost <- applyPreProcessors blog post
+        newPost <- applyPreProcessors post
 
         -- Render the transformed AST as HTML using Pandoc;
         let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
@@ -90,8 +110,8 @@ generatePosts blog posts = do
 
                   -- Write the final, complete page HTML to the post
                   -- HTML file location.
-                  writeFile (Files.postFinalHtml blog post) finalPageHtml
+                  liftIO $ writeFile (Files.postFinalHtml blog post) finalPageHtml
 
                   -- Give postprocessors a chance to transform the
                   -- final HTML.
-                  applyPostProcessors blog (Files.postFinalHtml blog post) BlogPost
+                  applyPostProcessors (Files.postFinalHtml blog post) BlogPost

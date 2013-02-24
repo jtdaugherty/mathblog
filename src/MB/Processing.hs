@@ -13,27 +13,31 @@ import qualified Text.Pandoc as Pandoc
 import MB.Types
 import MB.Util
 
-applyPreProcessors :: Blog -> Post -> IO Post
-applyPreProcessors b post = applyPreProcessors_ b post (processors b)
+applyPreProcessors :: Post -> BlogM Post
+applyPreProcessors post = do
+  ps <- processors <$> theBlog
+  applyPreProcessors_ post ps
 
-applyPostProcessors :: Blog -> FilePath -> Page -> IO ()
-applyPostProcessors b path pg = applyPostProcessors_ b path pg (processors b)
+applyPostProcessors :: FilePath -> Page -> BlogM ()
+applyPostProcessors path pg = do
+  ps <- processors <$> theBlog
+  applyPostProcessors_ path pg ps
 
-applyPreProcessors_ :: Blog -> Post -> [Processor] -> IO Post
-applyPreProcessors_ _ post [] = return post
-applyPreProcessors_ b post (p:ps) = do
+applyPreProcessors_ :: Post -> [Processor] -> BlogM Post
+applyPreProcessors_ post [] = return post
+applyPreProcessors_ post (p:ps) = do
   post' <- case preProcessPost p of
              Nothing -> return post
-             Just f -> f b post
-  applyPreProcessors_ b post' ps
+             Just f -> f post
+  applyPreProcessors_ post' ps
 
-applyPostProcessors_ :: Blog -> FilePath -> Page -> [Processor] -> IO ()
-applyPostProcessors_ _ _ _ [] = return ()
-applyPostProcessors_ b pth pg (p:ps) = do
+applyPostProcessors_ :: FilePath -> Page -> [Processor] -> BlogM ()
+applyPostProcessors_ _ _ [] = return ()
+applyPostProcessors_ pth pg (p:ps) = do
   case postProcessPost p of
     Nothing -> return ()
-    Just f -> f b pth pg
-  applyPostProcessors_ b pth pg ps
+    Just f -> f pth pg
+  applyPostProcessors_ pth pg ps
 
 getWriterOptions :: Blog -> Pandoc.WriterOptions -> Pandoc.WriterOptions
 getWriterOptions b = foldl (.) id (catMaybes $ applyWriterOptions <$> processors b)
