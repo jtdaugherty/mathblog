@@ -10,21 +10,25 @@ module MB.Types
     , Page(..)
     , Processor(..)
     , RenderCause(..)
+    , BlogInputFS(..)
+    , BlogOutputFS(..)
+    , BlogInputFSState(..)
     , nullProcessor
     , noChanges
     , theBlog
     , theConfig
     , notify
     , runBlogM
+    , blogOutputFS
+    , blogInputFS
     )
 where
 import Control.Concurrent.Chan
 import Control.Monad.Reader
-import Data.Time.Clock
-    ( UTCTime
-    )
+import Data.Time.Clock (UTCTime)
 import Data.Monoid
 import Data.List (nub)
+import System.FilePath ((</>))
 import qualified Text.Pandoc as Pandoc
 import Text.StringTemplate
     ( StringTemplate
@@ -38,6 +42,39 @@ data StartupConfig = StartupConfig { listenMode :: Bool
                                    , configFilePath :: FilePath
                                    }
                      deriving (Show, Eq)
+
+blogOutputFS :: StartupConfig -> BlogOutputFS
+blogOutputFS c =
+    let base = htmlOutputDirectory c
+        images = base </> "generated-images"
+        posts = base </> "posts"
+    in BlogOutputFS { ofsBaseDir = base
+                    , ofsPostHtmlDir = posts
+                    , ofsImageDir = images
+                    , ofsHtmlTempDir = base </> "tmp"
+                    , ofsImagePath = \fn -> images </> fn
+                    , ofsIndexHtml = base </> "index.html"
+                    , ofsRssXml = base </> "feed.xml"
+                    , ofsListHtml = posts </> "index.html"
+                    , ofsPostFinalHtml = \p -> posts </> postHtmlFilename p
+                    }
+
+blogInputFS :: StartupConfig -> BlogInputFS
+blogInputFS c =
+    let base = dataDirectory c
+        templates = base </> "templates"
+        posts = base </> "posts"
+    in BlogInputFS { ifsBaseDir = base
+                   , ifsPostSourceDir = posts
+                   , ifsTemplateDir = templates
+                   , ifsPostIndexPath = posts </> "posts-index"
+                   , ifsConfigPath = base </> "blog.cfg"
+                   , ifsAssetDir = base </> "assets"
+                   , ifsPageTemplatePath = templates </> "pageTemplate.html"
+                   , ifsListTemplatePath = templates </> "listTemplate.html"
+                   , ifsPostTemplatePath = templates </> "postTemplate.html"
+                   , ifsRssTemplatePath = templates </> "rssTemplate.xml"
+                   }
 
 data GenState =
     GenState { stBlog :: Blog
@@ -73,25 +110,48 @@ runBlogM b ch conf act = runReaderT act (GenState b ch conf)
 
 type Template = StringTemplate String
 
-data Blog = Blog { baseDir :: FilePath
-                 , postSourceDir :: FilePath
-                 , htmlDir :: FilePath
-                 , assetDir :: FilePath
-                 , postHtmlDir :: FilePath
-                 , imageDir :: FilePath
-                 , templateDir :: FilePath
-                 , htmlTempDir :: FilePath
+data BlogInputFS =
+ BlogInputFS { ifsBaseDir :: FilePath
+             , ifsPostSourceDir :: FilePath
+             , ifsAssetDir :: FilePath
+             , ifsTemplateDir :: FilePath
+             , ifsConfigPath :: FilePath
+             , ifsPostIndexPath :: FilePath
+             , ifsPageTemplatePath :: FilePath
+             , ifsListTemplatePath :: FilePath
+             , ifsPostTemplatePath :: FilePath
+             , ifsRssTemplatePath :: FilePath
+             }
+
+data BlogOutputFS =
+    BlogOutputFS { ofsBaseDir :: FilePath
+                 , ofsPostHtmlDir :: FilePath
+                 , ofsImageDir :: FilePath
+                 , ofsHtmlTempDir :: FilePath
+                 , ofsImagePath :: String -> FilePath
+                 , ofsIndexHtml :: FilePath
+                 , ofsRssXml :: FilePath
+                 , ofsListHtml :: FilePath
+                 , ofsPostFinalHtml :: Post -> FilePath
+                 }
+
+data BlogInputFSState =
+    BlogInputFSState { ifsPostIndexMTime :: UTCTime
+                     , ifsConfigMTime :: UTCTime
+                     , ifsBaselineMTime :: UTCTime
+                     , ifsTemplateMTime :: UTCTime
+                     }
+
+
+data Blog = Blog { inputFS :: BlogInputFS
+                 , outputFS :: BlogOutputFS
+                 , inputFSState :: BlogInputFSState
                  , baseUrl :: String
                  , title :: String
                  , authorName :: String
                  , authorEmail :: String
-                 , configPath :: FilePath
                  , blogPosts :: [Post]
                  , processors :: [Processor]
-                 , postIndexMTime :: UTCTime
-                 , configMTime :: UTCTime
-                 , templateMTime :: UTCTime
-                 , baselineMTime :: UTCTime
                  }
 
 data Post = Post { postTitle :: [Pandoc.Inline]

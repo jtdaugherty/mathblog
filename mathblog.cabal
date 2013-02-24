@@ -65,7 +65,6 @@ Executable mb
     MB.Initialize
     MB.Config
     MB.Templates
-    MB.Files
     MB.Types
     MB.Util
     MB.Startup

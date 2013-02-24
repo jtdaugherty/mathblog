@@ -17,7 +17,6 @@ import System.FSNotify
 import qualified Filesystem.Path.CurrentOS as FP
 
 import qualified MB.Config as Config
-import qualified MB.Files as Files
 import MB.Util
 import MB.Types
 import MB.Startup
@@ -33,18 +32,20 @@ import MB.Processors.Tikz
 import MB.Processors.Mathjax
 import MB.Processors.Base
 
-ensureDirs :: Blog -> IO ()
-ensureDirs blog = do
-  let dirs = [ postSourceDir
-             , htmlDir
-             , assetDir
-             , postHtmlDir
-             , imageDir
-             , templateDir
-             , htmlTempDir
-             ]
+ensureDirs :: BlogInputFS -> BlogOutputFS -> IO ()
+ensureDirs ifs ofs = do
+  let ifsDirs = [ ifsPostSourceDir
+                , ifsAssetDir
+                , ifsTemplateDir
+                ]
+      ofsDirs = [ ofsBaseDir
+                , ofsPostHtmlDir
+                , ofsImageDir
+                , ofsHtmlTempDir
+                ]
 
-  forM_ (dirs <*> pure blog) ensureDir
+  forM_ (ifsDirs <*> pure ifs) ensureDir
+  forM_ (ofsDirs <*> pure ofs) ensureDir
 
 doGeneration :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
 doGeneration config handler = do
@@ -125,14 +126,43 @@ eqBackends =
     [ ("tikz", tikzProcessor)
     ]
 
+getIFSState :: BlogInputFS -> BlogOutputFS -> IO BlogInputFSState
+getIFSState ifs ofs =
+    BlogInputFSState <$> indexMod <*> configMod <*> baseline <*> template
+        where
+          fallback = getCurrentTime
+
+          indexMod = do
+            let pth = ifsPostIndexPath ifs
+            ex <- doesFileExist pth
+            if ex then getModificationTime pth else fallback
+
+          configMod = do
+            let pth = ifsConfigPath ifs
+            ex <- doesFileExist pth
+            if ex then getModificationTime pth else fallback
+
+          template = do
+            contents <- getDirectoryContents $ ifsTemplateDir ifs
+            let templates = filter (not . flip elem [".", ".."]) contents
+                templatePath = (ifsTemplateDir ifs </>)
+            last <$> sort <$>
+                 mapM getModificationTime (templatePath <$> templates)
+
+          baseline = do
+            let indexHtml = ofsIndexHtml ofs
+            ex <- doesFileExist indexHtml
+            if ex then getModificationTime indexHtml else fallback
+
 mkBlog :: StartupConfig -> IO Blog
 mkBlog conf = do
-  let base = dataDirectory conf
-      configFile = base </> (configFilePath conf)
-  e <- doesFileExist configFile
+  let ifs = blogInputFS conf
+      ofs = blogOutputFS conf
+      configPath = ifsConfigPath ifs
 
+  e <- doesFileExist configPath
   when (not e) $ do
-                  putStrLn $ "Configuration file " ++ configFile ++ " not found"
+                  putStrLn $ "Configuration file " ++ configPath ++ " not found"
                   exitFailure
 
   let requiredValues = [ "baseUrl"
@@ -141,7 +171,7 @@ mkBlog conf = do
                        , "authorEmail"
                        ]
 
-  cfg <- Config.readConfig configFile requiredValues
+  cfg <- Config.readConfig configPath requiredValues
 
   let Just cfg_baseUrl = lookup "baseUrl" cfg
       Just cfg_title = lookup "title" cfg
@@ -149,8 +179,7 @@ mkBlog conf = do
       Just cfg_authorEmail = lookup "authorEmail" cfg
 
   -- Load blog posts from disk
-  let postSrcDir = base </> "posts"
-  allPosts <- loadPostIndex postSrcDir
+  allPosts <- loadPostIndex $ ifsPostSourceDir ifs
 
   let requestedMathBackend = lookup "mathBackend" cfg
       mathBackend = case requestedMathBackend of
@@ -170,49 +199,21 @@ mkBlog conf = do
 
       procs = baseProcessor : eqBackendConfig ++ [mathBackend]
 
-  let html = htmlOutputDirectory conf
-
   -- Get modification times.
-  indexMod <- do
-    let pth = postSrcDir </> "posts-index"
-    ex <- doesFileExist pth
-    if ex then getModificationTime pth else getCurrentTime
+  ifsState <- getIFSState ifs ofs
 
-  configMod <- getModificationTime configFile
+  ensureDirs ifs ofs
 
-  -- Get the most recent page template modification time.
-  let templatePath p = base </> "templates" </> p
-  tmpls <- filter (not . flip elem [".", ".."]) <$> (getDirectoryContents $ base </> "templates")
-  tmplTime <- last <$> sort <$> mapM getModificationTime (templatePath <$> tmpls)
-
-  baseline <- do
-    let indexHtml = html </> "index.html"
-    ex <- doesFileExist indexHtml
-    if ex then getModificationTime indexHtml else getCurrentTime
-
-  let b = Blog { baseDir = base
-               , postSourceDir = postSrcDir
-               , htmlDir = html
-               , assetDir = base </> "assets"
-               , postHtmlDir = html </> "posts"
-               , imageDir = html </> "generated-images"
-               , templateDir = base </> "templates"
-               , htmlTempDir = base </> "tmp"
-               , baseUrl = cfg_baseUrl
-               , title = cfg_title
-               , authorName = cfg_authorName
-               , authorEmail = cfg_authorEmail
-               , configPath = configFile
-               , blogPosts = allPosts
-               , processors = procs
-               , postIndexMTime = indexMod
-               , configMTime = configMod
-               , baselineMTime = baseline
-               , templateMTime = tmplTime
-               }
-
-  ensureDirs b
-  return b
+  return $ Blog { inputFS = ifs
+                , outputFS = ofs
+                , inputFSState = ifsState
+                , baseUrl = cfg_baseUrl
+                , title = cfg_title
+                , authorName = cfg_authorName
+                , authorEmail = cfg_authorEmail
+                , blogPosts = allPosts
+                , processors = procs
+                }
 
 -- For each configured document processor, run its check routine in
 -- case it needs to install data files or do validation.
@@ -231,6 +232,8 @@ doInstallAssets = do
 regenerateContent :: BlogM ()
 regenerateContent = do
   blog <- theBlog
+  let ifs = inputFS blog
+      ofs = outputFS blog
 
   runProcessorChecks
 
@@ -238,10 +241,10 @@ regenerateContent = do
   buildIndexPage
   generatePostList
 
-  withTemplate (Files.rssTemplatePath blog) $ \t ->
-      liftIO $ writeFile (Files.rssXml blog) $ generateRssFeed blog t
+  withTemplate (ifsRssTemplatePath ifs) $ \t ->
+      liftIO $ writeFile (ofsRssXml ofs) $ generateRssFeed blog t
 
-  liftIO $ writeFile (Files.postIndex blog) $
+  liftIO $ writeFile (ifsPostIndexPath ifs) $
             serializePostIndex $ blogPosts blog
 
   doInstallAssets

@@ -12,7 +12,6 @@ import System.Directory
 import System.Exit
 import qualified Text.Pandoc as Pandoc
 import MB.Types
-import qualified MB.Files as Files
 
 tikzProcessor :: Processor
 tikzProcessor =
@@ -39,7 +38,7 @@ renderTikzScript post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
       -- already exists.
       hash = showDigest $ sha1 $ pack digestInput
       imageFilename = "tikz-" ++ hash ++ ".png"
-      imagePath = Files.imageFilename blog imageFilename
+      imagePath = ofsImagePath (outputFS blog) imageFilename
       preamble = unlines [ "\\documentclass{article}"
                          , "\\usepackage{tikz}"
                          , "\\usetikzlibrary{intersections,backgrounds,fit,calc,positioning}"

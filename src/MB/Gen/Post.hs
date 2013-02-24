@@ -17,7 +17,6 @@ import qualified Text.Pandoc as Pandoc
 import MB.Processing
 import MB.Types
 import MB.Templates
-import qualified MB.Files as Files
 
 import MB.Gen.Base
 
@@ -60,20 +59,21 @@ renderSingle post pos = do
   blog <- theBlog
   conf <- theConfig
 
-  let renderCauses p =
-          catMaybes $ [ if postModificationTime p > baselineMTime blog
+  let st = inputFSState blog
+      renderCauses p =
+          catMaybes $ [ if postModificationTime p > ifsBaselineMTime st
                         then Just PostModified
                         else Nothing
-                      , if postIndexMTime blog > baselineMTime blog
+                      , if ifsPostIndexMTime st > ifsBaselineMTime st
                         then Just PostIndex
                         else Nothing
-                      , if configMTime blog > baselineMTime blog
+                      , if ifsConfigMTime st > ifsBaselineMTime st
                         then Just Config
                         else Nothing
                       , if forceRegeneration conf
                         then Just Forced
                         else Nothing
-                      , if templateMTime blog > baselineMTime blog
+                      , if ifsTemplateMTime st > ifsBaselineMTime st
                         then Just Template
                         else Nothing
                       ]
@@ -100,8 +100,8 @@ renderSingle post pos = do
         let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
             postBodyHtml = Pandoc.writeHtmlString writerOpts (postAst newPost)
 
-        withTemplate (Files.pageTemplatePath blog) $ \pageTmpl ->
-            withTemplate (Files.postTemplatePath blog) $ \postTmpl ->
+        withTemplate (ifsPageTemplatePath $ inputFS blog) $ \pageTmpl ->
+            withTemplate (ifsPostTemplatePath $ inputFS blog) $ \postTmpl ->
                 do
                   -- Embed the converted Pandoc HTML into the postTemplate;
                   let postPageHtml = renderPostTemplate blog post (nextPost, prevPost) postTmpl postBodyHtml
@@ -110,8 +110,8 @@ renderSingle post pos = do
 
                   -- Write the final, complete page HTML to the post
                   -- HTML file location.
-                  liftIO $ writeFile (Files.postFinalHtml blog post) finalPageHtml
+                  liftIO $ writeFile (ofsPostFinalHtml (outputFS blog) post) finalPageHtml
 
                   -- Give postprocessors a chance to transform the
                   -- final HTML.
-                  applyPostProcessors (Files.postFinalHtml blog post) BlogPost
+                  applyPostProcessors (ofsPostFinalHtml (outputFS blog) post) BlogPost
