@@ -91,7 +91,7 @@ requestHandler docRoot _addr url _req = do
                        }
 
       mkResponse f = do
-        putStrLn $ "Request: " ++ f
+        putStrLn $ "Request: /" ++ URL.url_path url
         bytes <- BS.readFile f
         -- Header HdrContentType "text/plain"
         return $ (respond Found :: Response BS.ByteString)
