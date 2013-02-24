@@ -4,6 +4,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader
 import Control.Concurrent
+import Control.Monad.Trans.Either
 import Data.Maybe
 import Data.Time.Clock
 import Data.List
@@ -47,8 +48,8 @@ ensureDirs ifs ofs = do
   forM_ (ifsDirs <*> pure ifs) ensureDir
   forM_ (ofsDirs <*> pure ofs) ensureDir
 
-doGeneration :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
-doGeneration config handler = do
+doGeneration :: StartupConfig -> Blog -> (GenEvent -> IO ()) -> IO ()
+doGeneration config blog handler = do
   ch <- newChan
   mv <- newEmptyMVar
 
@@ -60,7 +61,6 @@ doGeneration config handler = do
           _ -> waitForEvents
 
   _ <- forkIO waitForEvents
-  blog <- mkBlog config
   runBlogM blog ch config regenerateContent
 
   -- Signal event handler to shut down
@@ -112,7 +112,19 @@ scanForChanges conf h = do
             Added fp _ -> putStrLn $ "File created: " ++ FP.encodeString fp
             Modified fp _ -> putStrLn $ "File modified: " ++ FP.encodeString fp
             Removed fp _ -> putStrLn $ "File removed: " ++ FP.encodeString fp
-          doGeneration conf h
+
+          let loadBlog =
+                  do
+                    result <- runEitherT (mkBlog conf)
+                    case result of
+                      Left e -> do
+                          putStrLn $ "Error reading blog configuration: " ++ e
+                          threadDelay 1000000
+                          loadBlog
+                      Right blog -> return blog
+
+          blog <- loadBlog
+          doGeneration conf blog h
           putStrLn ""
           threadDelay $ 500 * 1000
 
@@ -154,16 +166,16 @@ getIFSState ifs ofs =
             ex <- doesFileExist indexHtml
             if ex then getModificationTime indexHtml else fallback
 
-mkBlog :: StartupConfig -> IO Blog
+mkBlog :: StartupConfig -> EitherT String IO Blog
 mkBlog conf = do
   let ifs = blogInputFS conf
       ofs = blogOutputFS conf
       configPath = ifsConfigPath ifs
 
-  e <- doesFileExist configPath
-  when (not e) $ do
-                  putStrLn $ "Configuration file " ++ configPath ++ " not found"
-                  exitFailure
+  e <- liftIO $ doesFileExist configPath
+  case e of
+    False -> left $ "Configuration file " ++ configPath ++ " not found"
+    True -> return ()
 
   let requiredValues = [ "baseUrl"
                        , "title"
@@ -171,7 +183,7 @@ mkBlog conf = do
                        , "authorEmail"
                        ]
 
-  cfg <- Config.readConfig configPath requiredValues
+  cfg <- liftIO $ Config.readConfig configPath requiredValues
 
   let Just cfg_baseUrl = lookup "baseUrl" cfg
       Just cfg_title = lookup "title" cfg
@@ -179,30 +191,28 @@ mkBlog conf = do
       Just cfg_authorEmail = lookup "authorEmail" cfg
 
   -- Load blog posts from disk
-  allPosts <- loadPostIndex $ ifsPostSourceDir ifs
+  allPosts <- liftIO $ loadPostIndex $ ifsPostSourceDir ifs
 
   let requestedMathBackend = lookup "mathBackend" cfg
-      mathBackend = case requestedMathBackend of
-                      Nothing -> mathjaxProcessor
-                      Just b -> case lookup b mathBackends of
-                                  Nothing -> error $ "Unsupported math backend " ++ show b
-                                             ++ "; valid choices are "
-                                             ++ (show $ fst <$> mathBackends)
-                                  Just proc -> proc
-
-      eqBackendConfig = catMaybes $ isBackendRequested <$> eqBackends
       isBackendRequested (nam, p) =
           let Just opt = lookup nam cfg <|> Just "no"
           in if Config.affirmative opt
              then Just p
              else Nothing
 
-      procs = baseProcessor : eqBackendConfig ++ [mathBackend]
+  mathBackend <- case requestedMathBackend of
+                   Nothing -> return mathjaxProcessor
+                   Just b -> case lookup b mathBackends of
+                               Nothing -> left $ "Unsupported math backend " ++ show b
+                                          ++ "; valid choices are "
+                                          ++ (show $ fst <$> mathBackends)
+                               Just proc -> return proc
 
-  -- Get modification times.
-  ifsState <- getIFSState ifs ofs
+  let procs = baseProcessor : eqBackendConfig ++ [mathBackend]
+      eqBackendConfig = catMaybes $ isBackendRequested <$> eqBackends
 
-  ensureDirs ifs ofs
+  ifsState <- liftIO $ getIFSState ifs ofs
+  liftIO $ ensureDirs ifs ofs
 
   return $ Blog { inputFS = ifs
                 , outputFS = ofs
@@ -266,6 +276,10 @@ printHandler Finished =
 
 main :: IO ()
 main = do
+  -- This is only to make it possible to run "mb" during the LaTeX
+  -- manual build process.  I run "mb" to generate output for
+  -- demonstrations in the manual and output buffering was causing
+  -- output to not get sent to pdfLaTeX.
   hSetBuffering stdout NoBuffering
 
   conf <- startupConfigFromEnv
@@ -279,12 +293,13 @@ main = do
 
   canonicalConfig <- canonicalizeStartupConfig newConf
 
-  case listenMode canonicalConfig of
-    False -> doGeneration canonicalConfig printHandler
-    True -> do
-         -- This will abort with an error if the blog directory isn't
-         -- configured.  Messy.
-         _ <- mkBlog canonicalConfig
+  result <- runEitherT (mkBlog canonicalConfig)
+  blog <- case result of
+            Left e -> (putStrLn $ "Error: " ++ e) >> exitFailure
+            Right b -> return b
 
+  case listenMode canonicalConfig of
+    False -> doGeneration canonicalConfig blog printHandler
+    True -> do
          putStrLn $ "Waiting for changes in " ++ (dataDirectory canonicalConfig) ++ " ..."
          scanForChanges (canonicalConfig { forceRegeneration = False }) printHandler

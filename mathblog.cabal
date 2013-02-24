@@ -57,7 +57,8 @@ Executable mb
     containers >= 0.3,
     fsnotify >= 0.0.6,
     system-filepath >= 0.3.1,
-    mtl >= 2.0
+    mtl >= 2.0,
+    either >= 3.4
 
   Other-modules:
     Paths_mathblog
