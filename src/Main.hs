@@ -6,7 +6,7 @@ import Control.Monad.Reader
 import Control.Concurrent
 import Data.Maybe
 import Data.Time.Clock
-import Data.List (sort, intercalate)
+import Data.List
 import System.Exit
 import System.Directory
     hiding (getModificationTime)
@@ -71,19 +71,28 @@ doGeneration config handler = do
   _ <- readMVar mv
   return ()
 
-isEventInteresting :: FS.Event -> Bool
-isEventInteresting ev =
+isEventInteresting :: StartupConfig -> Event -> Bool
+isEventInteresting conf ev =
     let fp = case ev of
                Added f _ -> f
                Modified f _ -> f
                Removed f _ -> f
-    -- Interesting if it is
-    -- in the assets dir (any file)
-    -- in the templates dir (any .html or .xml file)
-    -- in the posts dir (any .txt file)
-    -- the blog config
-    -- the posts index
-    in or []
+
+        isPost f = (dataDirectory conf </> "posts/") `isPrefixOf` f &&
+                   ".txt" `isSuffixOf` f &&
+                   not ("." `isPrefixOf` takeFileName f)
+        isPostIndex f = (dataDirectory conf </> "posts/post-index") == f
+        isAsset f = (dataDirectory conf </> "assets/") `isPrefixOf` f
+        isTemplate f = (dataDirectory conf </> "templates/") `isPrefixOf` f &&
+                       ".html" `isSuffixOf` f
+        isConfig f = (dataDirectory conf </> "blog.cfg") == f
+
+    in or ([ isPost
+           , isAsset
+           , isTemplate
+           , isConfig
+           , isPostIndex
+           ] <*> pure (FP.encodeString fp))
 
 scanForChanges :: StartupConfig -> (GenEvent -> IO ()) -> IO ()
 scanForChanges conf h = do
@@ -94,7 +103,7 @@ scanForChanges conf h = do
           watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
           let nextEv = do
                 ev <- readChan ch
-                if isEventInteresting ev then return ev else nextEv
+                if isEventInteresting conf ev then return ev else nextEv
           evt <- nextEv
           case evt of
             Added fp _ -> putStrLn $ "File created: " ++ FP.encodeString fp

@@ -49,9 +49,15 @@ getRawPostTitle b p = head (fs ++ [fallback]) $ postTitle p
       fs = catMaybes $ rawPostTitle <$> processors b
 
 getPostTitle :: Blog -> Post -> Page -> String
-getPostTitle b p s = concat $ getInlineStr <$> f (postTitle p)
+getPostTitle b p s = concat $ toPostTitle <$> f (postTitle p)
     where
       f = foldl (.) id (reverse $ fs <*> (pure s))
 
       fs :: [Page -> [Pandoc.Inline] -> [Pandoc.Inline]]
       fs = catMaybes $ buildPostTitle <$> processors b
+
+toPostTitle :: Pandoc.Inline -> String
+toPostTitle (Pandoc.Str s) = s
+toPostTitle (Pandoc.Math _ s) = "$" ++ s ++ "$"
+toPostTitle Pandoc.Space = " "
+toPostTitle i = error $ "Unexpected inline in document title, got " ++ (show i)
