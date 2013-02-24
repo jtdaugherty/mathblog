@@ -7,6 +7,7 @@ import Control.Concurrent
 import Data.Maybe
 import Data.Time.Clock
 import Data.List
+import System.IO
 import System.Exit
 import System.Directory
     hiding (getModificationTime)
@@ -79,7 +80,7 @@ isEventInteresting conf ev =
                    ".txt" `isSuffixOf` f &&
                    not ("." `isPrefixOf` takeFileName f)
 
-        isPostIndex f = (dataDirectory conf </> "posts/post-index") == f
+        isPostIndex f = (dataDirectory conf </> "posts/posts-index") == f
 
         isAsset f = (dataDirectory conf </> "assets/") `isPrefixOf` f
 
@@ -262,6 +263,8 @@ printHandler Finished =
 
 main :: IO ()
 main = do
+  hSetBuffering stdout NoBuffering
+
   conf <- startupConfigFromEnv
   let dir = dataDirectory conf
 
@@ -271,12 +274,14 @@ main = do
                  return $ conf { forceRegeneration = True }
                False -> return conf
 
-  case listenMode newConf of
-    False -> doGeneration newConf printHandler
+  canonicalConfig <- canonicalizeStartupConfig newConf
+
+  case listenMode canonicalConfig of
+    False -> doGeneration canonicalConfig printHandler
     True -> do
          -- This will abort with an error if the blog directory isn't
          -- configured.  Messy.
-         _ <- mkBlog newConf
+         _ <- mkBlog canonicalConfig
 
-         putStrLn $ "Waiting for changes in " ++ (dataDirectory newConf) ++ " ..."
-         scanForChanges (newConf { forceRegeneration = False }) printHandler
+         putStrLn $ "Waiting for changes in " ++ (dataDirectory canonicalConfig) ++ " ..."
+         scanForChanges (canonicalConfig { forceRegeneration = False }) printHandler

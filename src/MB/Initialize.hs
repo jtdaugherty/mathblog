@@ -23,6 +23,7 @@ initializeDataDir dir = do
 
   case existsDir of
     False -> do
+      putStrLn $ "Initializing data directory " ++ dir
       dataDir <- skelDir
       createDirectory dir
       copyTree dataDir dir

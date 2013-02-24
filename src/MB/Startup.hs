@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 module MB.Startup
     ( startupConfigFromEnv
+    , canonicalizeStartupConfig
     , versionString
 #ifdef TESTING
     , Flag(..)
@@ -25,6 +26,7 @@ import System.Environment
     ( getEnvironment
     , getArgs
     )
+import System.Directory
 import System.FilePath
 import System.Console.GetOpt
 
@@ -135,6 +137,18 @@ startupConfig flags env = do
                          , htmlOutputDirectory = o
                          , configFilePath = c
                          }
+
+canonicalizeStartupConfig :: StartupConfig -> IO StartupConfig
+canonicalizeStartupConfig conf = do
+  let dataDirName = takeFileName $ dataDirectory conf
+      outputName = takeFileName $ htmlOutputDirectory conf
+
+  d' <- canonicalizePath $ takeDirectory $ dataDirectory conf
+  o' <- canonicalizePath $ takeDirectory $ htmlOutputDirectory conf
+
+  return $ conf { dataDirectory = d' </> dataDirName
+                , htmlOutputDirectory = o' </> outputName
+                }
 
 baseDirEnvName :: String
 baseDirEnvName = "MB_DATA_DIR"
