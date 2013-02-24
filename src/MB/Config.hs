@@ -5,12 +5,11 @@ module MB.Config
 where
 
 import Control.Applicative
+import Control.Monad.Trans.Either
+import Control.Monad.Trans
 import Data.Char (toLower)
 import Data.ConfigFile.Parser
     ( parse_file
-    )
-import System.Exit
-    ( exitFailure
     )
 import Data.Maybe
     ( fromJust
@@ -24,24 +23,19 @@ import Control.Monad
 section :: String
 section = "DEFAULT"
 
-readConfig :: FilePath -> [String] -> IO [(String, String)]
+readConfig :: FilePath -> [String] -> EitherT String IO [(String, String)]
 readConfig path requiredArgs = do
-  result <- parse_file path
+  result <- liftIO $ parse_file path
 
   case result of
-    Left e ->
-        do
-          putStrLn $ "Error parsing config file " ++ path ++ ": " ++ show e
-          exitFailure
+    Left e -> left $ "Error parsing config file " ++ path ++ ": " ++ show e
     Right cfg ->
         do
           let pairs = fromJust $ lookup section cfg
 
           forM_ requiredArgs $ \k ->
             when (isNothing $ lookup k pairs) $
-                 do
-                   putStrLn $ "Missing required value for '" ++ k ++ "' in " ++ path
-                   exitFailure
+                 left $ "Missing required value for '" ++ k ++ "' in " ++ path
 
           return pairs
 

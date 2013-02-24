@@ -185,7 +185,7 @@ mkBlog conf = do
                        , "authorEmail"
                        ]
 
-  cfg <- liftIO $ Config.readConfig configPath requiredValues
+  cfg <- Config.readConfig configPath requiredValues
 
   let Just cfg_baseUrl = lookup "baseUrl" cfg
       Just cfg_title = lookup "title" cfg
