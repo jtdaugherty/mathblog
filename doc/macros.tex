@@ -5,4 +5,10 @@
 \newcommand{\fw}[1]{\texttt{#1}}
 \newcommand{\mathblog}{\fw{mathblog}}
 
-\newcommand{\blogexample}[1]{\VerbatimInput[samepage=true,frame=single]{|"./scripts/#1.sh"}}
+\newcommand{\blogexample}[1]{
+  \colorbox{blue!10}{
+  \begin{minipage}{\textwidth}
+  \VerbatimInput[frame=none,samepage=true]{|"./scripts/#1.sh"}
+  \end{minipage}
+  }
+}
