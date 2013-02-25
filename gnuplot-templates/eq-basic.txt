@@ -1,6 +1,0 @@
-set term png size 400,300
-set samples 500
-set zeroaxis
-set noborder
-set xtics axis nomirror
-set ytics axis nomirror

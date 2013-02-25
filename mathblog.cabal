@@ -28,7 +28,6 @@ Data-Files:
   skel/templates/listTemplate.html
   skel/posts/first-post.txt
   skel/blog.cfg
-  gnuplot-templates/eq-basic.txt
   doc/Makefile
   doc/title_page.tex
   doc/mathblog-manual.tex
