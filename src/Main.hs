@@ -278,13 +278,13 @@ regenerateContent = do
 
 printHandler :: GenEvent -> IO ()
 printHandler (PostRender p cs) =
-    let cause Config = "config changed"
-        cause PostIndex = "post-index changed"
-        cause Template = "template changed"
-        cause PostModified = "post was modified"
-        cause Forced = "forced rebuild"
+    let cause Config = "config"
+        cause PostIndex = "post-index"
+        cause Template = "template"
+        cause PostModified = "modified"
+        cause Forced = "forced"
         reasons = intercalate ", " (cause <$> cs)
-    in if cs == [PostModified]
+    in if cs == [PostModified] || Forced `elem` cs
        then putStrLn $ "Rendering post: " ++ (show $ postBaseName p)
        else putStrLn $ "Rendering post (" ++ reasons
                 ++ "): " ++ (show $ postBaseName p)
