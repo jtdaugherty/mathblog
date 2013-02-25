@@ -6,6 +6,37 @@
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.2.0/build/cssfonts/fonts-min.css">
     <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css"/>
     <link rel="alternate" type="application/rss+xml" href="$baseUrl$/feed.xml"/>
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config(
+  {"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+   tex2jax: {
+     element: null,
+     preview: "none",
+     skipTags: ["script","noscript","style","textarea","pre","code"],
+     inlineMath: [
+       ['\$', '\$'],
+       ["\\\\(", "\\\\)"],
+     ],
+     displayMath: [
+       ['\$\$', '\$\$'],
+       ["\\\\[", "\\\\]"],
+     ],
+     processEscapes: true,
+     ignoreClass: "tex2jax_ignore|dno"
+   },
+   TeX: {
+     extensions: ["AMSmath.js","AMSsymbols.js","cancel.js"],
+     equationNumbers: { autoNumber: "AMS" },
+     noUndefined: { attributes: {
+                      mathcolor: "red",
+                      mathbackground: "#FFEEEE",
+                      mathsize: "90%" }
+                  }
+   },
+   messageStyle: "none"
+});
+</script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
     $extraPageHead$
   </head>
   <body>
