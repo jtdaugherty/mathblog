@@ -24,6 +24,20 @@ import MB.Types
 reloadJS :: String
 reloadJS =
     "<script type=\"text/javascript\">\n\
+    \function waitForReload()\n\
+    \{\n\
+    \  var req = new XMLHttpRequest();\n\
+    \  req.onreadystatechange = function() {\n\
+    \    if (req.readyState == 4) {\n\
+    \      location.reload();\n\
+    \    }\n\
+    \  };\n\
+    \  req.open(\"GET\", \"/__reload\", true);\n\
+    \  req.timeout = 5000;\n\
+    \  req.ontimeout = waitForReload;\n\
+    \  req.send();\n\
+    \}\n\
+    \waitForReload();\n\
     \</script>"
 
 serverProcessor :: Processor
@@ -32,7 +46,7 @@ serverProcessor =
                   }
 
 withServing :: StartupConfig
-            -> (StartupConfig -> (Blog -> Blog) -> IO ())
+            -> (StartupConfig -> (Blog -> Blog) -> IO () -> IO ())
             -> IO ()
 withServing conf act = do
   (hostname, portNum) <-
@@ -43,8 +57,11 @@ withServing conf act = do
   tmpDir <- createTempDirectory "/tmp" "mbhtml.tmp"
   outputDir <- canonicalizePath tmpDir
 
-  -- Set up the temp output directoryy and modify the config and blog.
-  let serverConf = conf { htmlOutputDirectory = outputDir }
+  reloadChan <- newChan
+  let genSignalAct = putStrLn "Signalling to reload." >> writeChan reloadChan ()
+
+      -- Set up the temp output directoryy and modify the config and blog.
+      serverConf = conf { htmlOutputDirectory = outputDir }
       url = "http://" ++ hostname ++ ":" ++ show portNum ++ "/"
       blogTrans b =
           b { baseUrl = url
@@ -61,17 +78,53 @@ withServing conf act = do
       handleError e =
           putStrLn $ "Error running server on " ++ url ++ ": " ++ show e
 
+  -- Start the blog generation thread.
+  _ <- forkIO $ (act serverConf blogTrans genSignalAct `catch` handleError)
+
+  -- Wait for a successful blog generation, then start serving.
+  readChan reloadChan
+  putStrLn "Blog generation complete."
   putStrLn $ "Web server listening on " ++ url
 
-  -- Start the blog generation thread.
-  _ <- forkIO $ (act serverConf blogTrans `catch` handleError)
-
-  serverWith httpConfig (requestHandler outputDir)
+  serverWith httpConfig (requestHandler outputDir reloadChan)
                  `catch` handleError
                  `finally` cleanup
 
-requestHandler :: FilePath -> SockAddr -> URL.URL -> Request BS.ByteString -> IO (Response BS.ByteString)
-requestHandler docRoot _addr url _req = do
+requestHandler :: FilePath
+               -> Chan ()
+               -> SockAddr
+               -> URL.URL
+               -> Request BS.ByteString
+               -> IO (Response BS.ByteString)
+requestHandler docRoot reloadChan _addr url _req = do
+  -- If the request is for the special reload control URL, defer to
+  -- the reload handler
+  if URL.url_path url == "__reload" then
+      reloadHandler reloadChan else
+      fileHandler docRoot url
+
+reloadHandler :: Chan () -> IO (Response BS.ByteString)
+reloadHandler reloadChan = do
+  -- Duplicate the channel.  This effectively resets the read position
+  -- on the channel, so only messages added after the time of
+  -- duplication will be read.  This way, reload handlers who are
+  -- still waiting (from past page loads) even though their clients
+  -- have long since disconnected will not consume events intended for
+  -- current waiters.
+  ch <- dupChan reloadChan
+  readChan ch
+
+  let bytes = BSC.pack ""
+  return $ (respond Found :: Response BS.ByteString)
+             { rspHeaders = [ Header HdrContentLength $ show $ BS.length bytes
+                            , Header HdrCacheControl "no-cache"
+                            , Header HdrConnection "close"
+                            ]
+             , rspBody = bytes
+             }
+
+fileHandler :: FilePath -> URL.URL -> IO (Response BS.ByteString)
+fileHandler docRoot url = do
   -- Concatenate the url_path of the URL to the output directory.
   -- Then attempt to canonicalize the result.  If it succeeds and is
   -- not contained within the output directory, return a 404.

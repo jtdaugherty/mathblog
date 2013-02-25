@@ -104,7 +104,8 @@ scanForChanges :: StartupConfig
                -> (GenEvent -> IO ())
                -> (Blog -> Blog)
                -> IO ()
-scanForChanges conf h blogTrans = do
+               -> IO ()
+scanForChanges conf h blogTrans signalAct = do
   let ifs = blogInputFS conf
   forever $ do
     withManager $ \m ->
@@ -121,6 +122,7 @@ scanForChanges conf h blogTrans = do
 
           blog <- loadBlog
           doGeneration conf blog h
+          signalAct
 
           -- Wait for a bit so the filesystem scan doesn't pick up the
           -- posts-index change in the source tree
