@@ -124,6 +124,7 @@ scanForChanges conf h blogTrans signalAct = do
           blog <- loadBlog
           doGeneration conf blog h
           signalAct
+          putStrLn ""
 
           -- Wait for a bit so the filesystem scan doesn't pick up the
           -- posts-index change in the source tree
@@ -139,8 +140,6 @@ scanForChanges conf h blogTrans signalAct = do
             Added fp _ -> putStrLn $ "File created: " ++ FP.encodeString fp
             Modified fp _ -> putStrLn $ "File modified: " ++ FP.encodeString fp
             Removed fp _ -> putStrLn $ "File removed: " ++ FP.encodeString fp
-
-          putStrLn ""
 
 mathBackends :: [(String, Processor)]
 mathBackends =
