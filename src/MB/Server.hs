@@ -19,6 +19,7 @@ import Network.Socket (SockAddr)
 
 import System.IO.Temp
 
+import MB.Util (copyAll)
 import MB.Types
 
 reloadJS :: String
@@ -60,6 +61,8 @@ withServing conf act = do
 
   tmpDir <- createTempDirectory "/tmp" "mbhtml.tmp"
   outputDir <- canonicalizePath tmpDir
+
+  copyAll (htmlOutputDirectory conf) outputDir
 
   reloadChan <- newChan
   let genSignalAct = writeChan reloadChan ()

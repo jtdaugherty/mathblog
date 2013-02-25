@@ -1,5 +1,6 @@
 module MB.Util
     ( copyTree
+    , copyAll
     , toUtcTime
     , loadPostIndex
     , getModificationTime
@@ -103,6 +104,16 @@ copyTree srcPath dstPath = do
             e <- doesDirectoryExist dstDir
             when (not e) $ createDirectory dstDir
             copyTree' (src </> dirName) dstDir
+
+copyAll :: FilePath -> FilePath -> IO ()
+copyAll src dest = do
+  entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents src
+
+  files <- filterM doesFileExist $ (src </>) <$> entries
+  forM_ files $ \f -> copyFile f (dest </> (takeFileName f))
+
+  dirs <- filterM doesDirectoryExist $ (src </>) <$> entries
+  forM_ dirs $ \d -> copyTree d (dest </> (takeBaseName d))
 
 toUtcTime :: EpochTime -> UTCTime
 toUtcTime t = fromJust $ parseTime defaultTimeLocale "%s" $ show t
