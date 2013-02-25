@@ -17,6 +17,10 @@
             filecolor=red,linkcolor=blue,%
             urlcolor=blue}
 
+\usepackage{tikz}
+\usetikzlibrary{intersections,backgrounds,fit,calc,positioning}
+\usepackage{pgfplots}
+
 % Customize document dimensions.
 \addtolength{\hoffset}{-0.5in}
 \addtolength{\textwidth}{1.0in}
@@ -146,6 +150,7 @@ The directory structure of the new blog data directory is as follows:
 \end{itemize}
 
 \section{Step 2: Configure}
+\label{sec:configuration}
 
 \mathblog\ creates a default ``INI-style'' blog configuration file in
 your data directory called \fw{blog.cfg}.  It contains information
@@ -197,28 +202,14 @@ Here's a listen mode example:
 
 \blogexample{listen-mode}
 
-Above I ran \fw{mb} in listen mode and then modified the post index,
+Above I ran \fw{mb} in listen mode and then modified the posts index,
 then the blog config file, then one of the posts.  In each case
 \fw{mb} detected the change and ran its usual regeneration routine.
 
 You can set the hostname and port that \mathblog\ uses to serve the
 blog; see the \fw{mb -h} output.
 
-\section{When Should I Run \fw{mb}?}
-
-\fw{mb} looks at the modification times of the post files in
-\fw{posts/}, the config file, template files, asset files, and the
-posts index (see Section \ref{sec:postsindex}) when determining when
-to regenerate content.  It also looks for new posts that haven't been
-rendered in the past.  The rule of thumb is: re-run \fw{mb} whenever
-you make any changes to anything in your blog data directory.
-
-Modifications a post file will cause that post to be re-rendered, but
-modifications the configuration file or templates will cause ALL posts
-to be re-rendered since those changes impact how all pages are
-generated.
-
-\section{Blog Post Format}
+\subsection{Blog Post Format}
 
 Posts are formatted in Markdown and support the extended Markdown
 syntax as implemented by Pandoc.  The only important convention to
@@ -236,6 +227,20 @@ First paragraph starts here.
 Dates in the blog post header formatted as ``\fw{<MONTH> <DAY>,
   <YEAR>}'' will be parsed and used to generate the RSS feed
 publication date.
+
+\section{When Should I Run \fw{mb}?}
+
+\fw{mb} looks at the modification times of the post files in
+\fw{posts/}, the config file, template files, asset files, and the
+posts index (see Section \ref{sec:postsindex}) when determining when
+to regenerate content.  It also looks for new posts that haven't been
+rendered in the past.  The rule of thumb is: re-run \fw{mb} whenever
+you make any changes to anything in your blog data directory.
+
+Modifications a post file will cause that post to be re-rendered, but
+modifications the configuration file or templates will cause ALL posts
+to be re-rendered since those changes impact how all pages are
+generated.
 
 \section{Customization}
 \label{sec:customizing}
@@ -256,7 +261,7 @@ and are as follows:
   overall structure of every page on the blog.}
 \item{\fw{templates/postTemplate.html} - This file makes up the
   structure of the post portion of the page, for pages which show
-  posts (i.e., not the post index).}
+  posts (i.e., not the posts index).}
 \item{\fw{templates/listTemplate.html} - This file is the template
   used to generate the "all posts" page.  Once generated, the
   all-posts listing is then embedded in the page template.}
@@ -293,7 +298,7 @@ These placeholders are supported in the post template:
   post.  One or both may be null.}
 \item{\fw{\$post\_html\$} - The rendered body of the post itself.}
 \item{\fw{\$post.basename\$} - The base name of the post for use in
-  Javascript (see "Other features" below for usage).}
+  Javascript (see Section \ref{sec:disqus} for an example).}
 \item{\fw{\$post.title\$} - The title of the post as found in the Pandoc
   header.}
 \item{\fw{\$post.date\$} - The publication date string of the post as
@@ -328,8 +333,8 @@ with the rest of the generated content.
 \section{TeX Macros}
 
 You can define post-wide \TeX\ macros and then reference them in both
-Mathjax expressions and TikZ/PGF pictures.  To do this, define \TeX
-macros inside a ``\fw{tex-macros}'' block as follows:
+Mathjax expressions and TikZ pictures.  To do this, define \TeX macros
+inside a ``\fw{tex-macros}'' block as follows:
 
 \begin{verbatim}
 ~~~ {#tex-macros}
@@ -350,17 +355,16 @@ $tex_macros$
 \end{verbatim}
 
 The \TeX\ macros will automatically be included in generated
-\TeX\ source when TikZ/PGF processing is performed.  This way, you can
+\TeX\ source when TikZ processing is performed.  This way, you can
 write macros and use them everywhere in the document without having to
 redefine them inside picture environments.
 
-\section{Function Graph Embedding}
+\section{TikZ Embedding}
 
-mathblog supports inline scripts for rendering function graphs.  Right
-now, mathblog supports the TikZ \LaTeX\ package.  Set the appropriate
-configuration option (see above) to enable a backend.
-
-\subsection{TikZ}
+\mathblog\ supports inline scripts for rendering function graphs and
+diagrams.  Right now, only the TikZ \LaTeX\ package is supported.  Set
+the appropriate configuration option (see Section
+\ref{sec:configuration}) to enable it.
 
 To specify a TikZ diagram in a blog post, we overload the Pandoc code
 block syntax.  Here's an example of a TikZ figure:
@@ -383,9 +387,23 @@ block syntax.  Here's an example of a TikZ figure:
 
 This is a \LaTeX\ fragment which will automatically be embedded in a
 \fw{tikzpicture} environment and rendered to an image within the blog
-post.
+post.  The fragment above will produce this picture:
 
-\subsection{Styling Function Graphs with CSS}
+\begin{tikzpicture}
+\begin{axis}[
+    minor tick num=3,
+    axis y line=center,
+    axis x line=middle,
+    ]
+
+\addplot[smooth,mark=none,blue] plot coordinates {
+    (-1,-1)
+    (2.95,2.95)
+};
+\end{axis}
+\end{tikzpicture}
+
+\subsection{Styling TikZ Graphics CSS}
 
 Note that the Pandoc syntax also allows us to assign CSS class names
 to the code block, and mathblog passes these through to the generated
@@ -408,11 +426,11 @@ and then assign it to your equation graph like this:
 
 For more information on the code block syntax, please see:
 
-<http://johnmacfarlane.net/pandoc/README.html\#delimited-code-blocks>
+\href{http://johnmacfarlane.net/pandoc/README.html\#fenced-code-blocks}{http://johnmacfarlane.net/pandoc/README.html\#fenced-code-blocks
+}
 
-\section{Other features}
-
-\subsection{Disqus Integration}
+\section{Disqus Integration}
+\label{sec:disqus}
 
 Since mathblog doesn't provide many moving parts, it's up to you to
 outsource various web site features, such as comments.  I've
@@ -427,18 +445,17 @@ string so you can configure Disqus properly:
 var disqus_identifier = "$post.basename$";
 \end{verbatim}
 
-\subsection{Controlling Post Order}
+\section{Controlling Post Order}
 \label{sec:postsindex}
 
-Whenever you add a new post, \fw{mb} automatically updates the "post
-index", a file called \fw{posts-index} in the \fw{posts/}
-subdirectory.  This file lists the filenames of all posts from newest
-to oldest.  By default, new posts get added to the beginning of the
-list, as you would expect.  Any new posts added to the list are sorted
-by modification time so that the newest post on disk appears earlier
-in the index.  This feature exists to make it possible for older posts
-to be updated without changing their ordering in the overall sequence
-of posts.
+Whenever you add a new post, \fw{mb} automatically updates the ``posts
+index'', \fw{\$MB\_DATA\_DIR/posts-index}.  This file lists the
+filenames of all posts from newest to oldest.  By default, new posts
+get added to the beginning of the list, as you would expect.  Any new
+posts added to the list are sorted by modification time so that the
+newest post on disk appears earlier in the index.  This feature exists
+to make it possible for older posts to be updated without changing
+their ordering in the overall sequence of posts.
 
 At any time, you can edit the index to reorder the posts as you see
 fit.  \fw{mb} will preserve ordering of posts already in the index
