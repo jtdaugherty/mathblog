@@ -319,6 +319,6 @@ main = do
   case listenAddr canonicalConfig of
     Nothing -> doGeneration canonicalConfig blog printHandler
     Just _ -> do
-         putStrLn $ "Waiting for changes in " ++ (dataDirectory canonicalConfig) ++ " ..."
+         putStrLn $ "Starting up in listen mode..."
          let conf' = canonicalConfig { forceRegeneration = False }
          withServing conf' $ flip scanForChanges printHandler

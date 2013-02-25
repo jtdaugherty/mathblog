@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 module MB.Startup
     ( startupConfigFromEnv
     , canonicalizeStartupConfig
@@ -15,6 +15,8 @@ module MB.Startup
     )
 where
 
+import Prelude hiding (catch)
+import Control.Exception
 import Control.Monad
     ( mplus
     , when
@@ -184,8 +186,15 @@ canonicalizeStartupConfig conf = do
   let dataDirName = takeFileName $ dataDirectory conf
       outputName = takeFileName $ htmlOutputDirectory conf
 
-  d' <- canonicalizePath $ takeDirectory $ dataDirectory conf
-  o' <- canonicalizePath $ takeDirectory $ htmlOutputDirectory conf
+  d' <- (canonicalizePath $ takeDirectory $ dataDirectory conf) `catch`
+        \(_::SomeException) -> do
+          putStrLn $ "Invalid data directory: " ++ dataDirectory conf
+          exitFailure
+
+  o' <- (canonicalizePath $ takeDirectory $ htmlOutputDirectory conf) `catch`
+        \(_::SomeException) -> do
+          putStrLn $ "Invalid output directory: " ++ htmlOutputDirectory conf
+          exitFailure
 
   return $ conf { dataDirectory = d' </> dataDirName
                 , htmlOutputDirectory = o' </> outputName

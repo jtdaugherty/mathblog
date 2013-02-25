@@ -6,6 +6,7 @@ where
 import Prelude hiding (catch)
 import Control.Exception (SomeException, finally, catch)
 import Control.Concurrent
+import Control.Monad
 import Data.List (isPrefixOf)
 import System.Directory
 import System.Exit
@@ -144,10 +145,6 @@ fileHandler docRoot url = do
   let handleError :: SomeException -> IO (Response BS.ByteString)
       handleError = const $ return (resp404 url)
 
-      mkResponse f = do
-        putStrLn $ "Request: /" ++ URL.url_path url
-        fileToResponse f
-
       serveFile path = do
         realPath <- canonicalizePath path
         if not (docRoot `isPrefixOf` realPath) then
@@ -157,7 +154,7 @@ fileHandler docRoot url = do
               -- look for index.html instead
               e <- doesFileExist realPath
               if e then
-                  mkResponse realPath else
+                  fileToResponse realPath else
                   serveFile (path </> "index.html")
 
   serveFile (docRoot </> URL.url_path url) `catch` handleError
