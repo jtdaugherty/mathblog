@@ -29,7 +29,11 @@ reloadJS =
     \  var req = new XMLHttpRequest();\n\
     \  req.onreadystatechange = function() {\n\
     \    if (req.readyState == 4) {\n\
-    \      location.reload();\n\
+    \      if (req.status == 200 || req.status == 302) {\n\
+    \        location.reload();\n\
+    \      } else {\n\
+    \        setTimeout(waitForReload, 5000);\n\
+    \      }\n\
     \    }\n\
     \  };\n\
     \  req.open(\"GET\", \"/__reload\", true);\n\
