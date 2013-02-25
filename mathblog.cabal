@@ -33,6 +33,9 @@ Data-Files:
   doc/mathblog-manual.tex
   doc/toc.tex
   doc/macros.tex
+  doc/scripts/init.sh
+  doc/scripts/changed-post.sh
+  doc/scripts/listen-mode.sh
 
 Source-Repository head
   type:     git
