@@ -62,7 +62,7 @@ withServing conf act = do
   outputDir <- canonicalizePath tmpDir
 
   reloadChan <- newChan
-  let genSignalAct = putStrLn "Signalling to reload." >> writeChan reloadChan ()
+  let genSignalAct = writeChan reloadChan ()
 
       -- Set up the temp output directoryy and modify the config and blog.
       serverConf = conf { htmlOutputDirectory = outputDir }
