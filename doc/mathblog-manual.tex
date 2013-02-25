@@ -39,10 +39,13 @@ statically-generated, mathematically-themed weblogs.  It supports:
 \item{Extended Markdown input syntax as supported by the Pandoc
   library}
 \item{Inline and block-level \TeX\ math rendered by MathJax}
-\item{Function graphing with the TikZ / pgfplots \LaTeX\ packages}
-\item{Integration of Javascript-based web services such as Disqus}
+\item{Function graphing and drawing with the TikZ \LaTeX\ package}
+\item{Support for integration of Javascript-based web services such as
+  Disqus}
 \item{Template-based document rendering with support for layout and
   style customization}
+\item{A built-in web server with automatic page reloading for easy
+  blog post authoring}
 \end{itemize}
 
 \section{Project Vision}
@@ -59,7 +62,7 @@ motivated by the following principles:
   equations in the blog posts.}
 \end{itemize}
 
-As a result, \mathblog\ has the following properties:
+As a result, \mathblog\ has the following features:
 
 \begin{itemize}
 \item{The software is composed of a single executable which will
@@ -68,15 +71,17 @@ As a result, \mathblog\ has the following properties:
 \item{All content is stored in plain text files and is generated
   statically.  No database or web framework is used and no resident
   processes are required to serve your content.}
-\item{A \mathblog\ can be hosted with a simple static fileserver such
-  as thttpd, Lighttpd, or Apache.}
+\item{\mathblog's generated output files can be hosted by any web
+  server.}
+\item{\mathblog\ provides a built-in web server for easy blog post
+  authoring.}
 \item{Blog posts are written in the Markdown format with extensions,
   as supported by the Pandoc document converter.}
 \item{Math is embedded with \verb|$...$| or \verb|\(...\)| for inline
   math and \verb|$$...$$| or \verb|\[...\]| for block-level math.}
 \end{itemize}
 
-These properties have some nice advantages; your blog content is
+These features have some nice advantages; your blog content is
 cacheable and can be subjected to revision control.  Posts are easy to
 edit and editing doesn't require a web browser.  The static file
 representation model means you can compose a blog post on your laptop
@@ -85,29 +90,16 @@ push it up to your server to post it to your public blog.
 
 I personally use this software package but I'll be pleased if others
 find it useful.  In addition, I'm open to accepting contributions on
-the project if they're consistent with what I've outlined above.
+the project if they're consistent with the goals I've outlined above.
 Happy blogging!
-
-\section{Dependencies}
-
-\mathblog\ takes advantage of three primary software components:
-
-\begin{itemize}
-\item{Pandoc, a document-processing library.}
-\item{MathJax if you choose ``\fw{mathjax}'' for the value of the
-  ``\fw{mathBackend}'' configuration setting.  \mathblog\ uses the
-  MathJax CDN for MathJax resources.}
-\item{The TikZ and pgfplots \LaTeX\ packages if you set ``\fw{tikz =
-    yes}'' in your config.  This is the recommended backend for
-  function graph plotting.}
-\end{itemize}
 
 \chapter{Working With \mathblog}
 
 The main program provided by the \mathblog\ package is the program
 \fw{mb}.  This program takes care of initializing new blog data
-directories, detecting changes in your files, and regenerating the
-right HTML output files into your output directory.
+directories, detecting changes in your files, regenerating the right
+HTML output files into your output directory, and even serving them
+via HTTP while you work.
 
 \fw{mb} needs to know about two directories: the \textit{data
   directory} where your post input files and templates will be kept,
@@ -117,16 +109,16 @@ these directories: you can set environment variables or you can pass
 command-line flags to \fw{mb}:
 
 \begin{itemize}
-\item{Set \fw{MB\_DATA\_DIR} in the environment or pass the
-  \fw{-d/--data-dir} option to \fw{mb}.}
-\item{Set \fw{MB\_OUTPUT\_DIR} in the environment or pass the
-  \fw{-o/--output-dir} option to \fw{mb}.}
+\item{Data directory: et \fw{MB\_DATA\_DIR} in the environment or pass
+  the \fw{-d/--data-dir} option to \fw{mb}.}
+\item{Output directory: set \fw{MB\_OUTPUT\_DIR} in the environment or
+  pass the \fw{-o/--output-dir} option to \fw{mb}.}
 \end{itemize}
 
 Any command line parameters given to \fw{mb} will always take
 precedence over any environment variables.
 
-\section{Getting Started}
+\section{Step 1: Create}
 
 Once you've chosen your data and output directories, run \fw{mb -i}.
 It will take care of setting up a new blog data directory for you,
@@ -134,18 +126,37 @@ complete with some default pages and a default first blog post:
 
 \blogexample{init}
 
-\section{Configuring the Blog}
+The directory structure of the new blog data directory is as follows:
 
-\mathblog\ creates a default blog configuration file in your data
-directory called \fw{blog.cfg}.  It contains information which may be
-included in the generated pages.  The configuration file \fw{blog.cfg}
+\begin{itemize}
+\item{\fw{blog.cfg} - The blog configuration file.}
+\item{\fw{posts/} - Blog post files (``\fw{*.txt}'').}
+\item{\fw{posts/posts-index} - A special text file called the
+  \textit{posts index}.  This file contains a list of posts in the
+  order in which they should be listed on the blog.  It gets updated
+  by \mathblog\ when new posts are created, but you can edit the file
+  to change the ordering if you need to.  For more information, see
+  Section \ref{sec:postsindex}.}
+\item{\fw{templates/} - Templates used to generate the blog post
+  pages, post listing page, and RSS feed.  These templates are
+  StringTemplate templates.}
+\item{\fw{assets/} - The directory where you can put arbitrary files
+  to be copied to the HTML output directory.  \mathblog\ will copy
+  \fw{assets/foo} to \fw{\$MB\_OUTPUT\_DIR/foo}.}
+\end{itemize}
+
+\section{Step 2: Configure}
+
+\mathblog\ creates a default ``INI-style'' blog configuration file in
+your data directory called \fw{blog.cfg}.  It contains information
+which may be included in the generated pages.  The configuration file
 must have the following fields set:
 
 \begin{itemize}
 \item{\fw{baseUrl} - The base URL of your blog; this URL will be used
   to generate some links in the blog's pages where absolute URLs
-  matter.  Otherwise, relative URLs will be used, with an assumption
-  that your blog is hosted at the root of a domain.}
+  matter.  URL generation assumes that your blog is hosted at the root
+  of a domain.  The base URL corresponds to the output directory.}
 \item{\fw{title} - The title of your blog, such as "My math blog".}
 \item{\fw{authorName} - Your name (for the RSS feed metadata and the
   page footer).}
@@ -155,44 +166,52 @@ must have the following fields set:
   expressions.  Right now the only possible value is \fw{mathjax}.  No
   special configuration is necessary for MathJax, as mathblog's
   default templates use CDN resources for MathJax.}
-\item{\fw{tikz} - Whether to use the Tikz / Pgftplots approach to
-  rendering equation graphs.  Set to \fw{yes}, \fw{on}, or \fw{1} to
-  enable.  Disabled by default.}
+\item{\fw{tikz} - Whether to permit the use of the Tikz
+  \LaTeX\ package to create diagrams and function plots.  Set to
+  \fw{yes}, \fw{on}, or \fw{1} to enable.  Disabled by default.}
 \end{itemize}
-
-Note that if you pick a math or function graphing backend which isn't
-supported by your system, \fw{mb} will emit errors when processing
-your posts.
 
 All of the above fields can be accessed in templates using the syntax
 described in Section \ref{sec:customizing} below.
 
-\section{Serving the Blog}
+\section{Step 3: Edit}
 
-To serve your blog files you can either make the output directory a
-document root for your web server or virtual host or you can symlink
-the output directory to the location of choice.  The
-\mathblog\ directory itself is not intended to be in your web server's
-document tree because it contains many files that shouldn't be served
-to users such as your configuration and blog post input files.
-
-Start up a web server pointing at the output directory and take a
-look.
-
-Now you might want to edit or create a new post, or even remove one.
-Just edit the appropriate file in \fw{posts/} accordingly and re-run
-\fw{mb}.  Here's an example of modifying an existing post:
+Now you might want to edit or create a new post or remove one.  Start
+by editing the appropriate file in \fw{posts/} and then run \fw{mb}.
+To create a new blog post, just create a new file ending in
+``\fw{.txt}'' in the \fw{posts/} subdirectory.  Here's an example of
+running \fw{mb} after modifying an existing post:
 
 \blogexample{changed-post}
 
-\section{When to run \fw{mb}}
+Ordinarily, you might run \fw{mb} once in a while to update your
+output directory.  But if you're in the middle of authoring a new post
+and you want to see what it looks like as you edit it rather than run
+\fw{mb} by hand repeatedly, you can run \fw{mb} in ``listen'' mode; in
+listen mode, \fw{mb} will start a lightweight web server and serve
+your blog locally while you edit it.  If you open a web browser to one
+of your blog posts, it will automatically reload whenever you make a
+change to one of your blog files!
 
-\fw{mb} looks at the modification times of your post files in
-\fw{posts/}, the config file, template files, and the post index (see
-Section \ref{sec:postindex} ) when determining when to regenerate
-content.  It also looks for new posts that haven't been rendered in
-the past.  The rule of thumb is: re-run \fw{mb} whenever you make any
-changes to anything in your blog data directory.
+Here's a listen mode example:
+
+\blogexample{listen-mode}
+
+Above I ran \fw{mb} in listen mode and then modified the post index,
+then the blog config file, then one of the posts.  In each case
+\fw{mb} detected the change and ran its usual regeneration routine.
+
+You can set the hostname and port that \mathblog\ uses to serve the
+blog; see the \fw{mb -h} output.
+
+\section{When Should I Run \fw{mb}?}
+
+\fw{mb} looks at the modification times of the post files in
+\fw{posts/}, the config file, template files, asset files, and the
+posts index (see Section \ref{sec:postsindex}) when determining when
+to regenerate content.  It also looks for new posts that haven't been
+rendered in the past.  The rule of thumb is: re-run \fw{mb} whenever
+you make any changes to anything in your blog data directory.
 
 Modifications a post file will cause that post to be re-rendered, but
 modifications the configuration file or templates will cause ALL posts
@@ -218,25 +237,8 @@ Dates in the blog post header formatted as ``\fw{<MONTH> <DAY>,
   <YEAR>}'' will be parsed and used to generate the RSS feed
 publication date.
 
-\section{Running \fw{mb} in ``Listen'' Mode}
-
-Ordinarily, you'll just run \fw{mb} once in a while to update your
-output directory.  But if you're in the middle of authoring a new post
-and you want to see what it looks like as you edit it rather than run
-\fw{mb} by hand repeatedly, you can run \fw{mb} in ``listen'' mode;
-this means that \fw{mb} will run forever, peroidically scanning the
-filesystem for changes to your blog posts and other data files and
-will regenerate them and copy them to the output directory when it
-detects a change.  Running \mathblog\ in listen mode is simple:
-
-\blogexample{listen-mode}
-
-Above I ran \fw{mb} in listen mode and then modified the post index,
-then the blog config file, then one of the posts.  In each case
-\fw{mb} detected the change and ran its usual regeneration routine.
-
-\section{Customizing your blog}
-\label{ref:customizing}
+\section{Customization}
+\label{sec:customizing}
 
 It's likely that you'll want to customize the look and feel of your
 blog.  To this end, \mathblog\ generates the pages of your blog by
@@ -355,14 +357,13 @@ redefine them inside picture environments.
 \section{Function Graph Embedding}
 
 mathblog supports inline scripts for rendering function graphs.  Right
-now, mathblog supports the TikZ / pgfplots \LaTeX\ packages.  Set the
-appropriate configuration option (see above) to enable a backend.
+now, mathblog supports the TikZ \LaTeX\ package.  Set the appropriate
+configuration option (see above) to enable a backend.
 
-\subsection{TikZ / \fw{pgfplots}}
+\subsection{TikZ}
 
-To specify a TikZ / \fw{pgfplots} function graph in a blog post, we
-overload the Pandoc code block syntax.  Here's an example of a TikZ
-figure:
+To specify a TikZ diagram in a blog post, we overload the Pandoc code
+block syntax.  Here's an example of a TikZ figure:
 
 \begin{verbatim}
 ~~~ {#tikz}
@@ -382,8 +383,7 @@ figure:
 
 This is a \LaTeX\ fragment which will automatically be embedded in a
 \fw{tikzpicture} environment and rendered to an image within the blog
-post.  For more information on the powerful TikZ / \fw{pgfplots}
-packages, please see <https://sourceforge.net/projects/pgfplots/>.
+post.
 
 \subsection{Styling Function Graphs with CSS}
 
@@ -428,6 +428,7 @@ var disqus_identifier = "$post.basename$";
 \end{verbatim}
 
 \subsection{Controlling Post Order}
+\label{sec:postsindex}
 
 Whenever you add a new post, \fw{mb} automatically updates the "post
 index", a file called \fw{posts-index} in the \fw{posts/}
