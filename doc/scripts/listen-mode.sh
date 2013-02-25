@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+function readlink {
+    python -c 'import os,sys;print os.path.realpath(sys.argv[1])' "$1"
+}
+
 BASE=$(mktemp -d /tmp/mb.XXXXXX)
-CBASE=$(greadlink -f $BASE)
+CBASE=$(readlink $BASE)
 
 # Listen mode example: changes: post index, then the blog config file,
 # then one of the posts.
