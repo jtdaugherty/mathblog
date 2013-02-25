@@ -88,6 +88,7 @@ isEventInteresting ifs ev =
         isAsset f = (ifsAssetDir ifs) `isPrefixOf` f
 
         isTemplate f = (ifsTemplateDir ifs) `isPrefixOf` f &&
+                       (not ("." `isPrefixOf` takeFileName f)) &&
                        ((".html" `isSuffixOf` f) ||
                         (".xml" `isSuffixOf` f))
 
