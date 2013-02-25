@@ -14,6 +14,7 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
 import Network.HTTP
 import Network.HTTP.Server
+import Network.HTTP.Server.Logger
 import qualified Network.URL as URL
 import Network.Socket (SockAddr)
 
@@ -62,7 +63,10 @@ withServing conf act = do
   tmpDir <- createTempDirectory "/tmp" "mbhtml.tmp"
   outputDir <- canonicalizePath tmpDir
 
-  copyAll (htmlOutputDirectory conf) outputDir
+  let noExists :: SomeException -> IO Bool
+      noExists _ = return False
+  ex <- (doesDirectoryExist $ htmlOutputDirectory conf) `catch` noExists
+  when ex $ copyAll (htmlOutputDirectory conf) outputDir
 
   reloadChan <- newChan
   let genSignalAct = writeChan reloadChan ()
@@ -78,6 +82,7 @@ withServing conf act = do
 
       httpConfig = defaultConfig { srvHost = hostname
                                  , srvPort = portNum
+                                 , srvLog = quietLogger
                                  }
       cleanup = removeDirectoryRecursive (htmlOutputDirectory serverConf)
 
