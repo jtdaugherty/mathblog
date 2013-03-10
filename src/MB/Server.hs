@@ -21,7 +21,7 @@ import Network.Socket (SockAddr)
 
 import System.IO.Temp
 
-import MB.Util (copyAll)
+import MB.Util (copyContents)
 import MB.Types
 
 reloadJS :: String
@@ -67,7 +67,8 @@ withServing conf act = do
   let noExists :: SomeException -> IO Bool
       noExists _ = return False
   ex <- (doesDirectoryExist $ htmlOutputDirectory conf) `catch` noExists
-  when ex $ copyAll (htmlOutputDirectory conf) outputDir
+
+  when ex $ copyContents (htmlOutputDirectory conf) outputDir
 
   reloadChan <- newChan
   let genSignalAct = writeChan reloadChan ()

@@ -1,6 +1,5 @@
 module MB.Util
-    ( copyTree
-    , copyAll
+    ( copyContents
     , toUtcTime
     , loadPostIndex
     , getModificationTime
@@ -31,9 +30,6 @@ import Control.Monad
     , forM_
     , forM
     , filterM
-    )
-import System.Exit
-    ( exitFailure
     )
 import System.Posix.Files
     ( getFileStatus
@@ -71,49 +67,28 @@ import qualified Text.Pandoc as Pandoc
 import MB.Types
 import MB.TeXMacros
 
-copyTree :: FilePath -> FilePath -> IO ()
-copyTree srcPath dstPath = do
-  dstFExists <- doesFileExist dstPath
-  dstDExists <- doesDirectoryExist dstPath
-
-  when (dstFExists) $ do
-    putStrLn $ "Cannot copy " ++ (show srcPath) ++ " to existing destination path " ++
-                 (show dstPath) ++ "; remove to continue."
-    exitFailure
-
-  when (not dstDExists) $ createDirectory dstPath
-
-  copyTree' srcPath dstPath
-
-  where
-    copyTree' src dst = do
-      -- For each file in src, copy it to dest.
-      entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents src
-
-      dirs <- filterM doesDirectoryExist $ map (src </>) entries
-      files <- filterM doesFileExist $ map (src </>) entries
-
-      -- For each directory in src, create it in dest, then descend
-      -- into that directory in both src and dest.
-      forM_ files $ \f -> copyFile f $ dst </> takeFileName f
-      forM_ dirs $ \dir ->
-          do
-            let dstDir = dst </> dirName
-                dirName = takeFileName dir
-
-            e <- doesDirectoryExist dstDir
-            when (not e) $ createDirectory dstDir
-            copyTree' (src </> dirName) dstDir
-
-copyAll :: FilePath -> FilePath -> IO ()
-copyAll src dest = do
+-- |Given a source path SRC and a destination path DST, the SRC and
+-- DST paths MUST exist and must both be directories.  All contents of
+-- SRC/ will be copied, recursively, to DST/.
+copyContents :: FilePath -> FilePath -> IO ()
+copyContents src dst = do
+  -- For each file in src, copy it to dest.
   entries <- filter (not . flip elem [".", ".."]) <$> getDirectoryContents src
 
-  files <- filterM doesFileExist $ (src </>) <$> entries
-  forM_ files $ \f -> copyFile f (dest </> (takeFileName f))
+  dirs <- filterM doesDirectoryExist $ map (src </>) entries
+  files <- filterM doesFileExist $ map (src </>) entries
 
-  dirs <- filterM doesDirectoryExist $ (src </>) <$> entries
-  forM_ dirs $ \d -> copyTree d (dest </> (takeBaseName d))
+  -- For each directory in src, create it in dest, then descend into
+  -- that directory in both src and dest.
+  forM_ files $ \f -> copyFile f $ dst </> takeFileName f
+  forM_ dirs $ \dir ->
+      do
+        let dstDir = dst </> dirName
+            dirName = takeFileName dir
+
+        e <- doesDirectoryExist dstDir
+        when (not e) $ createDirectory dstDir
+        copyContents (src </> dirName) dstDir
 
 toUtcTime :: EpochTime -> UTCTime
 toUtcTime t = fromJust $ parseTime defaultTimeLocale "%s" $ show t

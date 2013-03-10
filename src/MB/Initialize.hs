@@ -9,7 +9,7 @@ import System.FilePath
 import Paths_mathblog
     ( getDataFileName
     )
-import MB.Util (copyTree)
+import MB.Util (copyContents)
 
 defaultConfigFilename :: String
 defaultConfigFilename = "blog.cfg"
@@ -26,7 +26,7 @@ initializeDataDir dir = do
       putStrLn $ "Initializing data directory " ++ dir
       dataDir <- skelDir
       createDirectory dir
-      copyTree dataDir dir
+      copyContents dataDir dir
 
     True -> do
       existsConfig <- doesFileExist $ dir </> defaultConfigFilename

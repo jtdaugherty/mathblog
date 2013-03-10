@@ -19,4 +19,4 @@ doInstallAssets = do
   assets <- ifsAssetDir <$> inputFS <$> theBlog
   outputDir <- ofsBaseDir <$> outputFS <$> theBlog
 
-  liftIO $ copyAll assets outputDir
+  liftIO $ copyContents assets outputDir
