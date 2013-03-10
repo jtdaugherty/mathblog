@@ -34,6 +34,8 @@ import Control.Monad
 import System.Posix.Files
     ( getFileStatus
     , modificationTime
+    , accessTime
+    , setFileTimes
     )
 import System.Posix.Types
     ( EpochTime
@@ -80,14 +82,23 @@ copyContents src dst = do
 
   -- For each directory in src, create it in dest, then descend into
   -- that directory in both src and dest.
-  forM_ files $ \f -> copyFile f $ dst </> takeFileName f
+  forM_ files $ \f -> do
+    let destPath = dst </> takeFileName f
+    st <- getFileStatus f
+    copyFile f destPath
+    setFileTimes destPath (accessTime st) (modificationTime st)
+
   forM_ dirs $ \dir ->
       do
         let dstDir = dst </> dirName
             dirName = takeFileName dir
 
         e <- doesDirectoryExist dstDir
-        when (not e) $ createDirectory dstDir
+        when (not e) $ do
+          createDirectory dstDir
+          st <- getFileStatus $ src </> dirName
+          setFileTimes dstDir (accessTime st) (modificationTime st)
+
         copyContents (src </> dirName) dstDir
 
 toUtcTime :: EpochTime -> UTCTime
