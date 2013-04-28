@@ -20,6 +20,9 @@ import System.Directory
     , getDirectoryContents
     , copyFile
     )
+import Data.Default
+    ( def
+    )
 import System.FilePath
     ( (</>)
     , takeFileName
@@ -108,7 +111,7 @@ loadPost :: FilePath -> IO Post
 loadPost fullPath = do
   fileContent <- readFile fullPath
   t <- getModificationTime fullPath
-  let doc = Pandoc.readMarkdown Pandoc.defaultParserState fileContent
+  let doc = Pandoc.readMarkdown def fileContent
       Pandoc.Pandoc m blocks = doc
       -- Extract defined TeX macros in the post and store them in the
       -- post data structure to make them available to other parts of

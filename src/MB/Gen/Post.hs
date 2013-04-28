@@ -5,6 +5,7 @@ module MB.Gen.Post
     )
 where
 
+import Data.Default
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans
@@ -97,7 +98,7 @@ renderSingle post pos = do
         newPost <- applyPreProcessors post
 
         -- Render the transformed AST as HTML using Pandoc;
-        let writerOpts = getWriterOptions blog Pandoc.defaultWriterOptions
+        let writerOpts = getWriterOptions blog def
             postBodyHtml = Pandoc.writeHtmlString writerOpts (postAst newPost)
 
         withTemplate (ifsPageTemplatePath $ inputFS blog) $ \pageTmpl ->
