@@ -4,10 +4,51 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Mathblog : A static blog generator for math-oriented content" />
+    <meta name="description" content="Mathblog: A static blog generator for math-oriented content" />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config(
+  {"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+   tex2jax: {
+     element: null,
+     preview: "none",
+     skipTags: ["script","noscript","style","textarea","pre","code"],
+     inlineMath: [
+       ['\$', '\$'],
+       ["\\\\(", "\\\\)"],
+     ],
+     displayMath: [
+       ['\$\$', '\$\$'],
+       ["\\\\[", "\\\\]"],
+     ],
+     processEscapes: true,
+     ignoreClass: "tex2jax_ignore|dno"
+   },
+   TeX: {
+     extensions: ["AMSmath.js","AMSsymbols.js","cancel.js"],
+     equationNumbers: { autoNumber: "AMS" },
+     noUndefined: { attributes: {
+                      mathcolor: "red",
+                      mathbackground: "#FFEEEE",
+                      mathsize: "90%" }
+                  }
+   },
+   messageStyle: "none"
+});
+</script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    <style type="text/css">
+        ul.latest-release span {
+            width: 6em;
+            margin-right: 0.5em;
+            float: left;
+            text-align: right;
+        }
+        ul.latest-release li {
+            list-style-type: none;
+        }
+    </style>
     <title>Mathblog</title>
   </head>
 
@@ -31,25 +72,62 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p><code>mathblog</code> is a Haskell program targeted at people who want to write
-statically-generated, mathematically-themed weblogs.  It supports:</p>
+        <p><code>mathblog</code> is a program for people who want to manage
+        statically-generated, mathematically-themed blogs.  It supports:</p>
 
-<ul>
-<li>Extended Markdown input syntax as supported by the Pandoc library</li>
-<li>Inline and block-level TeX math rendered by MathJax</li>
-<li>Function graphing with TikZ / pgfplots LaTeX packages</li>
-<li>Integration of Javascript-based web services such as Disqus</li>
-<li>Template-based document rendering with support for layout and style
-customization</li>
-</ul>
+        <ul>
+          <li>Extended Markdown input syntax as supported by the Pandoc library</li>
+          <li>Inline and block-level $\mathrm{\LaTeX}$ math rendered by MathJax</li>
+          <li>Function graphing with TikZ package</li>
+          <li>Integration of Javascript-based web services such as Disqus</li>
+          <li>Template-based document rendering with support for layout and style
+          customization</li>
+        </ul>
+
+        <p>
+          <code>mathblog</code> is installable
+          with <a href="http://hackage.haskell.org/package/cabal-install"><code>cabal-install</code></a>
+          and builds with <a href="http://www.haskell.org/ghc/">GHC</a> up to version 7.6:
+        </p>
+
+        <pre>$ cabal update
+$ cabal install mathblog</pre>
+
+        <h2>Latest Release</h2>
+
+        <ul class="latest-release">
+          <li><span>Version:</span> <strong>0.5</strong></li>
+          <li><span>Released:</span> <strong>2/25/2012</strong></li>
+          <li><span>Tarball:</span> <a href="https://github.com/jtdaugherty/mathblog/tarball/0.5">Download</a></li>
+          <li><span>Hackage:</span> <a href="http://hackage.haskell.org/package/mathblog-0.5">Hackage page for version 0.5</a></li>
+        </ul>
+
+        <h3>Contributing</h3>
+
+        <ul>
+          <li>
+            <code>mathblog</code>
+            is <a href="https://github.com/jtdaugherty/mathblog">hosted on
+              GitHub</a>.
+          </li>
+
+          <li>
+            <strong>Find a bug?</strong>  Post a minimal test case
+            on <a href="https://github.com/jtdaugherty/mathblog/issues">the
+              issue tracker</a> and describe what you did.
+          </li>
+
+          <li>
+            <strong>Got a patch?</strong>  Submit a pull request.  If
+            you want to make big changes, let's chat first.
+          </li>
+        </ul>
       </section>
-    </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
         <p class="copyright">Mathblog maintained by <a href="https://github.com/jtdaugherty">jtdaugherty</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
 
