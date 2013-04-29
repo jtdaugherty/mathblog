@@ -12,6 +12,7 @@ Description:         This package provides a program for creating and
                      platform for you!  For detailed information and a
                      full feature list, please see the README.
 Author:              Jonathan Daugherty <cygnus@foobox.com>
+Homepage:            http://jtdaugherty.github.io/mathblog/
 Maintainer:          Jonathan Daugherty <cygnus@foobox.com>
 Build-Type:          Simple
 Cabal-version:       >= 1.6
