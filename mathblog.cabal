@@ -70,7 +70,8 @@ Executable mb
     url,
     HTTP,
     data-default,
-    system-filepath
+    system-filepath,
+    JuicyPixels
 
   GHC-Options: -Wall
 
@@ -131,4 +132,5 @@ Executable mb-tests
     data-default,
     test-framework,
     test-framework-hunit,
-    HUnit
+    HUnit,
+    JuicyPixels

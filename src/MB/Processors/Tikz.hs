@@ -10,6 +10,7 @@ import Data.ByteString.Lazy.Char8 (pack)
 import System.Process
 import System.Directory
 import System.Exit
+import Codec.Picture
 import qualified Text.Pandoc as Pandoc
 import MB.Types
 
@@ -17,6 +18,15 @@ tikzProcessor :: Processor
 tikzProcessor =
     nullProcessor { preProcessPost = Just renderTikz
                   }
+
+imgDimensions :: DynamicImage -> (Int, Int)
+imgDimensions (ImageY8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageYF img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageYA8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageRGB8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageRGBF img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageRGBA8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageYCbCr8 img) = (imageWidth img, imageHeight img)
 
 renderTikz :: Post -> BlogM Post
 renderTikz post = do
@@ -64,18 +74,30 @@ renderTikzScript post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
 
       latexSource = preamble ++ rawScript ++ postamble
 
-  let newBlock = Pandoc.Para [Pandoc.RawInline "html" $
-                                    concat [ "<img src=\"/generated-images/"
-                                           , imageFilename
-                                           , "\" class=\""
-                                           , intercalate " " classes
-                                           , "\">"
-                                           ]
-                             ]
+  let newBlock pth = do
+      imgResult <- readImage pth
+      case imgResult of
+          Left e -> do
+              putStrLn $ "Yikes! Error reading an image we generated (" ++ show pth ++ "): " ++ e
+              exitFailure
+          Right img -> do
+              let (w, h) = imgDimensions img
+              return $ Pandoc.Para [ Pandoc.RawInline "html" $
+                  concat [ "<img src=\"/generated-images/"
+                         , imageFilename
+                         , "\" width=\""
+                         , show (w `div` 2)
+                         , "\" height=\""
+                         , show (h `div` 2)
+                         , "\" class=\""
+                         , intercalate " " classes
+                         , "\">"
+                         ]
+                         ]
 
   e <- liftIO $ doesFileExist imagePath
   case e of
-    True -> return newBlock
+    True -> liftIO $ newBlock imagePath
     False -> do
            liftIO $ writeFile "/tmp/tmp.tex" latexSource
 
@@ -91,7 +113,7 @@ renderTikzScript post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
                      return blk
              ExitSuccess -> do
                      -- Convert the temporary file to a PNG.
-                     (s2, out2, err) <- liftIO $ readProcessWithExitCode "convert" [ "-density", "120"
+                     (s2, out2, err) <- liftIO $ readProcessWithExitCode "convert" [ "-density", "250%"
                                                                                    , "-quality", "100"
                                                                                    , "/tmp/testfigure.pdf"
                                                                                    , imagePath
@@ -106,6 +128,6 @@ renderTikzScript post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
                                putStrLn out2
                                putStrLn err
                                return blk
-                       ExitSuccess -> return newBlock
+                       ExitSuccess -> liftIO $ newBlock imagePath
 
 renderTikzScript _ b = return b
