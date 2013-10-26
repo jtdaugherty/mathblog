@@ -21,12 +21,18 @@ tikzProcessor =
 
 imgDimensions :: DynamicImage -> (Int, Int)
 imgDimensions (ImageY8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageY16 img) = (imageWidth img, imageHeight img)
 imgDimensions (ImageYF img) = (imageWidth img, imageHeight img)
 imgDimensions (ImageYA8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageYA16 img) = (imageWidth img, imageHeight img)
 imgDimensions (ImageRGB8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageRGB16 img) = (imageWidth img, imageHeight img)
 imgDimensions (ImageRGBF img) = (imageWidth img, imageHeight img)
 imgDimensions (ImageRGBA8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageRGBA16 img) = (imageWidth img, imageHeight img)
 imgDimensions (ImageYCbCr8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageCMYK8 img) = (imageWidth img, imageHeight img)
+imgDimensions (ImageCMYK16 img) = (imageWidth img, imageHeight img)
 
 renderTikz :: Post -> BlogM Post
 renderTikz post = do
@@ -82,7 +88,7 @@ renderTikzScript post blk@(Pandoc.CodeBlock ("tikz", classes, _) rawScript) = do
               exitFailure
           Right img -> do
               let (w, h) = imgDimensions img
-              return $ Pandoc.Para [ Pandoc.RawInline "html" $
+              return $ Pandoc.Para [ Pandoc.RawInline (Pandoc.Format "html") $
                   concat [ "<img src=\"/generated-images/"
                          , imageFilename
                          , "\" width=\""
