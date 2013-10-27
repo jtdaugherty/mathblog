@@ -81,8 +81,8 @@ As a result, \mathblog\ has the following features:
   authoring.}
 \item{Blog posts are written in the Markdown format with extensions,
   as supported by the Pandoc document converter.}
-\item{Math is embedded with \verb|$...$| or \verb|\(...\)| for inline
-  math and \verb|$$...$$| or \verb|\[...\]| for block-level math.}
+\item{Math is embedded with \verb|$...$| (or \verb|\(...\)|) for inline math
+	and \verb|$$...$$| (or \verb|\[...\]|) for block-level math.}
 \end{itemize}
 
 These features have some nice advantages; your blog content is
@@ -97,7 +97,7 @@ find it useful.  In addition, I'm open to accepting contributions on
 the project if they're consistent with the goals I've outlined above.
 Happy blogging!
 
-\chapter{Working With \mathblog}
+\chapter{Using \mathblog}
 
 The main program provided by the \mathblog\ package is the program
 \fw{mb}.  This program takes care of initializing new blog data
@@ -113,10 +113,10 @@ these directories: you can set environment variables or you can pass
 command-line flags to \fw{mb}:
 
 \begin{itemize}
-\item{Data directory: et \fw{MB\_DATA\_DIR} in the environment or pass
-  the \fw{-d/--data-dir} option to \fw{mb}.}
+\item{Data directory: set \fw{MB\_DATA\_DIR} in the environment or pass
+	the \fw{-d} option to \fw{mb}.}
 \item{Output directory: set \fw{MB\_OUTPUT\_DIR} in the environment or
-  pass the \fw{-o/--output-dir} option to \fw{mb}.}
+	pass the \fw{-o} option to \fw{mb}.}
 \end{itemize}
 
 Any command line parameters given to \fw{mb} will always take
@@ -218,7 +218,7 @@ three lines of the file as follows:
 
 \begin{verbatim}
 % My First Post
-% Joe Author
+% Author Name
 % August 4, 1976
 
 First paragraph starts here.
@@ -309,8 +309,11 @@ These placeholders are supported in the post template:
 Posted by $post_authors; separator=", "$
 \end{verbatim}
 }
+% tex-macros below just happens to hyphenate properly to prevent a long line,
+% but keep an eye out: if the surrounding text changes enough, tex-macros may
+% become (wrongly) texmacros due to the hyphenation hint.
 \item{\fw{\$post.tex\_macros\$} - The combined \TeX\ macros string as
-  found in all of the \fw{\#tex-macros} code blocks in the post.  See
+  found in all of the \fw{\#tex\-macros} code blocks in the post.  See
   the section on \TeX\ macros for how to use this properly.}
 \end{itemize}
 
@@ -448,20 +451,23 @@ var disqus_identifier = "$post.basename$";
 \section{Controlling Post Order}
 \label{sec:postsindex}
 
-Whenever you add a new post, \fw{mb} automatically updates the ``posts
-index'', \fw{\$MB\_DATA\_DIR/posts-index}.  This file lists the
-filenames of all posts from newest to oldest.  By default, new posts
-get added to the beginning of the list, as you would expect.  Any new
-posts added to the list are sorted by modification time so that the
-newest post on disk appears earlier in the index.  This feature exists
-to make it possible for older posts to be updated without changing
-their ordering in the overall sequence of posts.
+Whenever \fw{mb} detects that you have added a new post, it updates the ``posts
+index'':
 
-At any time, you can edit the index to reorder the posts as you see
-fit.  \fw{mb} will preserve ordering of posts already in the index
-when you run it in the future.
+\begin{verbatim}
+$MB_DATA_DIR/posts-index
+\end{verbatim}
 
-\fw{mb} will also take care of removing posts from the index if
-they've been removed from the post source directory.
+This file lists the filenames of all posts from newest to oldest.  By default,
+new posts get added to the beginning of the list, as you would expect.  Any new
+posts added to the list are sorted by modification time so that the newest post
+on disk appears earlier in the index.  This feature exists to make it possible
+for older posts to be updated without changing their ordering in the overall
+sequence of posts.
+
+You can edit the index at any time to reorder the posts as you see fit.
+\fw{mb} will preserve ordering of posts already in the index when it runs.
+\fw{mb} will also take care of removing posts from the index if they've been
+removed from the post source directory.
 
 \end{document}
