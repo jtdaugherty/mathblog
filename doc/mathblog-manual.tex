@@ -89,7 +89,7 @@ These features have some nice advantages; your blog content is
 cacheable and can be subjected to revision control.  Posts are easy to
 edit and editing doesn't require a web browser.  The static file
 representation model means you can compose a blog post on your laptop
-and get it just right using a local installation of mathblog, then
+and get it just right using a local installation of \mathblog, then
 push it up to your server to post it to your public blog.
 
 I personally use this software package but I'll be pleased if others
@@ -170,7 +170,7 @@ must have the following fields set:
   metadata only).}
 \item{\fw{mathBackend} - The backend used to render \TeX\ math
   expressions.  Right now the only possible value is \fw{mathjax}.  No
-  special configuration is necessary for MathJax, as mathblog's
+  special configuration is necessary for MathJax, as \mathblog's
   default templates use CDN resources for MathJax.}
 \item{\fw{tikz} - Whether to permit the use of the Tikz
   \LaTeX\ package to create diagrams and function plots.  Set to
@@ -279,7 +279,7 @@ template placeholders are supported in each template:
 \item{\fw{\$extraPageHead\$} - Content to be placed in the \fw{<HEAD>}
   tag of the page, such as javascript tags, stylesheets, etc.  You'll
   need to ensure that this is somewhere in your \fw{<HEAD>} tag if you
-  want to use mathblog features which may need to load extra
+  want to use \mathblog\ features which may need to load extra
   resources.}
 \end{itemize}
 
@@ -410,7 +410,7 @@ post.  The fragment above will produce this picture:
 \subsection{Styling TikZ Graphics CSS}
 
 Note that the Pandoc syntax also allows us to assign CSS class names
-to the code block, and mathblog passes these through to the generated
+to the code block, and \mathblog\ passes these through to the generated
 image.  So if you wanted to wrap your text around the generated image,
 you could create a CSS class like this:
 
@@ -436,13 +436,13 @@ For more information on the code block syntax, please see:
 \section{Disqus Integration}
 \label{sec:disqus}
 
-Since mathblog doesn't provide many moving parts, it's up to you to
+Since \mathblog\ doesn't provide many moving parts, it's up to you to
 outsource various web site features, such as comments.  I've
-successfully integrated mathblog with the Disqus comments service.  To
+successfully integrated \mathblog\ with the Disqus comments service.  To
 do this, some javascript needs to be embedded in the blog pages.
 Disqus works best when you supply it with a page identifier so it can
 guarantee that comments are post-specific rather than URL-specific.
-The way mathblog makes this possible is by exposing a page basename
+The way \mathblog\ makes this possible is by exposing a page basename
 string so you can configure Disqus properly:
 
 \begin{verbatim}
