@@ -30,6 +30,7 @@ Data-Files:
   skel/templates/listTemplate.html
   skel/posts/first-post.txt
   skel/blog.cfg
+  doc/mathblog-manual.pdf
   doc/Makefile
   doc/title_page.tex
   doc/mathblog-manual.tex
