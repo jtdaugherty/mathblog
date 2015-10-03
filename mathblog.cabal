@@ -1,7 +1,7 @@
 Name:                mathblog
 Version:             0.6
 Synopsis:            A program for creating and managing a static
-                     weblog with LaTeX math and function graphs
+                     weblog with LaTeX math and diagrams
 Description:         This package provides a program for creating and
                      managing a statically-generated, VCS-friendly,
                      mathematically-inclined weblog.  If you're
@@ -22,6 +22,7 @@ Category:            Web
 
 Data-Files:
   README.md
+  CHANGELOG.md
   skel/assets/stylesheets/stylesheet.css
   skel/templates/postTemplate.html
   skel/templates/pageTemplate.html
