@@ -10,8 +10,8 @@ import Data.Time.Format
     )
 import System.Locale
     ( rfc822DateFormat
-    , defaultTimeLocale
     )
+import Data.Time.Format (defaultTimeLocale)
 import MB.Types
 import MB.Processing ( getRawPostTitle )
 import MB.Templates

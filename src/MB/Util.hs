@@ -52,7 +52,7 @@ import Data.Time.Clock
 import Data.Time.Format
     ( parseTime
     )
-import System.Locale
+import Data.Time.Format
     ( defaultTimeLocale
     )
 import System.IO
@@ -112,7 +112,7 @@ loadPost fullPath = do
   fileContent <- readFile fullPath
   t <- getModificationTime fullPath
   let doc = Pandoc.readMarkdown def fileContent
-      Pandoc.Pandoc m blocks = doc
+      Right (Pandoc.Pandoc m blocks) = doc
       -- Extract defined TeX macros in the post and store them in the
       -- post data structure to make them available to other parts of
       -- the page generation process (see Mathjax and TikZ for
