@@ -28,6 +28,8 @@ import System.FilePath
     , takeFileName
     , takeBaseName
     )
+import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans.Either
 import Control.Monad
     ( when
     , forM_
@@ -107,17 +109,19 @@ copyContents src dst = do
 toUtcTime :: EpochTime -> UTCTime
 toUtcTime t = fromJust $ parseTime defaultTimeLocale "%s" $ show t
 
-loadPost :: FilePath -> IO Post
+loadPost :: FilePath -> EitherT String IO Post
 loadPost fullPath = do
-  fileContent <- readFile fullPath
-  t <- getModificationTime fullPath
-  let doc = Pandoc.readMarkdown def fileContent
-      Right (Pandoc.Pandoc m blocks) = doc
-      -- Extract defined TeX macros in the post and store them in the
-      -- post data structure to make them available to other parts of
-      -- the page generation process (see Mathjax and TikZ for
-      -- examples.)
-      (newBlocks, macros) = extractTeXMacros blocks
+  fileContent <- liftIO $ readFile fullPath
+  t <- liftIO $ getModificationTime fullPath
+  (Pandoc.Pandoc m blocks) <- hoistEither $ case Pandoc.readMarkdown def fileContent of
+      Left pandocErr -> Left $ show pandocErr
+      Right v -> Right v
+
+  -- Extract defined TeX macros in the post and store them in
+  -- the post data structure to make them available to other
+  -- parts of the page generation process (see Mathjax and TikZ
+  -- for examples.)
+  let (newBlocks, macros) = extractTeXMacros blocks
 
       pas = case Pandoc.docAuthors m of
               [] -> []
@@ -127,8 +131,8 @@ loadPost fullPath = do
              [] -> Nothing
              d -> Just $ fromInlines d
 
-  tz <- getCurrentTimeZone
-  localTime <- toLocalTime t
+  tz <- liftIO getCurrentTimeZone
+  localTime <- liftIO $ toLocalTime t
   let modStr = show localTime ++ "  " ++ timeZoneName tz
       bn = takeBaseName $ takeFileName fullPath
       htmlFilename =  bn ++ ".html"
@@ -175,12 +179,12 @@ getModificationTime fullPath = do
   info <- getFileStatus fullPath
   return $ toUtcTime $ modificationTime info
 
-loadPostIndex :: BlogInputFS -> IO [Post]
+loadPostIndex :: BlogInputFS -> EitherT String IO [Post]
 loadPostIndex ifs = do
   let indexFilename = ifsPostIndexPath ifs
-  e <- doesFileExist indexFilename
+  e <- liftIO $ doesFileExist indexFilename
 
-  indexNames <- case e of
+  indexNames <- liftIO $ case e of
                   False -> return []
                   True -> do
                          h <- openFile indexFilename ReadMode
@@ -192,7 +196,7 @@ loadPostIndex ifs = do
 
   -- Now that we have a postIndex to deal with, load posts from disk
   -- and insert them into the post index in the proper order
-  postFiles <- allPostFilenames $ ifsPostSourceDir ifs
+  postFiles <- liftIO $ allPostFilenames $ ifsPostSourceDir ifs
   posts <- mapM loadPost postFiles
 
   -- There are two types of posts to put into the index: the ones that

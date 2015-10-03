@@ -207,7 +207,7 @@ mkBlog conf = do
       Just cfg_authorEmail = lookup "authorEmail" cfg
 
   -- Load blog posts from disk
-  allPosts <- liftIO $ loadPostIndex ifs
+  allPosts <- loadPostIndex ifs
 
   let requestedMathBackend = lookup "mathBackend" cfg
       isBackendRequested (nam, p) =
