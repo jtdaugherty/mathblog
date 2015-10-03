@@ -16,7 +16,6 @@ import System.Directory
 import System.FilePath
 
 import System.FSNotify
-import qualified Filesystem.Path.CurrentOS as FP
 
 import qualified MB.Config as Config
 import MB.Server
@@ -99,7 +98,7 @@ isEventInteresting ifs ev =
            , isTemplate
            , isConfig
            , isPostIndex
-           ] <*> pure (FP.encodeString fp))
+           ] <*> pure fp)
 
 scanForChanges :: StartupConfig
                -> (GenEvent -> IO ())
@@ -131,15 +130,15 @@ scanForChanges conf h blogTrans signalAct = do
           threadDelay $ 500 * 1000
 
           ch <- newChan
-          watchTreeChan m (FP.decodeString $ dataDirectory conf) (const True) ch
+          watchTreeChan m (dataDirectory conf) (const True) ch
           let nextEv = do
                 ev <- readChan ch
                 if isEventInteresting ifs ev then return ev else nextEv
           evt <- nextEv
           case evt of
-            Added fp _ -> putStrLn $ "File created: " ++ FP.encodeString fp
-            Modified fp _ -> putStrLn $ "File modified: " ++ FP.encodeString fp
-            Removed fp _ -> putStrLn $ "File removed: " ++ FP.encodeString fp
+            Added fp _ -> putStrLn $ "File created: " ++ fp
+            Modified fp _ -> putStrLn $ "File modified: " ++ fp
+            Removed fp _ -> putStrLn $ "File removed: " ++ fp
 
 mathBackends :: [(String, Processor)]
 mathBackends =

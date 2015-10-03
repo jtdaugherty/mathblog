@@ -70,7 +70,6 @@ Executable mb
     url,
     HTTP,
     data-default,
-    system-filepath,
     JuicyPixels >= 3.1
 
   GHC-Options: -Wall
