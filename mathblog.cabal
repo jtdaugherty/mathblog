@@ -48,6 +48,7 @@ Executable mb
   Main-is:         Main.hs
   Build-depends:
     base >= 3 && < 5,
+    deepseq >= 1.2,
     directory >= 1.0,
     filepath >= 1.1,
     pandoc >= 1.12,
