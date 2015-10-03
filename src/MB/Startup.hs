@@ -105,7 +105,7 @@ options = [ Option ['d'] [baseDirParamName] (ReqArg DataDir "PATH")
           ]
 
 versionString :: String
-versionString = "mathblog version 0.5"
+versionString = "mathblog version 0.6"
 
 -- |Inspect the program environment to create a startup configuration.
 -- If the configuration information is invalid or absent, this will
