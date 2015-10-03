@@ -73,6 +73,7 @@ import Data.Maybe
 import qualified Text.Pandoc as Pandoc
 import MB.Types
 import MB.TeXMacros
+import Control.DeepSeq
 
 -- |Given a source path SRC and a destination path DST, the SRC and
 -- DST paths MUST exist and must both be directories.  All contents of
@@ -189,7 +190,7 @@ loadPostIndex ifs = do
                   True -> do
                          h <- openFile indexFilename ReadMode
                          s <- hGetContents h
-                         s `seq` return ()
+                         s `deepseq` return ()
                          let idx = unserializePostIndex s
                          hClose h
                          return idx
