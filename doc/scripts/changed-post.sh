@@ -8,7 +8,7 @@ BASE=$(mktemp -d /tmp/mb.XXXXXX)
 CBASE=$(readlink $BASE)
 
 # Example for what happens when a post file changes.
-MB="mb -d $CBASE/blog -o $CBASE/html"
+MB="../.cabal-sandbox/bin/mb -d $CBASE/blog -o $CBASE/html"
 
 $MB -i >/dev/null
 touch -t 999901010000 $CBASE/blog/posts/first-post.txt

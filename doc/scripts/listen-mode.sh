@@ -9,7 +9,7 @@ CBASE=$(readlink $BASE)
 
 # Listen mode example: changes: post index, then the blog config file,
 # then one of the posts.
-MB="mb -d $CBASE/blog -o $CBASE/html"
+MB="../.cabal-sandbox/bin/mb -d $CBASE/blog -o $CBASE/html"
 
 SEDPAT="s|$CBASE|...|g"
 
