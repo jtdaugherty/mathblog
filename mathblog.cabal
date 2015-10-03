@@ -10,7 +10,8 @@ Description:         This package provides a program for creating and
                      embedded function plotting, and the UNIX editor
                      of your choice, then this is the blogging
                      platform for you!  For detailed information and a
-                     full feature list, please see the README.
+                     full feature list, please see the manual PDF in the
+                     'doc' directory.
 Author:              Jonathan Daugherty <cygnus@foobox.com>
 Homepage:            http://jtdaugherty.github.io/mathblog/
 Maintainer:          Jonathan Daugherty <cygnus@foobox.com>
